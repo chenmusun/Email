@@ -713,7 +713,7 @@ public:
 	CSQLServer(void);
 	~CSQLServer();
 	// TODO:  在此添加您的方法。
-	void Test();
+	void Test(EMAIL_ITEM& email);
 	void GetGUID(CString &guid);
 	BOOL Connect(LPCTSTR lpServer,LPCTSTR lpDatabase,LPCTSTR lpUser,LPCTSTR lpPass,int nType=0);//0:混合验证；1:Windows验证
 	BOOL IsConnect();

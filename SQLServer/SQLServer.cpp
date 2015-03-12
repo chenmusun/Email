@@ -83,7 +83,7 @@ CSQLServer::~CSQLServer()
 }
 
 
-void CSQLServer::Test()
+void CSQLServer::Test(EMAIL_ITEM& email)
 {
 	CString guid;
 	if (Connect(_T("OFFICE-PC\\SQLSERVER"), _T("mysqlserver"), _T("sa"), _T("test.123")))
