@@ -299,7 +299,7 @@ long CMailAnalysis::AnalysisHead()
 		StringProcess(csFrom, csTemp, csExtra, 0);
 		StringProcess(csTemp, csFrom);
 		csTemp = StringEncode(csFrom);
-		if (csFrom.Find(_T("@") > 0))
+		if (csFrom.Find(_T("@")) > 0)
 			m_stEmail.csFrom = csFrom;
 		else if (csExtra.Find(_T("@")) > 0)
 			m_stEmail.csFrom = csExtra;

@@ -85,16 +85,62 @@ CSQLServer::~CSQLServer()
 
 void CSQLServer::Test(EMAIL_ITEM& email)
 {
-	CString guid;
-	if (Connect(_T("OFFICE-PC\\SQLSERVER"), _T("mysqlserver"), _T("sa"), _T("test.123")))
+	COleDateTime oledt = COleDateTime::GetCurrentTime();
+	try
 	{
-		GetGUID(guid);
-		guid.Replace(_T("{"),_T(""));
-		guid.Replace(_T("}"), _T(""));
+		if(Connect(_T("192.168.1.150"), _T("ReportEmailDB"), _T("sa"), _T("123456")))
+		{
+			m_db.BeginTransaction();
+			CADOCommand * pEMCmd = new CADOCommand(&m_db);
+			if (pEMCmd == NULL) return;
+
+			TCHAR szCmdText[512] = _T("INSERT INTO report_email(EmailUIDL, ReportID, EmailFrom, EmailTo, EmailSubject, EmailDate, EmailTime, ContentType,Status) VALUES(?, ?, ?, ?, ?, ?, ?, ?,?)");
+			pEMCmd->AddParameter(_T("EmailUIDL"), adVarChar, CADOParameter::paramInput, email.csUIDL.GetLength(), _bstr_t(email.csUIDL.GetBuffer(0)));
+			pEMCmd->AddParameter(_T("ReportID"), adInteger, CADOParameter::paramInput, sizeof(long), (long)email.lSn);
+
+			pEMCmd->AddParameter(_T("EmailFrom"), adVarChar, CADOParameter::paramInput, email.csFrom.GetLength(), _bstr_t(email.csFrom.GetBuffer(0)));
+			pEMCmd->AddParameter(_T("EmailTo"), adVarWChar, CADOParameter::paramInput, email.csTo.GetLength(), _bstr_t(email.csTo.GetBuffer(0)));
+			pEMCmd->AddParameter(_T("EmailSubject"), adVarWChar, CADOParameter::paramInput, email.csSubject.GetLength(), _bstr_t(email.csSubject.GetBuffer(0)));
+
+			TCHAR szDate[32] = { 0 };
+			TCHAR szTime[32] = { 0 };
+			wsprintf(szDate, _T("%04d-%02d-%02d 00:00:00.000"), oledt.GetYear(), oledt.GetMonth(), oledt.GetDay());
+			wsprintf(szTime, _T("1899-12-30 %02d:%02d:%02d"), oledt.GetHour(), oledt.GetMinute(), oledt.GetSecond());
+			pEMCmd->AddParameter(_T("EmailDate"), adVarChar, CADOParameter::paramInput, lstrlen(szDate), _bstr_t(szDate));
+			pEMCmd->AddParameter(_T("EmailTime"), adVarChar, CADOParameter::paramInput, lstrlen(szTime), _bstr_t(szTime));
+			pEMCmd->AddParameter(_T("ContentType"), adVarWChar, CADOParameter::paramInput, email.csContentType.GetLength(), _bstr_t(email.csContentType.GetBuffer(0)));
+			pEMCmd->AddParameter(_T("Status"), adInteger, CADOParameter::paramInput, sizeof(long), (long)0);
+
+			pEMCmd->SetText(szCmdText);
 #ifdef _DEBUG
-		OutputDebugString(guid);
+			OutputDebugString(szCmdText);
+			OutputDebugString(_T("\r\n"));
+#endif
+			if (pEMCmd->Execute(adCmdText))
+			{
+#ifdef _DEBUG
+				OutputDebugString(_T("Insert to SQL Success!\r\n"));
+#endif
+			}
+			else
+			{
+#ifdef _DEBUG
+				OutputDebugString(_T("Insert to SQL Failed!\r\n"));
+#endif
+			}
+			delete pEMCmd;
+			m_db.RollbackTransaction();
+		}
+	}
+	catch (_com_error& e)
+	{
+		m_db.RollbackTransaction();
+		CString csErr;
+		csErr.Format(_T("SaveToDB\r\n%s\r\n%s"), (TCHAR*)e.Description(), (TCHAR*)e.ErrorMessage());
+#ifdef _DEBUG
+		OutputDebugString(csErr);
 		OutputDebugString(_T("\r\n"));
-#endif // _DEBUG
+#endif
 	}
 }
 

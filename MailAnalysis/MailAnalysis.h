@@ -44,6 +44,7 @@ public:
 	void Clear(long lType=1);//lType----1:删除本地文件；0：保留本地文件
 	void SetLogPath(const char*pPath);
 	inline void SetAbbreviation(LPCTSTR lpAbb){ m_csAbbreviation.Format(_T("%s"), lpAbb); }
+	inline EMAIL_ITEM& GetEmailItem(){ return m_stEmail; }
 private:
 	long GetContentInfo(const CString& csSrc, CString& csContent, CString& csExtra, long& lConttype);
 	void GetDispositionInfo(const CString& csSrc, CString& csDis, CString& csExtra);

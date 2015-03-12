@@ -976,6 +976,7 @@ DWORD WINAPI  CReceiveEmailDlg::_AfxMainTestAna(LPVOID lpParam)
 	csUIDL.Format(_T("%s"), pDlg->m_csTestText);
 	csPath.Format(_T("Email\\%s"),csUIDL);
 	WideCharToMultiByte(CP_ACP, 0, pDlg->m_csLogPath, MAX_PATH, chPath, MAX_PATH, NULL, NULL);
+	ana.SetAbbreviation(_T("test"));
 	ana.SetLogPath(chPath);
 	if (ana.LoadFile(__Main_Path__, csPath))
 	{
@@ -1019,10 +1020,7 @@ DWORD WINAPI  CReceiveEmailDlg::_AfxMainTestAna(LPVOID lpParam)
 			pDlg->m_log.Log(csLog, csLog.GetLength());
 			break;
 		}
-		if (1)
-		{
-			sql.Test();
-		}
+		sql.Test(ana.GetEmailItem());
 		ana.Clear(0);
 #ifdef _DEBUG
 		dwTime = GetTickCount() - dwTime;
@@ -1044,8 +1042,9 @@ void CReceiveEmailDlg::OnBnClickedButtonSet()
 {
 	// TODO:  在此添加控件通知处理程序代码
 #ifdef _DEBUG
+	EMAIL_ITEM email;
 	CSQLServer sqlserver;
-	sqlserver.Test();
+	sqlserver.Test(email);
 #else
 	CSettingDlg setting;
 	if (setting.DoModal() == IDOK)
