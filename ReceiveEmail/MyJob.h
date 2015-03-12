@@ -31,7 +31,7 @@ public:
 	BOOL Wait();
 	CLog m_log;
 	long SendEmail();
-	long MailAnalysis(POP3& pop3, const string& strUIDL, long lType = 0);
+	long MailAnalysis(POP3& pop3, const string& strUIDL, LPCTSTR lpAbb,long lType = 0);
 private:
 	POP3 m_pop3;
 	SMTP m_smtp;

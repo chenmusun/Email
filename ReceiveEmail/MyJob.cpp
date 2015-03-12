@@ -101,7 +101,7 @@ BOOL CMyJob::Run()
 									{
 										if (m_pop3.GetEMLFile(i, strUidl) == 0)
 										{
-											if (MailAnalysis(m_pop3, strUidl))
+											if (MailAnalysis(m_pop3, strUidl,info.szAbbreviation))
 											{
 												
 												sprintf_s(chDebug, 512, "Analysis [%s] Error!", strUidl.c_str());
@@ -231,10 +231,11 @@ long CMyJob::SendEmail()
 	return 0;
 }
 
-long CMyJob::MailAnalysis(POP3& pop3, const string& strUIDL, long lType)
+long CMyJob::MailAnalysis(POP3& pop3, const string& strUIDL, LPCTSTR lpAbb,long lType)
 {
 	CString csUIDL(strUIDL.c_str()),csPath(pop3.GetCurrPath());
 	CMailAnalysis ana;
+	ana.SetAbbreviation(lpAbb);
 	ana.LoadFile(csPath,csUIDL);
 #ifdef _DEBUG
 	DWORD dwTime(0);

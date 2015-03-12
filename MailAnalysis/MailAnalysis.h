@@ -43,6 +43,7 @@ public:
 	vector<ATTACH> AnalysisBody(const CString& csBody, const CString& csBoundry);//解析邮件体
 	void Clear(long lType=1);//lType----1:删除本地文件；0：保留本地文件
 	void SetLogPath(const char*pPath);
+	inline void SetAbbreviation(LPCTSTR lpAbb){ m_csAbbreviation.Format(_T("%s"), lpAbb); }
 private:
 	long GetContentInfo(const CString& csSrc, CString& csContent, CString& csExtra, long& lConttype);
 	void GetDispositionInfo(const CString& csSrc, CString& csDis, CString& csExtra);
@@ -64,12 +65,13 @@ private:
 	CString m_csMessageID;
 	CString m_csFilePath;//EML文件路径
 	CString m_csSavePath;//附件保存路径
-	long m_lAttachmentCount; //附件数量
 	CString m_csCharset; //源字符集
-	list<CString> m_lsAttachFile;
+	//list<CString> m_lsAttachFile;
+	long m_lAttachmentCount; //附件数量
 	TCHAR m_szMainPath[MAX_PATH];
 	CLog m_log;
 	EMAIL_ITEM m_stEmail;
+	CString m_csAbbreviation;
 };
 
 

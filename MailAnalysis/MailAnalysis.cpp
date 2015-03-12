@@ -93,7 +93,6 @@ CMailAnalysis::CMailAnalysis() :m_lHeadRowCount(0), m_lCurrRow(0), m_lAttachment
 {
 	memset(m_szMainPath, 0, MAX_PATH);
 	m_stAttachMent.clear();
-	m_lsAttachFile.clear();
 	m_stSubAttachMent.clear();
 	m_stEmail.Init();
 }
@@ -101,7 +100,6 @@ CMailAnalysis::CMailAnalysis() :m_lHeadRowCount(0), m_lCurrRow(0), m_lAttachment
 CMailAnalysis::~CMailAnalysis()
 {
 	m_stAttachMent.clear();
-	m_lsAttachFile.clear();
 	m_stSubAttachMent.clear();
 }
 
@@ -177,6 +175,8 @@ long CMailAnalysis::LoadFile(LPCTSTR lpPath, LPCTSTR lpUIDL, long lType)
 	csDebug.Format(_T("LoadFile Time = %d sec\r\n"), dwTime / 1000);
 	OutputDebugString(csDebug);
 #endif
+	m_stEmail.csTo = m_csAbbreviation;
+	m_stEmail.csUIDL = lpUIDL;
 	return 0;
 }
 
@@ -354,11 +354,11 @@ long CMailAnalysis::AnalysisHead()
 	csDate.Format(_T("Date:%d-%d-%d\t%d:%d:%d\r\n"),
 		datetime.GetYear(), datetime.GetMonth(), datetime.GetDay()
 		, datetime.GetHour(), datetime.GetMinute(), datetime.GetSecond());
+	m_stEmail.csDate = csDate;
 #ifdef _DEBUG
 	csDebug = csDate;
 	OutputDebugString(csDebug);
-
-	OutputDebugString(_T("Subject:"));
+#endif
 	CString csOutPut;
 	for (long long i = 0; i < csSubject.GetSize(); i++)
 	{
@@ -366,10 +366,16 @@ long CMailAnalysis::AnalysisHead()
 		StringProcess(csDebug, csDebug);
 		csOutPut.AppendFormat(_T("%s"), StringEncode(csDebug));
 	}
+	if (!csOutPut.IsEmpty())
+		m_stEmail.csSubject = csOutPut;
+#ifdef _DEBUG
+	OutputDebugString(_T("Subject:"));
 	OutputDebugString(csOutPut);
 	OutputDebugString(_T("\r\n"));
-
 	OutputDebugString(_T("To:"));
+#endif
+
+	
 	for (long long i = 0; i < csTo.GetSize(); i++)
 	{
 		csSrc = csTo.GetAt(i);
@@ -380,9 +386,11 @@ long CMailAnalysis::AnalysisHead()
 		StringProcess(csTemp, csSrc);
 		csTemp = StringEncode(csSrc);
 		csDebug.Format(_T("%s\t%s\r\n"), csTemp, csExtra);
+#ifdef _DEBUG
 		OutputDebugString(csDebug);
-	}
 #endif
+	}
+
 	return 0;
 }
 
@@ -478,6 +486,7 @@ long CMailAnalysis::AnalysisBoundary(const CString& csBoundary, vector<ATTACH>& 
 {
 	TCHAR chMainname[64] = { 0 };
 	BOUNDARY_HEAD stBouHead;
+	ATTACH_FILE attachfile;
 	if (vAttach.size() > 0)
 	{
 		vector<ATTACH>::iterator ite = vAttach.begin();
@@ -493,7 +502,8 @@ long CMailAnalysis::AnalysisBoundary(const CString& csBoundary, vector<ATTACH>& 
 				wsprintf(chMainname, _T("main%d.txt"), m_lAttachmentCount);
 				if (SaveToFile(ite->csText, chMainname, stBouHead.lEncode) == 0)
 				{
-					m_lsAttachFile.push_back(chMainname);
+					m_stEmail.csContentType = _T("text/plain");
+					m_stEmail.csEmailContent.Format(_T("%s%s"), m_csSavePath, chMainname);
 					m_lAttachmentCount++;
 				}
 				
@@ -504,7 +514,8 @@ long CMailAnalysis::AnalysisBoundary(const CString& csBoundary, vector<ATTACH>& 
 				wsprintf(chMainname, _T("main%d.html"), m_lAttachmentCount);
 				if (SaveToFile(ite->csText, chMainname, stBouHead.lEncode) == 0)
 				{
-					m_lsAttachFile.push_back(chMainname);
+					m_stEmail.lHasHtml = 1;
+					m_stEmail.csEmailContentHTML.Format(_T("%s%s"),m_csSavePath,chMainname);
 					m_lAttachmentCount++;
 				}				
 			}
@@ -523,8 +534,12 @@ long CMailAnalysis::AnalysisBoundary(const CString& csBoundary, vector<ATTACH>& 
 			{
 				if (SaveToFile(ite->csText, stBouHead.csFilename.IsEmpty() ? stBouHead.csName : stBouHead.csFilename, stBouHead.lEncode) == 0)
 				{
-					m_lsAttachFile.push_back(stBouHead.csFilename);
+					attachfile.Init();
+					m_stEmail.lHasAffix = 1;
 					m_lAttachmentCount++;
+					attachfile.csFileName = stBouHead.csFilename;
+					attachfile.csFilePath.Format(_T("%s%s"), m_csSavePath, stBouHead.csFilename);
+					m_stEmail.vecAttachFiles.push_back(attachfile);
 				}
 			}
 				break;
@@ -1011,13 +1026,13 @@ vector<ATTACH> CMailAnalysis::AnalysisBody(const CString& csBody, const CString&
 					{
 					case _CONTENT_TRANSFER_ENCODING2_:
 					{
-														 csaContent.Add(csData);
-														 bText = TRUE;
+						csaContent.Add(csData);
+						bText = TRUE;
 					}
 						break;
 					default:
 					{
-							   csaContent.Add(csData);
+						csaContent.Add(csData);
 					}
 						break;
 					}
@@ -1295,20 +1310,22 @@ void CMailAnalysis::Clear(long lType)
 	m_csMessageID.Empty();
 	m_csCharset.Empty();
 	//删除本地解析结果
-	if (m_lsAttachFile.size() > 0)
+	if (m_stEmail.vecAttachFiles.size() > 0)
 	{
-		if (lType ==1)
+		if (lType == 1)
 		{
-			CString csPath;
-			list<CString>::iterator ite = m_lsAttachFile.begin();
-			while (ite != m_lsAttachFile.end())
+			vector<ATTACH_FILE>::iterator ite = m_stEmail.vecAttachFiles.begin();
+			while (ite != m_stEmail.vecAttachFiles.end())
 			{
-				csPath.Format(_T("%s\\%s"), m_csSavePath, *ite);
-				DeleteFile(csPath);
+				(*ite).csFileName.Empty();
+				(*ite).csGUID.Empty();
+				(*ite).csMD5.Empty();
+				(*ite).lSize = 0;
+				DeleteFile((*ite).csFilePath);
 				ite++;
 			}
 		}
-		m_lsAttachFile.clear();
+		m_stEmail.vecAttachFiles.clear();
 	}
 	if (!m_csSavePath.IsEmpty())
 	{

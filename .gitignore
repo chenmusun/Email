@@ -56,3 +56,10 @@
 *.bsc
 *.tlh
 *.tli
+output/Mail
+output/Email
+output/Log
+ReceiveEmail/Mail
+ReceiveEmail/Email
+ReceiveEmail/Log
+*.ini.bak

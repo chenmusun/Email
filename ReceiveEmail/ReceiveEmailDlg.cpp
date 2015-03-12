@@ -972,6 +972,7 @@ DWORD WINAPI  CReceiveEmailDlg::_AfxMainTestAna(LPVOID lpParam)
 	unsigned long lCurrPos = 0;
 	size_t lCount = 0;
 	CMailAnalysis ana;
+	CSQLServer sql;
 	csUIDL.Format(_T("%s"), pDlg->m_csTestText);
 	csPath.Format(_T("Email\\%s"),csUIDL);
 	WideCharToMultiByte(CP_ACP, 0, pDlg->m_csLogPath, MAX_PATH, chPath, MAX_PATH, NULL, NULL);
@@ -1017,6 +1018,10 @@ DWORD WINAPI  CReceiveEmailDlg::_AfxMainTestAna(LPVOID lpParam)
 			csLog.Format(_T("AnalysisBoundary´íÎó£¡"));
 			pDlg->m_log.Log(csLog, csLog.GetLength());
 			break;
+		}
+		if (1)
+		{
+			sql.Test();
 		}
 		ana.Clear(0);
 #ifdef _DEBUG

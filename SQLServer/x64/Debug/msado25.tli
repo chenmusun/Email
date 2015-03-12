@@ -1,9 +1,9 @@
-﻿// Created by Microsoft (R) C/C++ Compiler Version 12.00.21005.1 (cf5ce8c0).
+﻿// Created by Microsoft (R) C/C++ Compiler Version 12.00.21005.1 (1a329610).
 //
-// e:\email\email\sqlserver\x64\debug\msado25.tli
+// e:\mail\mailtest\receiveemail\sqlserver\x64\debug\msado25.tli
 //
 // Wrapper implementations for type library C:\Program Files\Common Files\System\ado\msado25.tlb
-// compiler-generated file created 03/12/15 at 17:21:47 - DO NOT EDIT!
+// compiler-generated file created 03/12/15 at 14:34:28 - DO NOT EDIT!
 
 #pragma once
 

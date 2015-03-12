@@ -48,6 +48,14 @@ struct ATTACH_FILE
 	long lSize;			//附件大小
 	CString csMD5;		//附件MD5
 	CString csGUID;		//附件GUID
+	void Init()
+	{
+		csFileName.Empty();
+		csFilePath.Empty();
+		lSize = 0;
+		csMD5.Empty();
+		csGUID.Empty();
+	}
 };
 
 struct EMAIL_ITEM

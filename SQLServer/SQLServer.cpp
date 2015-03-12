@@ -95,7 +95,6 @@ void CSQLServer::Test()
 		OutputDebugString(guid);
 		OutputDebugString(_T("\r\n"));
 #endif // _DEBUG
-		AfxMessageBox(guid);
 	}
 }
 
