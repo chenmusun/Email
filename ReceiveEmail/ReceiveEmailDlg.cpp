@@ -1,0 +1,1201 @@
+
+// ReceiveEmailDlg.cpp : 实现文件
+//
+
+#include "stdafx.h"
+#include "ReceiveEmail.h"
+#include "ReceiveEmailDlg.h"
+#include "afxdialogex.h"
+#include <thread>
+#include <threadpoolapiset.h>
+#include <threadpoollegacyapiset.h>
+#include "GGJsonAdapter.h"
+#include "SettingDlg.h"
+#include "../SQLServer/SQLServer.h"
+
+#ifdef _DEBUG
+#define new DEBUG_NEW
+#endif
+
+#define MIN_LENGTH 600
+#define MIN_HEIGHT 400
+#define MAILLIST_ITE map<CString, MailBoxInfo>::iterator
+#define BTN_LENGTH 90
+#define BTN_HEIGHT 25
+#define GAP 20
+#define HORIZON_GAP 15
+
+TCHAR __Main_Path__[MAX_PATH];
+HANDLE __HEVENT_EXIT__ = NULL;
+HANDLE __HEVENT_TEST_EXIT__ = NULL;
+
+
+DWORD WINAPI  CReceiveEmailDlg::_AfxMain(LPVOID lpParam)
+{
+	CReceiveEmailDlg*pDlg = (CReceiveEmailDlg*)lpParam;
+	try
+	{
+		unsigned long lCurrPos = 0;
+		size_t lCount=0;
+		while (true)
+		{
+			if (WaitForSingleObject(__HEVENT_EXIT__, 10L) == WAIT_OBJECT_0)
+				break;
+			pDlg->m_pTestTheradPool->GetWaitJobNum(lCount);
+			if (lCount <= 0)
+			{
+				if (lCurrPos > pDlg->m_mailList.size()-1)
+					lCurrPos = 0;
+				ATLASSERT(pDlg->m_pTestTheradPool);
+				pDlg->m_nHighJobPriority--;
+				MyJobParam* pMyJobParam = new MyJobParam();
+				pMyJobParam->m_nIntParam = ++pDlg->m_nJobParamIntValue;
+				pMyJobParam->m_nStrParam.Format(TEXT("SomeStringValue%d"), pDlg->m_nJobParamIntValue);
+				pMyJobParam->m_pDlg = pDlg;
+				pMyJobParam->m_lPos = lCurrPos++;
+				pDlg->SetTextWnd(1, pMyJobParam->m_lPos);
+				CMyJob* pNewJob = new CMyJob(pMyJobParam);
+				pNewJob->SetJobPriority(pDlg->m_nHighJobPriority);
+				pDlg->m_pTestTheradPool->SubmitJob(pNewJob, &pDlg->m_nCurJobIndex);
+				if (WaitForSingleObject(__HEVENT_EXIT__, 500L) == WAIT_TIMEOUT)
+					continue;
+				else break;
+			}
+		}//End of while
+	}
+	catch (...)
+	{
+	}
+	return 0;
+}
+
+// 用于应用程序“关于”菜单项的 CAboutDlg 对话框
+
+class CAboutDlg : public CDialogEx
+{
+public:
+	CAboutDlg();
+
+// 对话框数据
+	enum { IDD = IDD_ABOUTBOX };
+
+	protected:
+	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV 支持
+
+// 实现
+protected:
+	DECLARE_MESSAGE_MAP()
+};
+
+CAboutDlg::CAboutDlg() : CDialogEx(CAboutDlg::IDD)
+{
+}
+
+void CAboutDlg::DoDataExchange(CDataExchange* pDX)
+{
+	CDialogEx::DoDataExchange(pDX);
+}
+
+BEGIN_MESSAGE_MAP(CAboutDlg, CDialogEx)
+END_MESSAGE_MAP()
+
+
+// CReceiveEmailDlg 对话框
+
+
+
+CReceiveEmailDlg::CReceiveEmailDlg(CWnd* pParent /*=NULL*/)
+: CDialogEx(CReceiveEmailDlg::IDD, pParent), m_pTestTheradPool(NULL)
+, m_nHighJobPriority(0), m_nJobParamIntValue(0), m_nCurJobIndex(0)
+, m_hMain(NULL), m_hMainTest(NULL), m_hMainTest2(NULL)
+{
+	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
+	m_mailList.clear();
+	m_HelpData.clear();
+	memset(m_TextWnd, 0, sizeof(m_TextWnd));
+	::InitializeCriticalSection(&_cs_);
+	memset(&m_dbinfo, 0, sizeof(MongoDBInfo));
+	memset(&m_fsinfo, 0, sizeof(ForwardSet));
+}
+
+CReceiveEmailDlg::~CReceiveEmailDlg()
+{
+	DeleteCriticalSection(&_cs_);
+	if (__HEVENT_EXIT__)
+	{
+		CloseHandle(__HEVENT_EXIT__);
+		__HEVENT_EXIT__ = NULL;
+	}
+	if (__HEVENT_TEST_EXIT__)
+	{
+		CloseHandle(__HEVENT_TEST_EXIT__);
+		__HEVENT_TEST_EXIT__ = NULL;
+	}
+}
+
+void CReceiveEmailDlg::DoDataExchange(CDataExchange* pDX)
+{
+	CDialogEx::DoDataExchange(pDX);
+	DDX_Control(pDX, IDC_MFCBUTTON_SET, m_btnSet);
+	DDX_Control(pDX, IDC_LIST_MAILBOX, m_listMailBox);
+	DDX_Control(pDX, IDC_BUTTON_STOP, m_btnStop);
+	DDX_Control(pDX, IDC_STATIC_GROUP, m_Group);
+	DDX_Control(pDX, IDC_STATIC_NAME1, m_Name1);
+	DDX_Control(pDX, IDC_STATIC_NAME2, m_Name2);
+	DDX_Control(pDX, IDC_STATIC_NAME3, m_Name3);
+	DDX_Control(pDX, IDC_STATIC_NAME4, m_Name4);
+	DDX_Control(pDX, IDC_STATIC_NAME5, m_Name5);
+	DDX_Control(pDX, IDC_PROGRESS1, m_progress1);
+	DDX_Control(pDX, IDC_PROGRESS2, m_progress2);
+	DDX_Control(pDX, IDC_PROGRESS3, m_progress3);
+	DDX_Control(pDX, IDC_PROGRESS4, m_progress4);
+	DDX_Control(pDX, IDC_PROGRESS5, m_progress5);
+	DDX_Control(pDX, IDC_STATIC_DBNAME, m_dbname);
+	DDX_Control(pDX, IDC_STATIC_DBNAM, m_dbnam);
+	DDX_Control(pDX, IDC_STATIC_DBADD, m_dbadd);
+	DDX_Control(pDX, IDC_STATIC_TAB, m_tab);
+	DDX_Control(pDX, IDC_STATIC_TABLENAM, m_tablename);
+	DDX_Control(pDX, IDC_CHECK_DB, m_checkdb);
+	DDX_Control(pDX, IDC_BUTTON1, m_btnTest);
+	DDX_Control(pDX, IDC_BUTTON_SET, m_btnSetting);
+	DDX_Control(pDX, IDC_BUTTON2, m_btnTest2);
+	DDX_Control(pDX, IDC_MFCEDITBROWSE1, m_editpath);
+}
+
+BEGIN_MESSAGE_MAP(CReceiveEmailDlg, CDialogEx)
+	ON_WM_SYSCOMMAND()
+	ON_WM_PAINT()
+	ON_WM_QUERYDRAGICON()
+	ON_BN_CLICKED(IDC_MFCBUTTON_SET, &CReceiveEmailDlg::OnBnClickedMfcbuttonSet)
+	ON_WM_SIZE()
+	ON_WM_DESTROY()
+	ON_BN_CLICKED(IDC_BUTTON_STOP, &CReceiveEmailDlg::OnBnClickedButtonStop)
+	ON_BN_CLICKED(IDC_CHECK_DB, &CReceiveEmailDlg::OnBnClickedCheckDb)
+	ON_BN_CLICKED(IDC_BUTTON1, &CReceiveEmailDlg::OnBnClickedButton1)
+	ON_BN_CLICKED(IDC_BUTTON_SET, &CReceiveEmailDlg::OnBnClickedButtonSet)
+	ON_BN_CLICKED(IDC_BUTTON2, &CReceiveEmailDlg::OnBnClickedButton2)
+END_MESSAGE_MAP()
+
+
+// CReceiveEmailDlg 消息处理程序
+
+BOOL CReceiveEmailDlg::OnInitDialog()
+{
+	CDialogEx::OnInitDialog();
+
+	// 将“关于...”菜单项添加到系统菜单中。
+
+	// IDM_ABOUTBOX 必须在系统命令范围内。
+	ASSERT((IDM_ABOUTBOX & 0xFFF0) == IDM_ABOUTBOX);
+	ASSERT(IDM_ABOUTBOX < 0xF000);
+
+	CMenu* pSysMenu = GetSystemMenu(FALSE);
+	if (pSysMenu != NULL)
+	{
+		BOOL bNameValid;
+		CString strAboutMenu;
+		bNameValid = strAboutMenu.LoadString(IDS_ABOUTBOX);
+		ASSERT(bNameValid);
+		if (!strAboutMenu.IsEmpty())
+		{
+			pSysMenu->AppendMenu(MF_SEPARATOR);
+			pSysMenu->AppendMenu(MF_STRING, IDM_ABOUTBOX, strAboutMenu);
+		}
+	}
+
+	// 设置此对话框的图标。  当应用程序主窗口不是对话框时，框架将自动
+	//  执行此操作
+	SetIcon(m_hIcon, TRUE);			// 设置大图标
+	SetIcon(m_hIcon, FALSE);		// 设置小图标
+
+	// TODO:  在此添加额外的初始化代码
+	GetCurrentDirectory(MAX_PATH, __Main_Path__);
+	CRect rt;
+	m_listMailBox.GetWindowRect(&rt);
+	m_listMailBox.SetExtendedStyle(m_listMailBox.GetExtendedStyle() | LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES | LVS_EX_CHECKBOXES);
+	m_listMailBox.InsertColumn(0, _T("序号"), LVCFMT_CENTER,40);
+	m_listMailBox.InsertColumn(1, _T("邮箱名称"), LVCFMT_LEFT, rt.right - 40);
+
+
+	if (LoadFromConfig())
+	{
+		InitMailList();
+		TCHAR szTemp[64] = { 0 };
+		MultiByteToWideChar(CP_ACP, 0, m_dbinfo.chDBName, 32, szTemp, 64);
+		m_dbname.SetWindowText(szTemp);
+		MultiByteToWideChar(CP_ACP, 0, m_dbinfo.chDBAdd, 32, szTemp, 64);
+		m_dbadd.SetWindowText(szTemp);
+		MultiByteToWideChar(CP_ACP, 0, m_dbinfo.chTable, 32, szTemp, 64);
+		m_tablename.SetWindowText(szTemp);
+	}
+	else
+	{
+		if (m_listMailBox.m_hWnd)
+		{
+			m_listMailBox.InsertItem(0, NULL);
+			m_listMailBox.SetItemText(0, 1, _T("Load Error!"));
+		}
+	}
+	m_btnStop.EnableWindow(FALSE);
+
+	::GetClientRect(m_hWnd, &rt);
+	LayoutDialog(rt.right, rt.bottom);
+	TCHAR szPath[MAX_PATH] = { 0 };
+	wsprintf(szPath, _T("%s\\Mail\\"), __Main_Path__);
+	if ((GetFileAttributes(szPath) == 0xFFFFFFFF))
+		CreateDirectory(szPath, NULL);
+	wsprintf(szPath, _T("%s\\Log\\"), __Main_Path__);
+	if ((GetFileAttributes(szPath) == 0xFFFFFFFF))
+		CreateDirectory(szPath, NULL);
+	wsprintf(szPath, _T("%s\\Email\\"), __Main_Path__);
+	if ((GetFileAttributes(szPath) == 0xFFFFFFFF))
+		CreateDirectory(szPath, NULL);
+	InitTextWnd();
+	for (int n = 0; n < 5; n++)
+		m_TextWnd[n] = -1;
+	m_checkdb.SetCheck(m_dbinfo.nUseDB);
+	if (m_dbinfo.nUseDB != 1)
+	{
+		m_dbadd.EnableWindow(FALSE);
+		m_dbname.EnableWindow(FALSE);
+		m_tablename.EnableWindow(FALSE);
+	}
+	wsprintf(szPath, _T("%s\\Log\\main.txt"),__Main_Path__);
+	m_csLogPath.Format(_T("%s"),szPath);
+	m_log.SetPath(m_csLogPath,m_csLogPath.GetLength());
+	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
+}
+
+void CReceiveEmailDlg::OnSysCommand(UINT nID, LPARAM lParam)
+{
+	if ((nID & 0xFFF0) == IDM_ABOUTBOX)
+	{
+		CAboutDlg dlgAbout;
+		dlgAbout.DoModal();
+	}
+	else
+	{
+		CDialogEx::OnSysCommand(nID, lParam);
+	}
+}
+
+// 如果向对话框添加最小化按钮，则需要下面的代码
+//  来绘制该图标。  对于使用文档/视图模型的 MFC 应用程序，
+//  这将由框架自动完成。
+
+void CReceiveEmailDlg::OnPaint()
+{
+	if (IsIconic())
+	{
+		CPaintDC dc(this); // 用于绘制的设备上下文
+
+		SendMessage(WM_ICONERASEBKGND, reinterpret_cast<WPARAM>(dc.GetSafeHdc()), 0);
+
+		// 使图标在工作区矩形中居中
+		int cxIcon = GetSystemMetrics(SM_CXICON);
+		int cyIcon = GetSystemMetrics(SM_CYICON);
+		CRect rect;
+		GetClientRect(&rect);
+		int x = (rect.Width() - cxIcon + 1) / 2;
+		int y = (rect.Height() - cyIcon + 1) / 2;
+
+		// 绘制图标
+		dc.DrawIcon(x, y, m_hIcon);
+	}
+	else
+	{
+		CDialogEx::OnPaint();
+	}
+}
+
+//当用户拖动最小化窗口时系统调用此函数取得光标
+//显示。
+HCURSOR CReceiveEmailDlg::OnQueryDragIcon()
+{
+	return static_cast<HCURSOR>(m_hIcon);
+}
+
+
+
+void CReceiveEmailDlg::OnBnClickedMfcbuttonSet()
+{
+	// TODO:  在此添加控件通知处理程序代码
+	DWORD id(0);
+	if (m_listMailBox.GetItemCount() > 0)
+	{
+		if (NULL == m_pTestTheradPool)
+		{
+			m_pTestTheradPool = new CFThreadPool<MyJobParam*>(this);
+			if (m_mailList.size() < 5)
+				m_pTestTheradPool->Start(1, 1);
+			else m_pTestTheradPool->Start(2, 5);
+		}
+		if (__HEVENT_EXIT__ == NULL)
+			__HEVENT_EXIT__ = CreateEvent(NULL, TRUE, FALSE, NULL);
+		if (m_hMain == NULL)
+		{
+			m_hMain = CreateThread(NULL, 0, _AfxMain, (LPVOID)this, 0, &id);
+			m_btnStop.EnableWindow(TRUE);
+			m_btnSet.EnableWindow(FALSE);
+		}
+	}
+	else
+		AfxMessageBox(_T("请检查配置文件！"));
+}
+
+
+void CReceiveEmailDlg::OnSize(UINT nType, int cx, int cy)
+{
+	CDialogEx::OnSize(nType, cx, cy);
+
+	// TODO:  在此处添加消息处理程序代码
+	LayoutDialog(cx, cy);
+}
+
+BOOL CReceiveEmailDlg::InitMailList()
+{
+	unsigned long i(0);
+	CString csNum;
+	COLORREF crTextColor = ::GetSysColor(COLOR_WINDOWTEXT);
+	if (m_mailList.size() > 0)
+	{
+		if (m_listMailBox.m_hWnd)
+		{
+			MAILLIST_ITE ite = m_mailList.begin();
+			for (i = 0;ite!=m_mailList.end() && i < m_mailList.size();ite++, i++)
+			{
+				csNum.Format(_T("%d"), i+1);
+				m_listMailBox.InsertItem(i, _T(""));
+				m_listMailBox.SetItemText(i, 0, csNum);
+				m_listMailBox.SetItemText(i, 1, ite->first);
+				m_listMailBox.SetTextColor(crTextColor);
+				ASSERT(m_listMailBox.GetTextColor() == crTextColor);
+			}
+		}
+	}
+	else return FALSE;
+	return TRUE;
+}
+
+BOOL CReceiveEmailDlg::LoadFromConfig()
+{
+	char chTemp[512] = { 0 }, chConfigPath[MAX_PATH] = {0};
+	TCHAR szConfigPath[MAX_PATH] = { 0 }, szName[64] = {0};
+	wsprintf(szConfigPath, _T("%s\\config.ini"), __Main_Path__);
+	MailBoxInfo info;
+	memset(&info, 0, sizeof(info));
+	CString csTemp, csName;
+	long lTemp(0);
+
+	long lCount = GetPrivateProfileInt(_T("E-mail"), _T("count"), 0, szConfigPath);
+	for (long i = 0; i < lCount; i++)
+	{
+		memset(&info, 0, sizeof(info));
+		csTemp.Format(_T("mail_%d_username"),i);
+		GetPrivateProfileString(_T("E-mail"), csTemp, _T(""), szName, 64, szConfigPath);
+		csName.Format(_T("%s"), szName);
+		if (csName.IsEmpty())
+			continue;
+		csTemp.Format(_T("mail_%d_name"), i);
+		GetPrivateProfileString(_T("E-mail"), csTemp, _T(""), info.szName, 64, szConfigPath);
+		csTemp.Format(_T("mail_%d_add"), i);
+		GetPrivateProfileString(_T("E-mail"), csTemp, _T(""), info.szServerAdd, 64, szConfigPath);
+		csTemp.Format(_T("mail_%d_port"), i);
+		info.lPort = GetPrivateProfileInt(_T("E-mail"), csTemp, 110, szConfigPath);
+		csTemp.Format(_T("mail_%d_passwd"), i);
+		GetPrivateProfileString(_T("E-mail"), csTemp, _T(""), info.szPasswd, 128, szConfigPath);
+		csTemp.Format(_T("mail_%d_abbreviation"), i);
+		GetPrivateProfileString(_T("E-mail"), csTemp, _T(""), info.szAbbreviation, 64, szConfigPath);
+		csTemp.Format(_T("mail_%d_bsend"), i);
+		lTemp = GetPrivateProfileInt(_T("E-mail"), csTemp,0,szConfigPath);
+		if (lTemp == 1)
+		{
+			info.bSendMail = TRUE;
+			csTemp.Format(_T("mail_%d_mailadd"), i);
+			GetPrivateProfileString(_T("E-mail"), csTemp, _T(""), info.szMailAdd, 128, szConfigPath);
+		}
+		else info.bSendMail = FALSE;
+		m_mailList.insert(make_pair(csName, info));
+	}
+	map<CString, MailBoxInfo>::iterator ite=m_mailList.begin();
+	lTemp = 0;
+	while (ite != m_mailList.end())
+	{
+		m_HelpData.insert(make_pair(lTemp, ite->first));
+		ite++;
+		lTemp++;
+	}
+	if (m_HelpData.size() != m_mailList.size())
+	{
+		m_HelpData.clear();
+		m_mailList.clear();
+		return FALSE;
+	}
+
+	GetPrivateProfileString(_T("DataBase"), _T("usedb"), _T("yes"), szName, 64, szConfigPath);
+	csTemp.Format(_T("%s"),szName);
+	if (csTemp.CompareNoCase(_T("yes")) >= 0)
+		m_dbinfo.nUseDB = 1;
+	else m_dbinfo.nUseDB = 0;
+	WideCharToMultiByte(CP_ACP, 0, szConfigPath, MAX_PATH, chConfigPath, MAX_PATH, NULL, NULL);
+	GetPrivateProfileStringA("DataBase", "dbadd", "locahost:27017", chTemp, 512, chConfigPath);
+	sprintf_s(m_dbinfo.chDBAdd, 32, "%s", chTemp);
+	memset(chTemp, 0, 512);
+	GetPrivateProfileStringA("DataBase", "data_base", "EmailUIDL", chTemp, 512, chConfigPath);
+	sprintf_s(m_dbinfo.chDBName, 32, "%s", chTemp);
+	memset(chTemp, 0, 512);
+	GetPrivateProfileStringA("DataBase", "table", "uidl", chTemp, 512, chConfigPath);
+	sprintf_s(m_dbinfo.chTable, 32, "%s", chTemp);
+	memset(chTemp, 0, 512);
+	GetPrivateProfileStringA("DataBase", "username", "zhangyu", chTemp, 512, chConfigPath);
+	sprintf_s(m_dbinfo.chUserName, 32, "%s", chTemp);
+	memset(chTemp, 0, 512);
+	GetPrivateProfileStringA("DataBase", "passwd", "123456", chTemp, 512, chConfigPath);
+	sprintf_s(m_dbinfo.chPasswd, 32, "%s", chTemp);
+
+	memset(&m_fsinfo, 0, sizeof(ForwardSet));
+	GetPrivateProfileStringA("ForwardSet", "srvadd", "", m_fsinfo.srvadd, 64, chConfigPath);
+	GetPrivateProfileStringA("ForwardSet", "username", "", m_fsinfo.username, 64, chConfigPath);
+	GetPrivateProfileStringA("ForwardSet", "pass", "", m_fsinfo.pass, 128, chConfigPath);
+	GetPrivateProfileStringA("ForwardSet", "to", "", m_fsinfo.to, 512, chConfigPath);
+	GetPrivateProfileStringA("ForwardSet", "from", "", m_fsinfo.from, 128, chConfigPath);
+	return TRUE;
+}
+
+
+void CReceiveEmailDlg::OnCancel()
+{
+	// TODO:  在此添加专用代码和/或调用基类
+	Stop();
+	StopTest();
+	StopTest2();
+	WriteToConfig();
+	CDialogEx::OnCancel();
+}
+
+
+void CReceiveEmailDlg::OnDestroy()
+{
+	CDialogEx::OnDestroy();
+
+	// TODO:  在此处添加消息处理程序代码
+	if (m_pTestTheradPool)
+	{
+		m_pTestTheradPool->StopAndWait(FTL_MAX_THREAD_DEADLINE_CHECK);
+		delete m_pTestTheradPool;
+		m_pTestTheradPool = NULL;
+	}
+}
+
+void CReceiveEmailDlg::GetMailBoxInfo(long lPos, CString& csInfo,MailBoxInfo& info)
+{
+	csInfo.Empty();
+	memset(&info, 0, sizeof(MailBoxInfo));
+	csInfo = m_HelpData[lPos];
+	map<CString, MailBoxInfo>::iterator ite = m_mailList.begin();
+	ite = m_mailList.find(csInfo);
+	if (ite != m_mailList.end())
+	{
+		wsprintf(info.szName, ite->second.szName);
+		wsprintf(info.szPasswd, ite->second.szPasswd);
+		wsprintf(info.szServerAdd, ite->second.szServerAdd);
+		info.lPort = ite->second.lPort;
+		wsprintf(info.szAbbreviation, ite->second.szAbbreviation);
+		info.bSendMail = ite->second.bSendMail;
+		wsprintf(info.szMailAdd, ite->second.szMailAdd);
+	}
+}
+
+void CReceiveEmailDlg::GetDataBaseInfo(MongoDBInfo& dbinfo)
+{
+	memset(&dbinfo, 0, sizeof(MongoDBInfo));
+	memcpy_s(&dbinfo, sizeof(MongoDBInfo), &m_dbinfo, sizeof(MongoDBInfo));
+}
+
+
+void CReceiveEmailDlg::OnBnClickedButtonStop()
+{
+	// TODO:  在此添加控件通知处理程序代码
+	Stop();
+	m_btnStop.EnableWindow(FALSE);
+	m_btnSet.EnableWindow(TRUE);
+	WriteToConfig();
+}
+
+void CReceiveEmailDlg::LayoutDialog(long cx, long cy)
+{
+	BOOL bMove = TRUE;
+	if (cx < MIN_LENGTH || cy < MIN_HEIGHT)
+		return;
+	long lGap = 0;
+	CRect rtTmp;
+	if (m_listMailBox.m_hWnd)
+	{
+		SetRect(&rtTmp, 0, 0, 228, cy);
+		m_listMailBox.MoveWindow(&rtTmp);
+	}
+	if (m_Group.m_hWnd)
+	{
+		SetRect(&rtTmp, 243, 5, cx-HORIZON_GAP, cy/3*2);
+		m_Group.MoveWindow(&rtTmp);
+		lGap = (rtTmp.Height() - 5 * BTN_HEIGHT) / 6;
+	}
+	if (m_checkdb.m_hWnd)
+	{
+		SetRect(&rtTmp, 243, cy / 3 * 2 + HORIZON_GAP, 243 + 120, cy / 3 * 2 + HORIZON_GAP + BTN_HEIGHT);
+		m_checkdb.MoveWindow(&rtTmp);
+	}
+	if (m_dbadd.m_hWnd)
+	{
+		SetRect(&rtTmp, 373, cy / 3 * 2 + HORIZON_GAP, 373 + 150, cy / 3 * 2 + HORIZON_GAP + BTN_HEIGHT);
+		m_dbadd.MoveWindow(&rtTmp);
+	}
+	if (m_dbnam.m_hWnd)
+	{
+		SetRect(&rtTmp, 523+GAP, cy / 3 * 2 + HORIZON_GAP, 523+GAP + 70, cy / 3 * 2 + HORIZON_GAP + BTN_HEIGHT);
+		m_dbnam.MoveWindow(&rtTmp);
+	}
+	if (m_dbname.m_hWnd)
+	{
+		SetRect(&rtTmp, 593 + GAP, cy / 3 * 2 + HORIZON_GAP, 593 + GAP + 100, cy / 3 * 2 + HORIZON_GAP + BTN_HEIGHT);
+		m_dbname.MoveWindow(&rtTmp);
+	}
+	if (m_tab.m_hWnd)
+	{
+		SetRect(&rtTmp, 693 + GAP*2, cy / 3 * 2 + HORIZON_GAP, 693 + GAP*2 + 40, cy / 3 * 2 + HORIZON_GAP + BTN_HEIGHT);
+		m_tab.MoveWindow(&rtTmp);
+	}
+	if (m_tablename.m_hWnd)
+	{
+		SetRect(&rtTmp, 733 + GAP*2, cy / 3 * 2 + HORIZON_GAP, 733 + GAP*2 + 100, cy / 3 * 2 + HORIZON_GAP + BTN_HEIGHT);
+		m_tablename.MoveWindow(&rtTmp);
+	}
+	//lGap = (cy / 3 * 2-BTN_HEIGHT*5)/6;
+	if (m_Name1.m_hWnd)
+	{
+		SetRect(&rtTmp, 253, 5 + lGap, 443, 5 + BTN_HEIGHT + lGap);
+		m_Name1.MoveWindow(&rtTmp);
+	}
+	if (m_progress1.m_hWnd)
+	{
+		SetRect(&rtTmp, 443 + HORIZON_GAP, 3 + lGap, cx - 25, 7 + BTN_HEIGHT + lGap);
+		m_progress1.MoveWindow(&rtTmp);
+	}
+	if (m_Name2.m_hWnd)
+	{
+		SetRect(&rtTmp, 253, 5 + BTN_HEIGHT + lGap*2, 253 + 190, 5 + BTN_HEIGHT * 2 + lGap*2);
+		m_Name2.MoveWindow(&rtTmp);
+	}
+	if (m_progress2.m_hWnd)
+	{
+		SetRect(&rtTmp, 443 + HORIZON_GAP, 3 + BTN_HEIGHT + lGap*2, cx - 25, 7 + BTN_HEIGHT * 2 + lGap*2);
+		m_progress2.MoveWindow(&rtTmp);
+	}
+	if (m_Name3.m_hWnd)
+	{
+		SetRect(&rtTmp, 253, 5 + BTN_HEIGHT * 2 + lGap * 3, 253 + 190, 5 + BTN_HEIGHT * 3 + lGap * 3);
+		m_Name3.MoveWindow(&rtTmp);
+	}
+	if (m_progress3.m_hWnd)
+	{
+		SetRect(&rtTmp, 443 + HORIZON_GAP, 3 + BTN_HEIGHT * 2 + lGap * 3, cx - 25, 7 + BTN_HEIGHT * 3 + lGap * 3);
+		m_progress3.MoveWindow(&rtTmp);
+	}
+	if (m_Name4.m_hWnd)
+	{
+		SetRect(&rtTmp, 253, 5 + BTN_HEIGHT * 3 + lGap * 4, 253 + 190, 5 + BTN_HEIGHT * 4 + lGap * 4);
+		m_Name4.MoveWindow(&rtTmp);
+	}
+	if (m_progress4.m_hWnd)
+	{
+		SetRect(&rtTmp, 443 + HORIZON_GAP, 3 + BTN_HEIGHT * 3 + lGap * 4, cx - 25, 7 + BTN_HEIGHT * 4 + lGap * 4);
+		m_progress4.MoveWindow(&rtTmp);
+	}
+	if (m_Name5.m_hWnd)
+	{
+		SetRect(&rtTmp, 253, 5 + BTN_HEIGHT * 4 + lGap * 5, 253 + 190, 5 + BTN_HEIGHT * 5 + lGap * 5);
+		m_Name5.MoveWindow(&rtTmp);
+	}
+	if (m_progress5.m_hWnd)
+	{
+		SetRect(&rtTmp, 443 + HORIZON_GAP, 3 + BTN_HEIGHT * 4 + lGap * 5, cx - 25, 7 + BTN_HEIGHT * 5 + lGap * 5);
+		m_progress5.MoveWindow(&rtTmp);
+	}
+	if (m_btnSetting.m_hWnd)
+	{
+		if (cx - BTN_LENGTH * 3 - GAP * 3 > 243 + BTN_LENGTH * 2+HORIZON_GAP)
+		{
+			SetRect(&rtTmp, cx - BTN_LENGTH * 3 - GAP * 3, cy - BTN_HEIGHT - GAP, cx - GAP * 3 - BTN_LENGTH * 2, cy - GAP);
+			m_btnSetting.MoveWindow(&rtTmp);
+		}
+		else bMove = FALSE;
+	}
+	if (m_btnStop.m_hWnd)
+	{
+		if (bMove)
+		{
+			SetRect(&rtTmp, cx - BTN_LENGTH * 2 - GAP * 2, cy - BTN_HEIGHT - GAP, cx - GAP - BTN_LENGTH - GAP, cy - GAP);
+			m_btnStop.MoveWindow(&rtTmp);
+		}
+	}
+	if (m_btnSet.m_hWnd)
+	{
+		if (bMove)
+		{
+			SetRect(&rtTmp, cx - BTN_LENGTH - GAP, cy - BTN_HEIGHT - GAP, cx - GAP, cy - GAP);
+			m_btnSet.MoveWindow(&rtTmp);
+		}
+	}
+	if (m_editpath.m_hWnd)
+	{
+		SetRect(&rtTmp, 243, cy - BTN_HEIGHT*2 - GAP*2, 243 + BTN_LENGTH * 3 + HORIZON_GAP, cy - BTN_HEIGHT-GAP*2);
+		m_editpath.MoveWindow(&rtTmp);
+	}
+	if (m_btnTest.m_hWnd)
+	{
+		SetRect(&rtTmp, 243, cy - BTN_HEIGHT - GAP, 243 + BTN_LENGTH, cy - GAP);
+		m_btnTest.MoveWindow(&rtTmp);
+	}
+	if (m_btnTest2.m_hWnd)
+	{
+		SetRect(&rtTmp, 243 + HORIZON_GAP + BTN_LENGTH*2, cy - BTN_HEIGHT - GAP, 243 + BTN_LENGTH*3 + HORIZON_GAP, cy - GAP);
+		m_btnTest2.MoveWindow(&rtTmp);
+	}
+}
+
+void CReceiveEmailDlg::Stop(long lType)//用于停止工作分配线程
+{
+	SetEvent(__HEVENT_EXIT__);
+	if (m_hMain)
+	{
+		if (WaitForSingleObject(m_hMain, 1000L) != WAIT_OBJECT_0)
+		{
+#ifdef DEBUG
+			OutputDebugString(_T("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\n"));
+#endif
+			TerminateThread(m_hMain, 0);
+		}
+	}
+	/*if (m_hMainTest)
+	{
+	CloseHandle(m_hMainTest);
+	m_hMainTest = NULL;
+	}
+	if (m_hMainTest)
+	{
+	if (WaitForSingleObject(m_hMainTest, 1000L) != WAIT_OBJECT_0)
+	{
+	TerminateThread(m_hMainTest, 0);
+	}
+	}
+	if (m_hMainTest)
+	{
+	CloseHandle(m_hMainTest);
+	m_hMainTest = NULL;
+	}*/
+	if (__HEVENT_EXIT__)
+	{
+		CloseHandle(__HEVENT_EXIT__);
+		__HEVENT_EXIT__ = NULL;
+	}
+	if (lType == 0)
+	{
+		if (m_pTestTheradPool)
+		{
+			m_pTestTheradPool->StopAndWait(FTL_MAX_THREAD_DEADLINE_CHECK);
+			SAFE_DELETE(m_pTestTheradPool);
+		}
+	}
+	for (int n = 0; n < 5; n++)
+		m_TextWnd[n] = -1;
+	//InitTextWnd();
+}
+
+void CReceiveEmailDlg::SetShowInfo(long lTextWnd, LPCTSTR lpName, long lProgress)
+{
+	if (lpName)
+		lProgress += 1;
+	switch (lTextWnd)
+	{
+	case 0:
+	{
+		m_Name1.SetWindowText(lpName);
+		m_progress1.SetPos(lProgress);
+	}
+		break;
+	case 1:
+	{
+		m_Name2.SetWindowText(lpName);
+		m_progress2.SetPos(lProgress);
+	}
+		break;
+	case 2:
+	{
+		m_Name3.SetWindowText(lpName);
+		m_progress3.SetPos(lProgress);
+	}
+		break;
+	case 3:
+	{
+		m_Name4.SetWindowText(lpName);
+		m_progress4.SetPos(lProgress);
+	}
+		break;
+	case 4:
+	{
+		m_Name5.SetWindowText(lpName);
+		m_progress5.SetPos(lProgress);
+	}
+		break;
+	default:
+		break;
+	}
+}
+
+
+BOOL CReceiveEmailDlg::PreTranslateMessage(MSG* pMsg)
+{
+	// TODO:  在此添加专用代码和/或调用基类
+	if (pMsg->message == __umymessage__fres_hprogress__)
+	{
+		long lTextWnd = 0, lProgress = (long)pMsg->lParam;
+		CString csName;
+		lTextWnd = SetTextWnd(0, (long)pMsg->wParam);
+		if (lTextWnd >= 0)
+		{
+			csName = m_listMailBox.GetItemText((long)pMsg->wParam, 1);
+			SetShowInfo(lTextWnd, csName, lProgress);
+		}
+	}
+	if (pMsg->message == __umymessage__kill_hprogress__)
+	{
+		long lTextWnd = 0;
+		lTextWnd = SetTextWnd(1, (long)pMsg->wParam, (long)pMsg->lParam);
+		if (lTextWnd >= 0)
+			SetShowInfo(lTextWnd);
+	}
+	if (pMsg->message == __umymessage_api_netcommand__)
+	{
+#ifdef _DEBUG
+	CStringA csApiParam;
+#endif
+		GGJsonAdapter jsonAdapter;
+		char *pData = (char*)pMsg->lParam;
+		std::string strContent(pData);
+		if (pData && pData[0] != '\0')
+		{
+			delete[] pData;
+			pData = NULL;
+		}
+#ifdef _DEBUG
+		OutputDebugStringA(strContent.c_str());
+		OutputDebugStringA("\r\n");
+#endif
+		if (!jsonAdapter.Parse(strContent))//解析
+		{
+#ifdef _DEBUG
+			
+			csApiParam.Append("------------服务器无返回！");
+			OutputDebugStringA(csApiParam);
+			OutputDebugString(_T("\r\n"));
+#endif
+		}
+		else
+		{
+			if (jsonAdapter.ReadValueLongFromNum(_T("code")))//返回值不为0，则表示不成功
+			{
+#ifdef DEBUG
+				csApiParam.Append("------------服务器返回Code非0！");
+				OutputDebugStringA(csApiParam);
+				OutputDebugString(_T("\r\n"));
+#endif
+			}
+			else
+			{
+#ifdef _DEBUG
+				csApiParam.Format("Success!\r\n");
+				OutputDebugStringA(csApiParam);
+#endif
+			}
+
+		}
+	}
+	if (pMsg->message == __umymessage__sendcomplete__)
+	{
+#ifndef _DEBUG
+		AfxMessageBox(_T("发送成功！"));
+#endif
+	}
+	if (pMsg->message == __umymessage__senduncomplete__)
+	{
+#ifndef _DEBUG
+		AfxMessageBox(_T("发送失败！"));
+#endif
+	}
+	if (pMsg->message == __umymessage__anacomplete__)
+	{
+#ifndef _DEBUG
+		AfxMessageBox(_T("解析完成！"));
+#endif
+	}
+	if (pMsg->message == __umymessage__anauncomplete__)
+	{
+#ifndef _DEBUG
+		AfxMessageBox(_T("解析失败！"));
+#endif
+	}
+	return __super::PreTranslateMessage(pMsg);
+}
+
+void CReceiveEmailDlg::OnJobBegin(LONG nJobIndex, CFJobBase<MyJobParam*>* pJob)
+{
+}
+void CReceiveEmailDlg::OnJobEnd(LONG nJobIndex, CFJobBase<MyJobParam*>* pJob)
+{
+	PostMessage(__umymessage__kill_hprogress__, (WPARAM)pJob->m_JobParam->m_lPos, (LPARAM)-1);
+}
+
+long CReceiveEmailDlg::SetTextWnd(long lType, long lCurrPos,long lStatus)
+{
+	::EnterCriticalSection(&_cs_);
+	long lTextWnd = -1;
+	int n = 0;
+	BOOL bFind = FALSE;
+	switch (lType)
+	{
+	case 0://Get
+	{
+		for (n = 0; n < 5; n++)
+		{
+			if (m_TextWnd[n] == lCurrPos)
+			{
+				lTextWnd = n;
+				break;
+			}
+		}
+	}
+		break;
+	case 1://Set
+	{
+		for (n = 0; n < 5; n++)
+		{
+			if (m_TextWnd[n] == lCurrPos)
+			{
+				bFind = TRUE;
+				lTextWnd = n;
+				if (lStatus < 0)
+				{
+					m_TextWnd[n] = lStatus;
+				}
+				break;
+			}
+		}
+		if (!bFind)
+		{
+			lTextWnd = -1;
+			for (n = 0; n < 5; n++)
+			{
+				if (m_TextWnd[n] == -1)
+				{
+					m_TextWnd[n] = lCurrPos;
+					break;
+				}
+			}
+		}
+	}
+		break;
+	default:
+		break;
+	}
+	::LeaveCriticalSection(&_cs_);
+	return lTextWnd;
+}
+
+void CReceiveEmailDlg::InitTextWnd()
+{
+	m_Name1.SetWindowText(_T("Empty"));
+	m_progress1.SetRange(0, 100);
+	m_progress1.SetPos(0);
+	m_Name2.SetWindowText(_T("Empty"));
+	m_progress2.SetRange(0, 100);
+	m_progress2.SetPos(0);
+	m_Name3.SetWindowText(_T("Empty"));
+	m_progress3.SetRange(0, 100);
+	m_progress3.SetPos(0);
+	m_Name4.SetWindowText(_T("Empty"));
+	m_progress4.SetRange(0, 100);
+	m_progress4.SetPos(0);
+	m_Name5.SetWindowText(_T("Empty"));
+	m_progress5.SetRange(0, 100);
+	m_progress5.SetPos(0);
+}
+
+
+void CReceiveEmailDlg::OnBnClickedCheckDb()
+{
+	// TODO:  在此添加控件通知处理程序代码
+	int nChenck = m_checkdb.GetCheck();
+	m_dbinfo.nUseDB = nChenck;
+	if (m_dbinfo.nUseDB != 1)
+	{
+		m_dbadd.EnableWindow(FALSE);
+		m_dbname.EnableWindow(FALSE);
+		m_tablename.EnableWindow(FALSE);
+	}
+	else
+	{
+		m_dbadd.EnableWindow(TRUE);
+		m_dbname.EnableWindow(TRUE);
+		m_tablename.EnableWindow(TRUE);
+	}
+}
+
+
+void CReceiveEmailDlg::WriteToConfig()
+{
+	TCHAR szConfigPath[MAX_PATH] = { 0 }, szName[64] = { 0 };
+	wsprintf(szConfigPath, _T("%s\\config.ini"), __Main_Path__);
+	CString csTemp;
+	if (m_dbinfo.nUseDB == 1)
+		csTemp.Format(_T("yes"));
+	else
+		csTemp.Format(_T("no"));
+	WritePrivateProfileString(_T("DataBase"), _T("usedb"), csTemp, szConfigPath);
+}
+
+DWORD WINAPI  CReceiveEmailDlg::_AfxMainTestAna(LPVOID lpParam)
+{
+	char chPath[MAX_PATH] = { 0 };
+	BOOL bRet = TRUE;
+	CString csUIDL,csPath,csLog;
+	CReceiveEmailDlg*pDlg = (CReceiveEmailDlg*)lpParam;
+	unsigned long lCurrPos = 0;
+	size_t lCount = 0;
+	CMailAnalysis ana;
+	csUIDL.Format(_T("%s"), pDlg->m_csTestText);
+	csPath.Format(_T("Email\\%s"),csUIDL);
+	WideCharToMultiByte(CP_ACP, 0, pDlg->m_csLogPath, MAX_PATH, chPath, MAX_PATH, NULL, NULL);
+	ana.SetLogPath(chPath);
+	if (ana.LoadFile(__Main_Path__, csPath))
+	{
+		bRet = FALSE;
+		csLog.Format(_T("加载文件失败！"));
+		pDlg->m_log.Log(csLog, csLog.GetLength());
+		pDlg->PostMessage(__umymessage__anauncomplete__);
+		return -1;
+	}
+	if (WaitForSingleObject(__HEVENT_TEST_EXIT__, 0L) == WAIT_OBJECT_0)
+	{
+		return 0;
+	}
+#ifdef _DEBUG
+	DWORD dwTime(0);
+	dwTime = GetTickCount();
+#endif
+	do 
+	{
+		if (ana.AnalysisHead() < 0)
+		{
+			ana.Clear(1);
+			bRet = FALSE;
+			csLog.Format(_T("AnalysisHead错误！"));
+			pDlg->m_log.Log(csLog, csLog.GetLength());
+			break;
+		}
+		if (ana.AnalysisBody(ana.GetBoundry(), ana.GetHeadRowCount()) < 0)
+		{
+			ana.Clear(1);
+			bRet = FALSE;
+			csLog.Format(_T("AnalysisBody错误！"));
+			pDlg->m_log.Log(csLog, csLog.GetLength());
+			break;
+		}
+		if (ana.AnalysisBoundary(ana.GetBoundry(), ana.GetAttach()) < 0)
+		{
+			ana.Clear(1);
+			bRet = FALSE;
+			csLog.Format(_T("AnalysisBoundary错误！"));
+			pDlg->m_log.Log(csLog, csLog.GetLength());
+			break;
+		}
+		ana.Clear(0);
+#ifdef _DEBUG
+		dwTime = GetTickCount() - dwTime;
+		CString csDebug;
+		csDebug.Format(_T("Process Time = %d\tAnalysis [%s] Complete!\r\n"), dwTime / 1000, csUIDL);
+		OutputDebugString(csDebug);
+		pDlg->m_log.Log(csDebug, csDebug.GetLength());
+#endif
+		break;
+	} while (0);
+	if (bRet)
+		pDlg->PostMessage(__umymessage__anacomplete__);
+	else pDlg->PostMessage(__umymessage__anauncomplete__);
+	return 0;
+}
+
+
+void CReceiveEmailDlg::OnBnClickedButtonSet()
+{
+	// TODO:  在此添加控件通知处理程序代码
+#ifdef _DEBUG
+	CSQLServer sqlserver;
+	sqlserver.Test();
+#else
+	CSettingDlg setting;
+	if (setting.DoModal() == IDOK)
+	{
+		AfxMessageBox(_T("Test"));
+	}
+#endif
+}
+
+void CReceiveEmailDlg::GetForwardInfo(ForwardSet& fdsinfo)
+{
+	sprintf_s(fdsinfo.srvadd, 64, "%s", m_fsinfo.srvadd);
+	sprintf_s(fdsinfo.username, 64, "%s", m_fsinfo.username);
+	sprintf_s(fdsinfo.pass, 128, "%s", m_fsinfo.pass);
+	sprintf_s(fdsinfo.to, 512, "%s", m_fsinfo.to);
+	sprintf_s(fdsinfo.from, 128, "%s", m_fsinfo.from);
+}
+
+DWORD WINAPI  CReceiveEmailDlg::_AfxMainTestSend(LPVOID lpParam)
+{
+	TCHAR szUIDL[256] = { 0 };
+	BOOL bRet = TRUE;
+	CReceiveEmailDlg*pDlg = (CReceiveEmailDlg*)lpParam;
+	char chPath[MAX_PATH] = { 0 }, chLog[128] = { 0 }, chUIDL[256] = {0};
+	ForwardSet fsinfo;
+	memset(&fsinfo, 0, sizeof(ForwardSet));
+	pDlg->GetForwardInfo(fsinfo);
+	SMTP smtp;
+	smtp.SetForwardInfo(fsinfo);
+	WideCharToMultiByte(CP_ACP, 0, __Main_Path__, MAX_PATH, chPath, MAX_PATH, NULL, NULL);
+	strcat_s(chPath, MAX_PATH, "\\Email");
+	smtp.SetCurrPath(chPath);
+	wsprintf(szUIDL, _T("%s"), pDlg->m_csTestText.GetBuffer(0));
+	WideCharToMultiByte(CP_ACP, 0, szUIDL, 256, chUIDL, 256, NULL, NULL);
+	smtp.AddAttachFileName(chUIDL);
+	WideCharToMultiByte(CP_ACP, 0, pDlg->m_csLogPath, MAX_PATH, chPath, MAX_PATH, NULL, NULL);
+	smtp.SetLogPath(chPath);
+	smtp.SetReceiver(fsinfo.to);
+
+	do 
+	{
+		if (smtp.Logon() != 0)
+		{
+			bRet = FALSE;
+			break;
+		}
+		if (smtp.SendHead() != 0)
+		{
+			bRet = FALSE;
+			break;
+		}
+		if (smtp.SendTextBody() != 0)
+		{
+			bRet = FALSE;
+			break;
+		}
+		if (smtp.SendFileBody() != 0)
+		{
+			bRet = FALSE;
+			break;
+		}
+		if (!smtp.Quit())
+			bRet = FALSE;
+		//else
+		//	smtp.DeleteEMLFile();
+		break;
+	} while (0);
+
+	if (bRet)
+		pDlg->PostMessage(__umymessage__sendcomplete__);
+	else pDlg->PostMessage(__umymessage__senduncomplete__);
+	return 0;
+}
+
+
+void CReceiveEmailDlg::OnBnClickedButton1()
+{
+	// TODO:  在此添加控件通知处理程序代码
+	StopTest();
+	m_editpath.GetWindowText(m_csTestText);
+#ifdef _DEBUG
+	if (m_csTestText.IsEmpty())
+		m_csTestText.Format(_T("ZL1402-XRZ8y~QE2yLsPW46G3bEc52"));
+#endif
+	if (!m_csTestText.IsEmpty())
+	{
+		if (__HEVENT_TEST_EXIT__ == NULL)
+			__HEVENT_TEST_EXIT__ = CreateEvent(NULL, TRUE, FALSE, NULL);
+		DWORD id(0);
+		if (m_hMainTest == NULL)
+		{
+			m_hMainTest = CreateThread(NULL, 0, _AfxMainTestAna, (LPVOID)this, 0, &id);
+		}
+	}
+	else
+	{
+		AfxMessageBox(_T("请输入UIDL！"));
+	}
+}
+
+
+void CReceiveEmailDlg::OnBnClickedButton2()
+{
+	// TODO:  在此添加控件通知处理程序代码
+	string strAPIname = "v1/system/guid", strParam;
+	GGDataAPI::PostAsyncRequest(strAPIname, strParam, m_hWnd);
+	StopTest2();
+	m_editpath.GetWindowText(m_csTestText);
+#ifdef _DEBUG
+	if (m_csTestText.IsEmpty())
+		m_csTestText.Format(_T("ZL1402-XRZ8y~QE2yLsPW46G3bEc52"));
+#endif
+	if (!m_csTestText.IsEmpty())
+	{
+		DWORD id(0);
+		if (m_hMainTest2 == NULL)
+		{
+			m_hMainTest2 = CreateThread(NULL, 0, _AfxMainTestSend, (LPVOID)this, 0, &id);
+		}
+	}
+	else
+	{
+		AfxMessageBox(_T("请输入UIDL！"));
+	}
+}
+
+void CReceiveEmailDlg::StopTest()
+{
+	if (__HEVENT_TEST_EXIT__)
+		SetEvent(__HEVENT_TEST_EXIT__);
+	if (m_hMainTest)
+	{
+		if (WaitForSingleObject(m_hMainTest, INFINITE) != WAIT_OBJECT_0)
+		{
+			TerminateThread(m_hMainTest, 0);
+		}
+		CloseHandle(m_hMainTest);
+		m_hMainTest = NULL;
+	}
+	if (__HEVENT_TEST_EXIT__)
+	{
+		CloseHandle(__HEVENT_TEST_EXIT__);
+		__HEVENT_TEST_EXIT__ = NULL;
+	}
+}
+
+void CReceiveEmailDlg::StopTest2()
+{
+	if (m_hMainTest2)
+	{
+		if (WaitForSingleObject(m_hMainTest2, INFINITE) != WAIT_OBJECT_0)
+		{
+			TerminateThread(m_hMainTest2, 0);
+		}
+		CloseHandle(m_hMainTest2);
+		m_hMainTest2 = NULL;
+	}
+}

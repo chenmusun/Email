@@ -31,3 +31,10 @@
 *.tlog
 *.config
 *.user
+*.sdf
+*.aps
+*.res
+*.idb
+*.pdb
+*.ipch
+*.ilk

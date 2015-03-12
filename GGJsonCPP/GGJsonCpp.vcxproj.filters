@@ -1,0 +1,92 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="src">
+      <UniqueIdentifier>{770d3a5b-a323-4f54-8a06-58db304da54f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include">
+      <UniqueIdentifier>{e4c723d1-1bdb-4413-be80-eccc08c29272}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource">
+      <UniqueIdentifier>{468d3122-6599-46f5-8c7a-b9e8d2289875}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Version">
+      <UniqueIdentifier>{479d49d8-71f6-4de5-bea9-62177c7d345f}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="json_batchallocator.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="json_tool.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\json\assertions.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\json\autolink.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\json\config.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\json\features.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\json\forwards.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\json\json.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\json\reader.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\json\value.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\json\version.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\json\writer.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="resource.h">
+      <Filter>Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="TemplateFileVersion.h">
+      <Filter>Version</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="json_internalarray.inl">
+      <Filter>src</Filter>
+    </None>
+    <None Include="json_internalmap.inl">
+      <Filter>src</Filter>
+    </None>
+    <None Include="json_valueiterator.inl">
+      <Filter>src</Filter>
+    </None>
+    <None Include="version.h.in">
+      <Filter>src</Filter>
+    </None>
+    <None Include="ReadMe.docx" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="json_reader.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="json_value.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="json_writer.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="GGJsonCpp.rc">
+      <Filter>Resource</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+</Project>
