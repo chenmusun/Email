@@ -46,4 +46,9 @@
 *.xlsx
 *.ppt
 *.pptx
+*.opensdf
+*.exp
+*.suo
+*v12.suo
 *.ini
+*.asm
