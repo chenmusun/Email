@@ -1,4 +1,4 @@
-﻿生成启动时间为 2015/3/12 17:13:49。
+﻿生成启动时间为 2015/3/12 17:20:07。
      1>项目“E:\Email\Email\DataBase\DataBase.vcxproj”在节点 2 上(Rebuild 个目标)。
      1>ClCompile:
          C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I..\boost /I..\include /Zi /nologo /W3 /WX- /sdl /O2 /Oi /GL /D WIN64 /D NDEBUG /D _WINDOWS /D _USRDLL /D DATABASE_EXPORTS /D _WINDLL /D _UNICODE /D UNICODE /Gm- /EHsc /MD /GS /Gy /fp:precise /Zc:wchar_t /Zc:forScope /Yc"stdafx.h" /Fp"x64\Release\DataBase.pch" /Fo"x64\Release\\" /Fd"x64\Release\vc120.pdb" /Gd /TP /wd4244 /wd4267 /wd4251 /wd4351 /errorReport:prompt stdafx.cpp
@@ -19,4 +19,4 @@
 
 生成成功。
 
-已用时间 00:00:06.71
+已用时间 00:00:03.15
