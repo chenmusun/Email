@@ -54,3 +54,5 @@
 *.asm
 *.sbr
 *.bsc
+*.tlh
+*.tli
