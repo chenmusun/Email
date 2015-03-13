@@ -94,13 +94,11 @@ void CSQLServer::Test(EMAIL_ITEM& email)
 			CADOCommand * pEMCmd = new CADOCommand(&m_db);
 			if (pEMCmd == NULL) return;
 
-			TCHAR szCmdText[512] = _T("INSERT INTO [ReportEmailDB].[dbo].[REPORT_EMAIL](EmailUIDL, ReportID, EmailFrom, EmailTo, EmailSubject, EmailDate, EmailTime, ContentType) VALUES(?, ?, ?, ?, ?, ?, ?, ?)");
+			TCHAR szCmdText[512] = _T("INSERT INTO [ReportEmailDB].[dbo].[T_REPORT_EMAIL](EmailUIDL, EmailFrom, EmailTo, EmailSubject, EmailDate, ContentType) VALUES(?, ?, ?, ?, ?, ?)");
 			auto pos = email.csUIDL.Find(_T("\\"));
 			if (pos > 0)
 				email.csUIDL = email.csUIDL.Mid(pos + 1);
 			pEMCmd->AddParameter(_T("EmailUIDL"), adVarChar, CADOParameter::paramInput, email.csUIDL.GetLength(), _bstr_t(email.csUIDL.GetBuffer(0)));
-			pEMCmd->AddParameter(_T("ReportID"), adInteger, CADOParameter::paramInput, sizeof(long), (long)email.lSn);
-
 			if (email.csFrom.IsEmpty())
 				email.csFrom.Format(_T("unknow"));
 			pEMCmd->AddParameter(_T("EmailFrom"), adVarChar, CADOParameter::paramInput, email.csFrom.GetLength(), _bstr_t(email.csFrom.GetBuffer(0)));
@@ -113,10 +111,9 @@ void CSQLServer::Test(EMAIL_ITEM& email)
 
 			TCHAR szDate[32] = { 0 };
 			TCHAR szTime[32] = { 0 };
-			wsprintf(szDate, _T("%04d-%02d-%02d 00:00:00.000"), oledt.GetYear(), oledt.GetMonth(), oledt.GetDay());
-			wsprintf(szTime, _T("1899-12-30 %02d:%02d:%02d"), oledt.GetHour(), oledt.GetMinute(), oledt.GetSecond());
+			wsprintf(szDate, _T("%04d-%02d-%02d %02d:%02d:%02d"), oledt.GetYear(), oledt.GetMonth(), oledt.GetDay()
+				, oledt.GetHour(), oledt.GetMinute(), oledt.GetSecond());
 			pEMCmd->AddParameter(_T("EmailDate"), adVarChar, CADOParameter::paramInput, lstrlen(szDate), _bstr_t(szDate));
-			pEMCmd->AddParameter(_T("EmailTime"), adVarChar, CADOParameter::paramInput, lstrlen(szTime), _bstr_t(szTime));
 			if (email.csContentType.IsEmpty())
 				email.csContentType.Format(_T("unknow"));
 			pEMCmd->AddParameter(_T("ContentType"), adVarWChar, CADOParameter::paramInput, email.csContentType.GetLength(), _bstr_t(email.csContentType.GetBuffer(0)));

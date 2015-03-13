@@ -66,7 +66,7 @@ BOOL CMyJob::Run()
 		WideCharToMultiByte(CP_ACP, 0, info.szAbbreviation, 32, chAbbreviation, 64, NULL, NULL);
 		strName = chAbbreviation;
 		m_JobParam->m_pDlg->GetDataBaseInfo(dbinfo);
-		m_sql.Connect(_T("192.168.1.150"), _T("ReportEmailDB"), _T("sa"), _T("123456"));
+		m_sql.Connect(_T("OFFICE-PC\\SQLSERVER"), _T("ReportEmailDB"), _T("sa"), _T("test.123"));
 		if (!csInfo.IsEmpty())
 		{
 			m_pop3.SetParent((void*)this);
