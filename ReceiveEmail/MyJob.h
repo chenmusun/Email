@@ -4,6 +4,7 @@
 #include "../Log/Log.h"
 #include "SendEmail.h"
 #include "../MailAnalysis/MailAnalysis.h"
+#include "../SQLServer/SQLServer.h"
 class CReceiveEmailDlg;
 
 struct MyJobParam
@@ -31,9 +32,10 @@ public:
 	BOOL Wait();
 	CLog m_log;
 	long SendEmail();
-	long MailAnalysis(POP3& pop3, const string& strUIDL, LPCTSTR lpAbb,long lType = 0);
+	long MailAnalysis(POP3& pop3, CSQLServer& sql,const string& strUIDL, LPCTSTR lpAbb,long lType = 0);
 private:
 	POP3 m_pop3;
 	SMTP m_smtp;
+	CSQLServer m_sql;
 	vector<string> m_UidlData;
 };

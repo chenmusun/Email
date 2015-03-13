@@ -66,6 +66,7 @@ BOOL CMyJob::Run()
 		WideCharToMultiByte(CP_ACP, 0, info.szAbbreviation, 32, chAbbreviation, 64, NULL, NULL);
 		strName = chAbbreviation;
 		m_JobParam->m_pDlg->GetDataBaseInfo(dbinfo);
+		m_sql.Connect(_T("192.168.1.150"), _T("ReportEmailDB"), _T("sa"), _T("123456"));
 		if (!csInfo.IsEmpty())
 		{
 			m_pop3.SetParent((void*)this);
@@ -101,7 +102,7 @@ BOOL CMyJob::Run()
 									{
 										if (m_pop3.GetEMLFile(i, strUidl) == 0)
 										{
-											if (MailAnalysis(m_pop3, strUidl,info.szAbbreviation))
+											if (MailAnalysis(m_pop3,m_sql ,strUidl,info.szAbbreviation))
 											{
 												
 												sprintf_s(chDebug, 512, "Analysis [%s] Error!", strUidl.c_str());
@@ -128,6 +129,7 @@ BOOL CMyJob::Run()
 							else break;
 							Sleep(dSleepTime);
 						}
+						m_sql.CloseDB();
 						//Delete
 						std::vector<string>::iterator ite = m_UidlData.begin();
 						long n(0),lCount=m_UidlData.size();
@@ -231,7 +233,7 @@ long CMyJob::SendEmail()
 	return 0;
 }
 
-long CMyJob::MailAnalysis(POP3& pop3, const string& strUIDL, LPCTSTR lpAbb,long lType)
+long CMyJob::MailAnalysis(POP3& pop3, CSQLServer& sql,const string& strUIDL, LPCTSTR lpAbb, long lType)
 {
 	CString csUIDL(strUIDL.c_str()),csPath(pop3.GetCurrPath());
 	CMailAnalysis ana;
@@ -257,6 +259,7 @@ long CMyJob::MailAnalysis(POP3& pop3, const string& strUIDL, LPCTSTR lpAbb,long 
 		return -1;
 	}
 	//pop3.SaveFileToDB();
+	sql.Test(ana.GetEmailItem());
 	ana.Clear(lType);
 #ifdef _DEBUG
 	dwTime = GetTickCount() - dwTime;

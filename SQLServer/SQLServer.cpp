@@ -88,18 +88,25 @@ void CSQLServer::Test(EMAIL_ITEM& email)
 	COleDateTime oledt = COleDateTime::GetCurrentTime();
 	try
 	{
-		if(Connect(_T("192.168.1.150"), _T("ReportEmailDB"), _T("sa"), _T("123456")))
+		if(m_db.IsOpen())
 		{
 			m_db.BeginTransaction();
 			CADOCommand * pEMCmd = new CADOCommand(&m_db);
 			if (pEMCmd == NULL) return;
 
-			TCHAR szCmdText[512] = _T("INSERT INTO report_email(EmailUIDL, ReportID, EmailFrom, EmailTo, EmailSubject, EmailDate, EmailTime, ContentType,Status) VALUES(?, ?, ?, ?, ?, ?, ?, ?,?)");
+			TCHAR szCmdText[512] = _T("INSERT INTO [ReportEmailDB].[dbo].[REPORT_EMAIL](EmailUIDL, ReportID, EmailFrom, EmailTo, EmailSubject, EmailDate, EmailTime, ContentType) VALUES(?, ?, ?, ?, ?, ?, ?, ?)");
+			auto pos = email.csUIDL.Find(_T("\\"));
+			if (pos > 0)
+				email.csUIDL = email.csUIDL.Mid(pos + 1);
 			pEMCmd->AddParameter(_T("EmailUIDL"), adVarChar, CADOParameter::paramInput, email.csUIDL.GetLength(), _bstr_t(email.csUIDL.GetBuffer(0)));
 			pEMCmd->AddParameter(_T("ReportID"), adInteger, CADOParameter::paramInput, sizeof(long), (long)email.lSn);
 
+			if (email.csFrom.IsEmpty())
+				email.csFrom.Format(_T("unknow"));
 			pEMCmd->AddParameter(_T("EmailFrom"), adVarChar, CADOParameter::paramInput, email.csFrom.GetLength(), _bstr_t(email.csFrom.GetBuffer(0)));
 			pEMCmd->AddParameter(_T("EmailTo"), adVarWChar, CADOParameter::paramInput, email.csTo.GetLength(), _bstr_t(email.csTo.GetBuffer(0)));
+			if (email.csSubject.IsEmpty())
+				email.csSubject.Format(_T("ÎÞÖ÷Ìâ"));
 			pEMCmd->AddParameter(_T("EmailSubject"), adVarWChar, CADOParameter::paramInput, email.csSubject.GetLength(), _bstr_t(email.csSubject.GetBuffer(0)));
 
 			TCHAR szDate[32] = { 0 };
@@ -108,9 +115,10 @@ void CSQLServer::Test(EMAIL_ITEM& email)
 			wsprintf(szTime, _T("1899-12-30 %02d:%02d:%02d"), oledt.GetHour(), oledt.GetMinute(), oledt.GetSecond());
 			pEMCmd->AddParameter(_T("EmailDate"), adVarChar, CADOParameter::paramInput, lstrlen(szDate), _bstr_t(szDate));
 			pEMCmd->AddParameter(_T("EmailTime"), adVarChar, CADOParameter::paramInput, lstrlen(szTime), _bstr_t(szTime));
+			if (email.csContentType.IsEmpty())
+				email.csContentType.Format(_T("unknow"));
 			pEMCmd->AddParameter(_T("ContentType"), adVarWChar, CADOParameter::paramInput, email.csContentType.GetLength(), _bstr_t(email.csContentType.GetBuffer(0)));
-			pEMCmd->AddParameter(_T("Status"), adInteger, CADOParameter::paramInput, sizeof(long), (long)0);
-
+			
 			pEMCmd->SetText(szCmdText);
 #ifdef _DEBUG
 			OutputDebugString(szCmdText);
@@ -129,7 +137,13 @@ void CSQLServer::Test(EMAIL_ITEM& email)
 #endif
 			}
 			delete pEMCmd;
-			m_db.RollbackTransaction();
+			m_db.CommitTransaction();
+		}
+		else
+		{
+#ifdef _DEBUG
+			OutputDebugString(_T("DataBase is closed!\r\n"));
+#endif
 		}
 	}
 	catch (_com_error& e)
@@ -169,6 +183,7 @@ void CSQLServer::GetGUID(CString &guid)
 
 BOOL CSQLServer::Connect(LPCTSTR lpServer, LPCTSTR lpDatabase, LPCTSTR lpUser, LPCTSTR lpPass, int nType)
 {
+	::CoInitialize(NULL);
 	CString csCommand;
 	m_csServer.Empty();
 	m_csDatabase.Empty();
@@ -309,6 +324,7 @@ BOOL CSQLServer::SQLExec(LPCTSTR lpSql)
 
 BOOL CSQLServer::CloseDB()
 {
+	::CoUninitialize();
 	if (m_db.IsOpen())
 	{
 		m_db.Close();

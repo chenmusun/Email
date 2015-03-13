@@ -11,7 +11,6 @@
 #include <threadpoollegacyapiset.h>
 #include "GGJsonAdapter.h"
 #include "SettingDlg.h"
-#include "../SQLServer/SQLServer.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -973,6 +972,7 @@ DWORD WINAPI  CReceiveEmailDlg::_AfxMainTestAna(LPVOID lpParam)
 	size_t lCount = 0;
 	CMailAnalysis ana;
 	CSQLServer sql;
+	sql.Connect(_T("192.168.1.150"), _T("ReportEmailDB"), _T("sa"), _T("123456"));
 	csUIDL.Format(_T("%s"), pDlg->m_csTestText);
 	csPath.Format(_T("Email\\%s"),csUIDL);
 	WideCharToMultiByte(CP_ACP, 0, pDlg->m_csLogPath, MAX_PATH, chPath, MAX_PATH, NULL, NULL);
@@ -1022,6 +1022,7 @@ DWORD WINAPI  CReceiveEmailDlg::_AfxMainTestAna(LPVOID lpParam)
 		}
 		sql.Test(ana.GetEmailItem());
 		ana.Clear(0);
+		sql.CloseDB();
 #ifdef _DEBUG
 		dwTime = GetTickCount() - dwTime;
 		CString csDebug;
