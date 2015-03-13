@@ -104,6 +104,8 @@ void CSQLServer::Test(EMAIL_ITEM& email)
 			if (email.csFrom.IsEmpty())
 				email.csFrom.Format(_T("unknow"));
 			pEMCmd->AddParameter(_T("EmailFrom"), adVarChar, CADOParameter::paramInput, email.csFrom.GetLength(), _bstr_t(email.csFrom.GetBuffer(0)));
+			if (email.csTo.IsEmpty())
+				email.csTo.Format(_T("unknow"));
 			pEMCmd->AddParameter(_T("EmailTo"), adVarWChar, CADOParameter::paramInput, email.csTo.GetLength(), _bstr_t(email.csTo.GetBuffer(0)));
 			if (email.csSubject.IsEmpty())
 				email.csSubject.Format(_T("ÎÞÖ÷Ìâ"));
