@@ -713,7 +713,7 @@ public:
 	CSQLServer(void);
 	~CSQLServer();
 	// TODO:  在此添加您的方法。
-	void Test(EMAIL_ITEM& email);
+	long SaveToDB(EMAIL_ITEM& email);
 	void GetGUID(CString &guid);
 	BOOL Connect(LPCTSTR lpServer,LPCTSTR lpDatabase,LPCTSTR lpUser,LPCTSTR lpPass,int nType=0);//0:混合验证；1:Windows验证
 	BOOL IsConnect();
@@ -721,7 +721,6 @@ public:
 	BOOL SQLExec(LPCTSTR lpSql);
 	BOOL CloseDB();
 	BOOL IsExist();
-	BOOL SaveToDB(const ATTACH_FILE& item);
 private:
 	CString m_csServer;
 	CString m_csDatabase;

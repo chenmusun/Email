@@ -123,7 +123,7 @@ BOOL CMyJob::Run()
 									else if (lReturnvalue == MONGO_DELETE)
 										m_UidlData.push_back(strUidl);
 									dPercent = (double)i / lResult * 100;
-									m_JobParam->m_pDlg->PostMessage(__umymessage__fres_hprogress__, (WPARAM)m_JobParam->m_lPos, (LPARAM)dPercent);
+									//m_JobParam->m_pDlg->PostMessage(__umymessage__fres_hprogress__, (WPARAM)m_JobParam->m_lPos, (LPARAM)dPercent);
 								}
 							}
 							else break;
@@ -151,7 +151,7 @@ BOOL CMyJob::Run()
 										if (m_pop3.DelEmail(i,strUidl) == SUCCESS)
 											m_UidlData.erase(ite);
 										dPercent = (double)n++ / (double)lCount * 100;
-										m_JobParam->m_pDlg->PostMessage(__umymessage__delfres_hprogress__, (WPARAM)m_JobParam->m_lPos, (LPARAM)dPercent);
+										//m_JobParam->m_pDlg->PostMessage(__umymessage__delfres_hprogress__, (WPARAM)m_JobParam->m_lPos, (LPARAM)dPercent);
 									}
 								}
 							}
@@ -259,7 +259,7 @@ long CMyJob::MailAnalysis(POP3& pop3, CSQLServer& sql,const string& strUIDL, LPC
 		return -1;
 	}
 	//pop3.SaveFileToDB();
-	sql.Test(ana.GetEmailItem());
+	sql.SaveToDB(ana.GetEmailItem());
 	ana.Clear(lType);
 #ifdef _DEBUG
 	dwTime = GetTickCount() - dwTime;

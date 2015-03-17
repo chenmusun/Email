@@ -83,46 +83,46 @@ CSQLServer::~CSQLServer()
 }
 
 
-void CSQLServer::Test(EMAIL_ITEM& email)
+long CSQLServer::SaveToDB(EMAIL_ITEM& email)
 {
+	DWORD size = 0;
 	COleDateTime oledt = COleDateTime::GetCurrentTime();
+	CString csTemp;
 	try
 	{
 		if(m_db.IsOpen())
 		{
 			m_db.BeginTransaction();
 			CADOCommand * pEMCmd = new CADOCommand(&m_db);
-			if (pEMCmd == NULL) return;
+			if (pEMCmd == NULL) 
+				return -1;
 
-			TCHAR szCmdText[512] = _T("INSERT INTO [ReportEmailDB].[dbo].[T_REPORT_EMAIL](EmailUIDL, EmailFrom, EmailTo, EmailSubject, EmailDate, ContentType) VALUES(?, ?, ?, ?, ?, ?)");
+			TCHAR szCmdText[512] = _T("INSERT INTO [ReportEmailDB].[dbo].[T_REPORT_EMAIL](EmailUIDL, EmailSubject,EmailFrom, EmailTo , EmailDate,ContentType) VALUES(?, ?, ?, ?, ?, ?)");
 			auto pos = email.csUIDL.Find(_T("\\"));
 			if (pos > 0)
 				email.csUIDL = email.csUIDL.Mid(pos + 1);
 			pEMCmd->AddParameter(_T("EmailUIDL"), adVarChar, CADOParameter::paramInput, email.csUIDL.GetLength(), _bstr_t(email.csUIDL.GetBuffer(0)));
+			if (email.csSubject.IsEmpty())
+				email.csSubject.Format(_T("无主题"));
+			pEMCmd->AddParameter(_T("EmailSubject"), adVarWChar, CADOParameter::paramInput, email.csSubject.GetLength(), _bstr_t(email.csSubject.GetBuffer(0)));
+
 			if (email.csFrom.IsEmpty())
 				email.csFrom.Format(_T("unknow"));
 			pEMCmd->AddParameter(_T("EmailFrom"), adVarChar, CADOParameter::paramInput, email.csFrom.GetLength(), _bstr_t(email.csFrom.GetBuffer(0)));
 			if (email.csTo.IsEmpty())
 				email.csTo.Format(_T("unknow"));
 			pEMCmd->AddParameter(_T("EmailTo"), adVarWChar, CADOParameter::paramInput, email.csTo.GetLength(), _bstr_t(email.csTo.GetBuffer(0)));
-			if (email.csSubject.IsEmpty())
-				email.csSubject.Format(_T("无主题"));
-			pEMCmd->AddParameter(_T("EmailSubject"), adVarWChar, CADOParameter::paramInput, email.csSubject.GetLength(), _bstr_t(email.csSubject.GetBuffer(0)));
-
+			
 			TCHAR szDate[32] = { 0 };
 			TCHAR szTime[32] = { 0 };
+			oledt.ParseDateTime(email.csDate);
 			wsprintf(szDate, _T("%04d-%02d-%02d %02d:%02d:%02d"), oledt.GetYear(), oledt.GetMonth(), oledt.GetDay()
 				, oledt.GetHour(), oledt.GetMinute(), oledt.GetSecond());
 			pEMCmd->AddParameter(_T("EmailDate"), adVarChar, CADOParameter::paramInput, lstrlen(szDate), _bstr_t(szDate));
 			if (email.csContentType.IsEmpty())
 				email.csContentType.Format(_T("unknow"));
 			pEMCmd->AddParameter(_T("ContentType"), adVarWChar, CADOParameter::paramInput, email.csContentType.GetLength(), _bstr_t(email.csContentType.GetBuffer(0)));
-			
 			pEMCmd->SetText(szCmdText);
-#ifdef _DEBUG
-			OutputDebugString(szCmdText);
-			OutputDebugString(_T("\r\n"));
-#endif
 			if (pEMCmd->Execute(adCmdText))
 			{
 #ifdef _DEBUG
@@ -134,8 +134,46 @@ void CSQLServer::Test(EMAIL_ITEM& email)
 #ifdef _DEBUG
 				OutputDebugString(_T("Insert to SQL Failed!\r\n"));
 #endif
+				delete pEMCmd;
+				return -1;
 			}
 			delete pEMCmd;
+			TCHAR szQuerySQL[512] = { 0 };
+			swprintf_s(szQuerySQL,
+				_T("SELECT EMailID, ContentType, EmailContent FROM [ReportEmailDB].[dbo].[T_REPORT_EMAIL] WHERE EMailUidl COLLATE Latin1_General_CS_AS ='%s' AND EMailTo='%s' AND EMailDate=CONVERT(datetime,'%s',121)"),
+				email.csUIDL, email.csTo, szDate);
+			if(m_pEMRs->Open(szQuerySQL, CADORecordset::openQuery))
+			{
+				m_pEMRs->Edit();
+				CFile file;
+				char * pContentData = NULL;
+				if (!email.csEmailContent.IsEmpty())
+				{
+					size = 0;
+					file.Open(email.csEmailContent, CFile::modeRead);
+					size = file.GetLength();
+					pContentData = new char[size + 1];
+					for (DWORD index = 0; index < size; index)
+					{
+						index += file.Read(pContentData + index, size - index);
+					}
+					file.Close();
+					if (pContentData != NULL && size > 0)
+						m_pEMRs->AppendChunk(_T("EmailContent"), pContentData, size);
+				}
+				if (pContentData != NULL&& size > 0)
+				{
+					delete  pContentData;
+					pContentData = NULL;
+				}
+				m_pEMRs->Update();
+				m_pEMRs->GetFieldValue(_T("EMailID"), email.lSn);
+#ifdef _DEBUG
+				CString csDebug;
+				csDebug.Format(_T("EMailID = %d\r\n"), email.lSn);
+				OutputDebugString(csDebug);
+#endif
+			}
 			m_db.CommitTransaction();
 		}
 		else
@@ -155,6 +193,7 @@ void CSQLServer::Test(EMAIL_ITEM& email)
 		OutputDebugString(_T("\r\n"));
 #endif
 	}
+	return 0;
 }
 
 void CSQLServer::GetGUID(CString &guid)
@@ -334,12 +373,6 @@ BOOL CSQLServer::CloseDB()
 
 BOOL CSQLServer::IsExist()
 {
-	return TRUE;
-}
-
-BOOL CSQLServer::SaveToDB(const ATTACH_FILE& item)
-{
-
 	return TRUE;
 }
 ///////////////////////////////////////////////////////
@@ -2518,7 +2551,7 @@ void CADOCommand::dump_com_error(_com_error &e)
 	m_strLastError = ErrorStr;
 	m_dwLastError = e.Error();
 #ifdef _DEBUG
-	AfxMessageBox(ErrorStr, MB_OK | MB_ICONERROR);
+	//AfxMessageBox(ErrorStr, MB_OK | MB_ICONERROR);
 #endif	
 	// throw CADOException(e.Error(), e.Description());
 }

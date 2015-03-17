@@ -299,10 +299,11 @@ long CMailAnalysis::AnalysisHead()
 		StringProcess(csFrom, csTemp, csExtra, 0);
 		StringProcess(csTemp, csFrom);
 		csTemp = StringEncode(csFrom);
-		if (csFrom.Find(_T("@")) > 0)
-			m_stEmail.csFrom = csFrom;
+		if (csTemp.Find(_T("@")) > 0)
+			m_stEmail.csFrom = csTemp;
 		else if (csExtra.Find(_T("@")) > 0)
 			m_stEmail.csFrom = csExtra;
+		else m_stEmail.csFrom = csTemp;
 #ifdef _DEBUG
 		OutputDebugString(_T("From:"));
 		OutputDebugString(csTemp);
@@ -351,20 +352,21 @@ long CMailAnalysis::AnalysisHead()
 	datetime.ParseDateTime(csDate);
 	if (datetime.GetStatus() != COleDateTime::valid) datetime = COleDateTime::GetCurrentTime();
 	datetime += COleDateTimeSpan(0, nHour, 0, 0);
-	csDate.Format(_T("Date:%d-%d-%d\t%d:%d:%d\r\n"),
+	csDate.Format(_T("%d-%d-%d\t%d:%d:%d\r\n"),
 		datetime.GetYear(), datetime.GetMonth(), datetime.GetDay()
 		, datetime.GetHour(), datetime.GetMinute(), datetime.GetSecond());
 	m_stEmail.csDate = csDate;
 #ifdef _DEBUG
-	csDebug = csDate;
+	csDebug.Format(_T("Date:%s\r\n"),csDate);
 	OutputDebugString(csDebug);
 #endif
+	csTemp.Empty();
 	CString csOutPut;
 	for (long long i = 0; i < csSubject.GetSize(); i++)
 	{
-		StringProcess(csSubject.GetAt(i), csDebug, _SUBJECT_);
-		StringProcess(csDebug, csDebug);
-		csOutPut.AppendFormat(_T("%s"), StringEncode(csDebug));
+		StringProcess(csSubject.GetAt(i), csTemp, _SUBJECT_);
+		StringProcess(csTemp, csTemp);
+		csOutPut.AppendFormat(_T("%s"), StringEncode(csTemp));
 	}
 	if (!csOutPut.IsEmpty())
 		m_stEmail.csSubject = csOutPut;
@@ -502,8 +504,13 @@ long CMailAnalysis::AnalysisBoundary(const CString& csBoundary, vector<ATTACH>& 
 				wsprintf(chMainname, _T("main%d.txt"), m_lAttachmentCount);
 				if (SaveToFile(ite->csText, chMainname, stBouHead.lEncode) == 0)
 				{
+					attachfile.Init();
+					attachfile.lType = 0;
+					attachfile.csFilePath.Format(_T("%s%s"), m_csSavePath, chMainname);
+					attachfile.csFileName.Format(_T("%s"), chMainname);
 					m_stEmail.csContentType = _T("text/plain");
-					m_stEmail.csEmailContent.Format(_T("%s%s"), m_csSavePath, chMainname);
+					m_stEmail.csEmailContent = attachfile.csFilePath;
+					m_stEmail.vecAttachFiles.push_back(attachfile);
 					m_lAttachmentCount++;
 				}
 				
@@ -514,8 +521,14 @@ long CMailAnalysis::AnalysisBoundary(const CString& csBoundary, vector<ATTACH>& 
 				wsprintf(chMainname, _T("main%d.html"), m_lAttachmentCount);
 				if (SaveToFile(ite->csText, chMainname, stBouHead.lEncode) == 0)
 				{
+					attachfile.Init();
+					attachfile.lType = 0;
+					attachfile.csFilePath.Format(_T("%s%s"), m_csSavePath, chMainname);
+					attachfile.csFileName.Format(_T("%s"),chMainname);
+					//m_stEmail.csContentType = _T("text/html");
 					m_stEmail.lHasHtml = 1;
-					m_stEmail.csEmailContentHTML.Format(_T("%s%s"),m_csSavePath,chMainname);
+					m_stEmail.csEmailContentHTML = attachfile.csFilePath;
+					m_stEmail.vecAttachFiles.push_back(attachfile);
 					m_lAttachmentCount++;
 				}				
 			}
@@ -535,6 +548,7 @@ long CMailAnalysis::AnalysisBoundary(const CString& csBoundary, vector<ATTACH>& 
 				if (SaveToFile(ite->csText, stBouHead.csFilename.IsEmpty() ? stBouHead.csName : stBouHead.csFilename, stBouHead.lEncode) == 0)
 				{
 					attachfile.Init();
+					attachfile.lType=1;
 					m_stEmail.lHasAffix = 1;
 					m_lAttachmentCount++;
 					attachfile.csFileName = stBouHead.csFilename;
@@ -1317,10 +1331,6 @@ void CMailAnalysis::Clear(long lType)
 			vector<ATTACH_FILE>::iterator ite = m_stEmail.vecAttachFiles.begin();
 			while (ite != m_stEmail.vecAttachFiles.end())
 			{
-				(*ite).csFileName.Empty();
-				(*ite).csGUID.Empty();
-				(*ite).csMD5.Empty();
-				(*ite).lSize = 0;
 				DeleteFile((*ite).csFilePath);
 				ite++;
 			}
@@ -1509,7 +1519,8 @@ void StringProcess(const CString& csSrc, CString& csDest, int nType)
 	}
 	csTemp.TrimLeft();
 	csTemp.TrimRight();
-	StringProcess(csTemp, csDest);
+	csDest = csTemp;
+	//StringProcess(csTemp, csDest);
 }
 
 void CodeConvert(const CString& csSrc, CString&csDest, int nCharset, int nCodetype)

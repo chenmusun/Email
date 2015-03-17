@@ -89,7 +89,7 @@ long CDataBase::ExecSQL(const string& strUIDL, string& strErr,const string& strN
 	strIndexName.append(m_dbinfo.chTable);
 	if (connect.isStillConnected())
 	{
-		BSONObj cmd, obj = BSON("UIDL" << strUIDL << "MD5" << "MD5test" << "DATE" << DATENOW<<"TO"<<strName<<"STATUS"<<3)
+		BSONObj cmd, obj = BSON("UIDL" << strUIDL << "DATE" << DATENOW<<"TO"<<strName)
 			, bsoReturnValue, bsoQuery = BSON("UIDL" << strUIDL), bsoValue;
 		try
 		{

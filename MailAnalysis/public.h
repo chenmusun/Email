@@ -48,6 +48,7 @@ struct ATTACH_FILE
 	long lSize;			//附件大小
 	CString csMD5;		//附件MD5
 	CString csGUID;		//附件GUID
+	long lType;			//0：正文；1：附件
 	void Init()
 	{
 		csFileName.Empty();
@@ -55,12 +56,14 @@ struct ATTACH_FILE
 		lSize = 0;
 		csMD5.Empty();
 		csGUID.Empty();
+		lType = 1;
 	}
 };
 
 struct EMAIL_ITEM
 {
 	long lSn;							//邮件序号
+	CString csGUDI;
 	CString csUIDL;						//UIDL
 	CString csSubject;					//邮件主题
 	CString csFrom;						//解析得到邮件来源
@@ -78,6 +81,8 @@ struct EMAIL_ITEM
 	
 	void Init()							//初始化函数
 	{
+		lSn = 0;
+		csGUDI.Empty();
 		csUIDL.Empty();
 		csSubject.Empty();
 		csFrom.Empty();
@@ -98,6 +103,7 @@ struct EMAIL_ITEM
 			(*ite).csGUID.Empty();
 			(*ite).csMD5.Empty();
 			(*ite).lSize = 0;
+			(*ite).lType = 1;
 			ite++;
 		}
 		vecAttachFiles.clear();

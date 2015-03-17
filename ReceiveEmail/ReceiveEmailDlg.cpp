@@ -1020,7 +1020,7 @@ DWORD WINAPI  CReceiveEmailDlg::_AfxMainTestAna(LPVOID lpParam)
 			pDlg->m_log.Log(csLog, csLog.GetLength());
 			break;
 		}
-		sql.Test(ana.GetEmailItem());
+		sql.SaveToDB(ana.GetEmailItem());
 		ana.Clear(0);
 		sql.CloseDB();
 #ifdef _DEBUG
@@ -1042,17 +1042,11 @@ DWORD WINAPI  CReceiveEmailDlg::_AfxMainTestAna(LPVOID lpParam)
 void CReceiveEmailDlg::OnBnClickedButtonSet()
 {
 	// TODO:  在此添加控件通知处理程序代码
-#ifdef _DEBUG
-	EMAIL_ITEM email;
-	CSQLServer sqlserver;
-	sqlserver.Test(email);
-#else
 	CSettingDlg setting;
 	if (setting.DoModal() == IDOK)
 	{
 		AfxMessageBox(_T("Test"));
 	}
-#endif
 }
 
 void CReceiveEmailDlg::GetForwardInfo(ForwardSet& fdsinfo)
