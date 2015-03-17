@@ -28,7 +28,7 @@ BOOL MailSocket::CloseMySocket()
 long MailSocket::InitSocket(LPCTSTR lpAddr, UINT nHostPort)
 {
 	struct hostent *remoteHost;
-	char chSrvAdd[64] = { 0 }, chResult[256] = { 0 };
+	char chSrvAdd[64] = { 0 }, chResult[256] = { 0 }, chPort[32] = {0};
 	int iResult(0), i(0);
 	long noDelay(1);
 	m_MySocket = ::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
@@ -53,9 +53,38 @@ long MailSocket::InitSocket(LPCTSTR lpAddr, UINT nHostPort)
 	WideCharToMultiByte(CP_ACP, 0, lpAddr, 64, chSrvAdd, 64, NULL, NULL);
 	sockaddr_in addr_sev;
 	addr_sev.sin_family = AF_INET;
-	addr_sev.sin_addr.s_addr = inet_addr(chSrvAdd);
+	inet_pton(AF_INET, chSrvAdd, (PVOID)addr_sev.sin_addr.s_addr);
 	addr_sev.sin_port = htons(nHostPort);
 	remoteHost = gethostbyname(chSrvAdd);
+	
+	/*DWORD dwRetval(0);
+	BOOL bFound = FALSE;
+	sprintf_s(chPort,32,"%d",nHostPort);
+	struct addrinfo *result = NULL;
+	struct addrinfo *ptr = NULL;
+	struct addrinfo hints;
+	ZeroMemory(&hints, sizeof(hints));
+	hints.ai_flags = AI_NUMERICHOST;
+	hints.ai_family = AF_UNSPEC;
+	dwRetval = getaddrinfo(chSrvAdd, chPort, &hints, &result);
+	for (ptr = result; ptr != NULL; ptr = ptr->ai_next)
+	{
+		switch (ptr->ai_family)
+		{
+		case AF_INET:
+			bFound = TRUE;
+			break;
+		default:
+			break;
+		}
+	}
+	if (dwRetval != 0 || !bFound)
+	{
+		freeaddrinfo(result);
+		return NO_INTERNET;
+	}
+	freeaddrinfo(result);*/
+
 	i = 0;
 	if (remoteHost && remoteHost->h_addrtype == AF_INET)
 	{
