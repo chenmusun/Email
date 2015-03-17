@@ -721,6 +721,7 @@ public:
 	BOOL SQLExec(LPCTSTR lpSql);
 	BOOL CloseDB();
 	BOOL IsExist();
+	long SaveAttachment(ATTACH_FILE& attach);
 private:
 	CString m_csServer;
 	CString m_csDatabase;

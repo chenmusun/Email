@@ -49,6 +49,7 @@ struct ATTACH_FILE
 	CString csMD5;		//附件MD5
 	CString csGUID;		//附件GUID
 	long lType;			//0：正文；1：附件
+	CString csAffixType;
 	void Init()
 	{
 		csFileName.Empty();
@@ -57,6 +58,7 @@ struct ATTACH_FILE
 		csMD5.Empty();
 		csGUID.Empty();
 		lType = 1;
+		csAffixType.Empty();
 	}
 };
 
