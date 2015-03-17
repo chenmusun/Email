@@ -53,11 +53,12 @@ long MailSocket::InitSocket(LPCTSTR lpAddr, UINT nHostPort)
 	WideCharToMultiByte(CP_ACP, 0, lpAddr, 64, chSrvAdd, 64, NULL, NULL);
 	sockaddr_in addr_sev;
 	addr_sev.sin_family = AF_INET;
-	inet_pton(AF_INET, chSrvAdd, (PVOID)addr_sev.sin_addr.s_addr);
+	addr_sev.sin_addr.s_addr = inet_addr(chSrvAdd);
 	addr_sev.sin_port = htons(nHostPort);
 	remoteHost = gethostbyname(chSrvAdd);
 	
 	/*DWORD dwRetval(0);
+	inet_pton(AF_INET, chSrvAdd, (PVOID)addr_sev.sin_addr.s_addr);
 	BOOL bFound = FALSE;
 	sprintf_s(chPort,32,"%d",nHostPort);
 	struct addrinfo *result = NULL;
