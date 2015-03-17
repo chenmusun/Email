@@ -714,14 +714,8 @@ public:
 	~CSQLServer();
 	// TODO:  在此添加您的方法。
 	long SaveToDB(EMAIL_ITEM& email);
-	void GetGUID(CString &guid);
-	BOOL Connect(LPCTSTR lpServer,LPCTSTR lpDatabase,LPCTSTR lpUser,LPCTSTR lpPass,int nType=0);//0:混合验证；1:Windows验证
-	BOOL IsConnect();
-	BOOL ReConnect();
-	BOOL SQLExec(LPCTSTR lpSql);
+	BOOL Connect(LPCTSTR lpServer, LPCTSTR lpDatabase, LPCTSTR lpUser, LPCTSTR lpPass, int nType = 0);//0:混合验证；1:Windows验证
 	BOOL CloseDB();
-	BOOL IsExist();
-	long SaveAttachment(ATTACH_FILE& attach);
 private:
 	CString m_csServer;
 	CString m_csDatabase;
@@ -732,6 +726,13 @@ private:
 	CADORecordset *	m_pEMRs;
 	CADORecordset *	m_pGuidRs;
 	CADORecordset *	m_pSubjectRs;
+private:
+	void GetGUID(CString &guid);
+	BOOL IsConnect();
+	BOOL ReConnect();
+	BOOL SQLExec(LPCTSTR lpSql);
+	BOOL IsExist(EMAIL_ITEM& email);
+	long SaveAttachment(ATTACH_FILE& attach, long lEmailID);
 public:
 };
 
