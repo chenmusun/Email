@@ -552,8 +552,9 @@ long CMailAnalysis::AnalysisBoundary(const CString& csBoundary, vector<ATTACH>& 
 					attachfile.lType=1;
 					m_stEmail.lHasAffix = 1;
 					m_lAttachmentCount++;
+					FormatFileName(stBouHead.csFilename);
+					FormatFileName(stBouHead.csName);
 					attachfile.csFileName = stBouHead.csFilename.IsEmpty() ? stBouHead.csName : stBouHead.csFilename;
-					FormatFileName(attachfile.csFileName);
 					attachfile.csFilePath.Format(_T("%s%s"), m_csSavePath, stBouHead.csFilename.IsEmpty() ? stBouHead.csName : stBouHead.csFilename);
 					GetContentType(stBouHead.lContentType, attachfile.csAffixType);
 					m_stEmail.vecAttachFiles.push_back(attachfile);
@@ -1082,6 +1083,7 @@ long CMailAnalysis::SaveToFile(const CString& csCode, LPCTSTR lpFileName, int nC
 		CreateDirectory(m_csSavePath, NULL);
 	if (csFileName.Find(_T(".")) < 0)
 		csFileName.Append(_T(".dat"));
+	FormatFileName(csFileName);
 	csSavePath.Format(_T("%s%s"), m_csSavePath, csFileName);
 	CodeConvert(csCode, csDeCode, nCharset, nCodeType);
 	if (!csDeCode.IsEmpty())
@@ -1716,6 +1718,8 @@ void CMailAnalysis::GetContentType(long lContentType, CString& csContentType)
 
 void FormatFileName(CString& csFileName)
 {
+	if (csFileName.IsEmpty())
+		return;
 	csFileName.Replace(_T("*"), _T(""));
 	csFileName.Replace(_T("\\"), _T(""));
 	csFileName.Replace(_T(":"), _T(""));

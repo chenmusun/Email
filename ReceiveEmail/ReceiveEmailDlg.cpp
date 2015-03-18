@@ -1122,7 +1122,7 @@ void CReceiveEmailDlg::OnBnClickedButton1()
 	m_editpath.GetWindowText(m_csTestText);
 #ifdef _DEBUG
 	if (m_csTestText.IsEmpty())
-		m_csTestText.Format(_T("ZL1402-XRZ8y~QE2yLsPW46G3bEc52"));
+		m_csTestText.Format(_T("MD50000021244MSG15341385304331051223377027"));
 #endif
 	if (!m_csTestText.IsEmpty())
 	{
@@ -1150,7 +1150,7 @@ void CReceiveEmailDlg::OnBnClickedButton2()
 	m_editpath.GetWindowText(m_csTestText);
 #ifdef _DEBUG
 	if (m_csTestText.IsEmpty())
-		m_csTestText.Format(_T("ZL1402-XRZ8y~QE2yLsPW46G3bEc52"));
+		m_csTestText.Format(_T("MD50000021244MSG15341385304331051223377027"));
 #endif
 	if (!m_csTestText.IsEmpty())
 	{
