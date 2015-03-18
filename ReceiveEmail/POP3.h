@@ -1,6 +1,7 @@
 #pragma once
 #include "../DataBase/DataBase.h"
 #include "../ReceiveEmail/public.h"
+#include "../MailAnalysis/public.h"
 #include "Socket.h"
 #include "../Log/Log.h"
 
@@ -26,7 +27,7 @@ public:
 	inline char* GetCurrPath(){ return m_CurrPath; }
 	void SetLogPath(const char*pPath);
 	inline void SetParent(void* pParent){ if (pParent) m_pParent = pParent; }
-	void SaveFileToDB();
+	void SaveFileToDB(EMAIL_ITEM& email);
 	inline BOOL GetStatus(){ return m_bFailed; }
 private:
 	CDataBase m_db;//数据库操作实例

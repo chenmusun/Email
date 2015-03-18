@@ -163,16 +163,36 @@ long long CDataBase::GetTimeStamp()
 	return llTime;
 }
 
-void CDataBase::SaveFileToMongoDB(string& strRtr)
+long CDataBase::SaveFileToMongoDB(string& remotename, string& strPath, string& strRtr)
 {
 	/*
 	GfidFS 对象用来存储文件，构造是需要传入DBClientConnection实例，使用数据库名称
 	storeFile函数用来上传指定路径的文件，参数一：文件路径，参数二：数据库存储名称
 	write函数下载文件，参数：文件保存路径
 	*/
-	string remotename("test11.pdf"),strerr;
-	GridFS fs(connect,m_dbinfo.chDBName);
-	BSONObj obj=fs.storeFile("E:\\Mail\\MailTest\\ReceiveEmail\\ReceiveEmail\\Email\\912340\\2.pdf", remotename);
-	BSONElement em = obj.getField("md5");
-	strRtr = em.toString();
+	if (remotename.length() <= 0)
+	{
+		strRtr = "RemoteName is Empty!";
+		return -1;
+	}
+	if (strPath.length() <= 0)
+	{
+		strRtr = "Path is Empty!";
+		return -1;
+	}
+	string strerr;
+	if (connect.isStillConnected())
+	{
+		GridFS fs(connect, m_dbinfo.chDBName);
+		//fs.storeFile(strPath, remotename);
+		BSONObj obj = fs.storeFile(strPath, remotename);
+		if (!obj.isEmpty())
+		{
+			BSONElement em = obj.getField("md5");
+			strRtr = em.toString();
+		}
+		else return -1;
+	}
+	else return -1;
+	return 0;
 }

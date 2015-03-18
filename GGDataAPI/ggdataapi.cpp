@@ -1,3 +1,4 @@
+#include "stdafx.h"
 #include "ggdataapi.h"
 #include <process.h>
 #include "../ReceiveEmail/public.h"

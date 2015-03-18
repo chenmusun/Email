@@ -525,7 +525,8 @@ long CMailAnalysis::AnalysisBoundary(const CString& csBoundary, vector<ATTACH>& 
 					attachfile.lType = 0;
 					attachfile.csFilePath.Format(_T("%s%s"), m_csSavePath, chMainname);
 					attachfile.csFileName.Format(_T("%s"),chMainname);
-					//m_stEmail.csContentType = _T("text/html");
+					if (m_stEmail.csContentType.IsEmpty())
+						m_stEmail.csContentType = _T("text/html");
 					m_stEmail.lHasHtml = 1;
 					m_stEmail.csEmailContentHTML = attachfile.csFilePath;
 					m_stEmail.vecAttachFiles.push_back(attachfile);
@@ -551,8 +552,10 @@ long CMailAnalysis::AnalysisBoundary(const CString& csBoundary, vector<ATTACH>& 
 					attachfile.lType=1;
 					m_stEmail.lHasAffix = 1;
 					m_lAttachmentCount++;
-					attachfile.csFileName = stBouHead.csFilename;
-					attachfile.csFilePath.Format(_T("%s%s"), m_csSavePath, stBouHead.csFilename);
+					attachfile.csFileName = stBouHead.csFilename.IsEmpty() ? stBouHead.csName : stBouHead.csFilename;
+					FormatFileName(attachfile.csFileName);
+					attachfile.csFilePath.Format(_T("%s%s"), m_csSavePath, stBouHead.csFilename.IsEmpty() ? stBouHead.csName : stBouHead.csFilename);
+					GetContentType(stBouHead.lContentType, attachfile.csAffixType);
 					m_stEmail.vecAttachFiles.push_back(attachfile);
 				}
 			}
@@ -758,6 +761,14 @@ long CMailAnalysis::GetContentInfo(const CString& csSrc, CString& csContent, CSt
 			lConttype = MULTI_RELATED;
 		else if (csContentType.Find(_T("image/png")) >= 0)
 			lConttype = IMG_PNG;
+		else if (csContentType.Find(_T("application/msexcel")) >= 0)
+			lConttype = APP_MSEX;
+		else if (csContentType.Find(_T("image/jpeg")) >= 0)
+			lConttype = IMG_JPG;
+		else if (csContentType.Find(_T("application/msword")) >= 0)
+			lConttype = APP_MSWD;
+		else if (csContentType.Find(_T("application/mspowerpoint")) >= 0)
+			lConttype = APP_MSPT;
 		else lConttype = UNKNOWN_TYPE;
 
 		nOffset = nOffset < 0 ? 0 : nOffset;
@@ -1101,17 +1112,7 @@ long CMailAnalysis::SaveToFile(const CString& csCode, LPCTSTR lpFileName, int nC
 		CreateDirectory(m_csSavePath, NULL);
 	if (csFileName.Find(_T(".")) < 0)
 		csFileName.Append(_T(".dat"));
-	csFileName.Replace(_T("*"), _T(""));
-	csFileName.Replace(_T("\\"), _T(""));
-	csFileName.Replace(_T(":"), _T(""));
-	csFileName.Replace(_T("?"), _T(""));
-	csFileName.Replace(_T("="), _T(""));
-	csFileName.Replace(_T("<"), _T(""));
-	csFileName.Replace(_T(">"), _T(""));
-	csFileName.Replace(_T("\t"), _T(""));
-	csFileName.Replace(_T(" "), _T(""));
-	//csFileName.Replace(_T("\|"), _T(""));
-	//csFileName.Replace(_T("\/"), _T(""));
+	FormatFileName(csFileName);
 	csSavePath.Format(_T("%s%s"), m_csSavePath, csFileName);
 	int LEN(0), ibytes(0);
 	LEN = WideCharToMultiByte(CP_ACP, 0, csCode, -1, NULL, 0, NULL, NULL);
@@ -1671,4 +1672,57 @@ void CMailAnalysis::SetLogPath(const char*pPath)
 	{
 		m_log.SetPath(pPath);
 	}
+}
+
+void CMailAnalysis::GetContentType(long lContentType, CString& csContentType)
+{
+	switch (lContentType)
+	{
+	case TEXT_PLAIN:
+		csContentType.Format(_T("text/plain"));
+		break;
+	case APP_OCTET:
+		csContentType.Format(_T("application/octet-stream"));
+		break;
+	case APP_PDF:
+		csContentType.Format(_T("application/pdf"));
+		break;
+	case APP_ZIP:
+		csContentType.Format(_T("application/zip"));
+		break;
+	case TEXT_HTML:
+		csContentType.Format(_T("text/html"));
+		break;
+	case IMG_PNG:
+		csContentType.Format(_T("image/png"));
+		break;
+	case IMG_JPG:
+		csContentType.Format(_T("image/jpeg"));
+		break;
+	case APP_MSEX:
+		csContentType.Format(_T("application/msexcel"));
+		break;
+	case APP_MSWD:
+		csContentType.Format(_T("application/msword"));
+		break;
+	case APP_MSPT:
+		csContentType.Format(_T("application/mspowerpoint"));
+		break;
+	default:
+		csContentType.Format(_T("unknow"));
+		break;
+	}
+}
+
+void FormatFileName(CString& csFileName)
+{
+	csFileName.Replace(_T("*"), _T(""));
+	csFileName.Replace(_T("\\"), _T(""));
+	csFileName.Replace(_T(":"), _T(""));
+	csFileName.Replace(_T("?"), _T(""));
+	csFileName.Replace(_T("="), _T(""));
+	csFileName.Replace(_T("<"), _T(""));
+	csFileName.Replace(_T(">"), _T(""));
+	csFileName.Replace(_T("\t"), _T(""));
+	csFileName.Replace(_T(" "), _T(""));
 }

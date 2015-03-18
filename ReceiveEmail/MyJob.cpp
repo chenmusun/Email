@@ -258,8 +258,8 @@ long CMyJob::MailAnalysis(POP3& pop3, CSQLServer& sql,const string& strUIDL, LPC
 		ana.Clear(1);
 		return -1;
 	}
-	//pop3.SaveFileToDB();
 	sql.SaveToDB(ana.GetEmailItem());
+	pop3.SaveFileToDB(ana.GetEmailItem());
 	ana.Clear(lType);
 #ifdef _DEBUG
 	dwTime = GetTickCount() - dwTime;

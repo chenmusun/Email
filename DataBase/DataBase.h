@@ -34,10 +34,11 @@ public:
 	void GetCurrTime(string& strDate);
 	long long GetTimeStamp();
 	inline int GetUseDB(){ return m_dbinfo.nUseDB; }
-	void SaveFileToMongoDB(string& strRtr);
+	long SaveFileToMongoDB(string& remotename,string& strPath,string& strRtr);
 private:
 	DBClientConnection connect;//MongoÁ¬½ÓÊµÀý
 	MongoDBInfo m_dbinfo;
+	//GridFS m_gridfs;
 private:
 protected:
 };

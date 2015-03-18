@@ -50,6 +50,7 @@ struct ATTACH_FILE
 	CString csGUID;		//附件GUID
 	long lType;			//0：正文；1：附件
 	CString csAffixType;
+	CString csRemoteName;
 	void Init()
 	{
 		csFileName.Empty();
@@ -59,13 +60,13 @@ struct ATTACH_FILE
 		csGUID.Empty();
 		lType = 1;
 		csAffixType.Empty();
+		csRemoteName.Empty();
 	}
 };
 
 struct EMAIL_ITEM
 {
 	long lSn;							//邮件序号
-	CString csGUDI;
 	CString csUIDL;						//UIDL
 	CString csSubject;					//邮件主题
 	CString csFrom;						//解析得到邮件来源
@@ -84,7 +85,6 @@ struct EMAIL_ITEM
 	void Init()							//初始化函数
 	{
 		lSn = 0;
-		csGUDI.Empty();
 		csUIDL.Empty();
 		csSubject.Empty();
 		csFrom.Empty();

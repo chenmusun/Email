@@ -1,6 +1,5 @@
 #include "stdafx.h"
 #include "POP3.h"
-#include "../ReceiveEmail/public.h"
 #include "MyJob.h"
 #include "../include/json/json.h"
 
@@ -361,22 +360,30 @@ void POP3::SetLogPath(const char*pPath)
 	}
 }
 
-void POP3::SaveFileToDB()
+void POP3::SaveFileToDB(EMAIL_ITEM& email)
 {
-	string str, strmd5;
-	Json::Value js_value;
-	Json::Reader js_reader;
-	m_db.SaveFileToMongoDB(str);
-	js_reader.parse(str, js_value);
-	strmd5 = /*js_value["md5"].asString()*/str;
-	auto pos1 = strmd5.find("\"");
-	if (pos1 > 0 && pos1 != string::npos)
+	char chGUID[128] = { 0 }, chFilePath[512] = {0};
+	string strRemote, strPath, strErr;
+#ifdef _DEBUG
+	CString csDebug;
+#endif
+	vector<ATTACH_FILE>::iterator ite = email.vecAttachFiles.begin();
+	while (ite!=email.vecAttachFiles.end())
 	{
-		auto pos2 = strmd5.find("\"",pos1+1);
-		if (pos2 > 0 && pos2 != string::npos)
+		memset(&chGUID, 0, 128);
+		memset(&chFilePath, 0,512);
+		if ((*ite).lType == 0)
 		{
-			str = strmd5.substr(pos1+1, pos2 - pos1 - 1);
+			ite++;
+			continue;
 		}
+		WideCharToMultiByte(CP_ACP, 0, (*ite).csRemoteName.GetBuffer(), (*ite).csRemoteName.GetLength(), chGUID, 128, NULL, NULL);
+		strRemote = chGUID;
+		WideCharToMultiByte(CP_ACP, 0, (*ite).csFilePath.GetBuffer(), (*ite).csFilePath.GetLength(), chFilePath, 512, NULL, NULL);
+		strPath = chFilePath;
+		m_db.SaveFileToMongoDB(strRemote, strPath, strErr);
+		ite++;
 	}
+	
 }
 /////////////////////////////////////////////////////////////////////
