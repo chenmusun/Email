@@ -431,8 +431,6 @@ long CSQLServer::SaveAttachment(ATTACH_FILE& attach, long lEmailID)
 	GetGUID(csGuid);
 	if (csGuid.IsEmpty() || attach.csFileName.IsEmpty())
 		return -1;
-	csGuid.Replace(_T("{"), _T(""));
-	csGuid.Replace(_T("}"), _T(""));
 	attach.csGUID = csGuid;
 	auto pos = attach.csFileName.ReverseFind(_T('.'));
 	if (pos > 0)
@@ -471,7 +469,12 @@ long CSQLServer::SaveAttachment(ATTACH_FILE& attach, long lEmailID)
 			attach.csAffixType.Format(_T("unknow"));
 		pEMAttachCmd->AddParameter(_T("AffixType"), adVarChar, CADOParameter::paramInput, attach.csAffixType.GetLength()*sizeof(TCHAR), _bstr_t(attach.csAffixType.GetBuffer(0)));
 		pEMAttachCmd->SetText(szAttachCmdText);
-		pEMAttachCmd->Execute(adCmdText);
+		if (!pEMAttachCmd->Execute(adCmdText))
+		{
+#ifdef _DEBUG
+			OutputDebugString(_T("Execute Error1!\r\n"));
+#endif
+		}
 		delete pEMAttachCmd;
 	}
 	catch (_com_error&e)
@@ -492,7 +495,12 @@ long CSQLServer::SaveAttachment(ATTACH_FILE& attach, long lEmailID)
 		pMapCmd->AddParameter(_T("GUID"), adGUID, CADOParameter::paramInput, csGuid.GetLength(), _bstr_t(csGuid.GetBuffer(0)));
 		pMapCmd->AddParameter(_T("EMailID"), adInteger, CADOParameter::paramInput, sizeof(long), lEmailID);
 		pMapCmd->SetText(szMapCmdText);
-		pMapCmd->Execute(adCmdText);
+		if (!pMapCmd->Execute(adCmdText))
+		{
+#ifdef _DEBUG
+			OutputDebugString(_T("Execute Error2!\r\n"));
+#endif
+		}
 		delete pMapCmd;
 	}
 	catch (_com_error& e)
@@ -2684,7 +2692,7 @@ void CADOCommand::dump_com_error(_com_error &e)
 	m_strLastError = ErrorStr;
 	m_dwLastError = e.Error();
 #ifdef _DEBUG
-	//AfxMessageBox(ErrorStr, MB_OK | MB_ICONERROR);
+	AfxMessageBox(ErrorStr, MB_OK | MB_ICONERROR);
 #endif	
 	// throw CADOException(e.Error(), e.Description());
 }
