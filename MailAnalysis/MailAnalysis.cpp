@@ -1036,13 +1036,13 @@ vector<ATTACH> CMailAnalysis::AnalysisBody(const CString& csBody, const CString&
 					{
 					case _CONTENT_TRANSFER_ENCODING2_:
 					{
-														 csaContent.Add(csData);
-														 bText = TRUE;//对于多层嵌套有问题！！！！ 
+						csaContent.Add(csData);
+						bText = TRUE;//对于多层嵌套有问题！！！！ 
 					}
 						break;
 					default:
 					{
-							   csaContent.Add(csData);
+						csaContent.Add(csData);
 					}
 						break;
 					}
