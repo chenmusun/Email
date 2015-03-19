@@ -102,7 +102,7 @@ BOOL CMyJob::Run()
 									{
 										if (m_pop3.GetEMLFile(i, strUidl) == 0)
 										{
-											if (MailAnalysis(m_pop3,m_sql ,strUidl,info.szAbbreviation))
+											if (MailAnalysis(m_pop3,m_sql ,strUidl,info.szAbbreviation,1))
 											{
 												
 												sprintf_s(chDebug, 512, "Analysis [%s] Error!", strUidl.c_str());

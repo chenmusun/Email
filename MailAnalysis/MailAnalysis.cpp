@@ -120,6 +120,7 @@ BYTE GetBCode(char c)
 
 long CMailAnalysis::LoadFile(LPCTSTR lpPath, LPCTSTR lpUIDL, long lType)
 {
+	CString csLog;
 	BOOL bFirst = TRUE;
 	CFile stream;
 	SetMainPath(lpPath);
@@ -129,7 +130,11 @@ long CMailAnalysis::LoadFile(LPCTSTR lpPath, LPCTSTR lpUIDL, long lType)
 	m_csSavePath.Format(_T("%s\\%s\\"), m_szMainPath, m_csUIDL);
 	BOOL bRet = stream.Open(m_csFilePath, CFile::modeRead);
 	if (bRet == FALSE)
+	{
+		csLog.Format(_T("打开文件[%s]失败！"),m_csFilePath);
+		m_log.Log(csLog.GetBuffer(),csLog.GetLength());
 		return -1;
+	}
 	ULONGLONG dwSize = stream.GetLength();//读到的文件大小
 #ifdef _DEBUG
 	CString csDebug;
@@ -187,7 +192,8 @@ long CMailAnalysis::AnalysisHead()
 	if (llSize <= 0)
 		return -1;
 	CString csItem, csTemp, csKey, csDate, csFrom, csContentType,
-		csEncoding, csUIDL, csMessageID, csBoundry, csSrc, csExtra;
+		csEncoding, csUIDL, csMessageID, csBoundry, csSrc, csExtra,
+		csLog;
 	CStringArray csSubject, csTo;
 	int nSave = -1;
 	//////////////////////////////////////////////////////////////////////
@@ -332,9 +338,9 @@ long CMailAnalysis::AnalysisHead()
 		{
 			m_csEncoding = csEncoding;
 #ifdef _DEBUG
-			OutputDebugString(_T("Content-Transfer-Encoding::"));
+			OutputDebugString(_T("Content-Transfer-Encoding:"));
 			OutputDebugString(m_csEncoding);
-			OutputDebugString(_T("\r\n"));
+			OutputDebugString(_T("\r\n------------------------------------------------\r\n"));
 #endif
 		}
 	}
@@ -352,7 +358,7 @@ long CMailAnalysis::AnalysisHead()
 	datetime.ParseDateTime(csDate);
 	if (datetime.GetStatus() != COleDateTime::valid) datetime = COleDateTime::GetCurrentTime();
 	datetime += COleDateTimeSpan(0, nHour, 0, 0);
-	csDate.Format(_T("%d-%d-%d\t%d:%d:%d\r\n"),
+	csDate.Format(_T("%d-%d-%d\t%d:%d:%d"),
 		datetime.GetYear(), datetime.GetMonth(), datetime.GetDay()
 		, datetime.GetHour(), datetime.GetMinute(), datetime.GetSecond());
 	m_stEmail.csDate = csDate;
@@ -387,12 +393,11 @@ long CMailAnalysis::AnalysisHead()
 		StringProcess(csSrc, csTemp, csExtra, 0);
 		StringProcess(csTemp, csSrc);
 		csTemp = StringEncode(csSrc);
-		csDebug.Format(_T("%s\t%s\r\n"), csTemp, csExtra);
 #ifdef _DEBUG
+		csDebug.Format(_T("%s\t%s\r\n"), csTemp, csExtra);
 		OutputDebugString(csDebug);
 #endif
 	}
-
 	return 0;
 }
 
@@ -705,7 +710,7 @@ long CMailAnalysis::AnalysisBoundaryHead(list<CString>& lsHead, const CString& c
 	GetDispositionInfo(csDisposition, info.csContentDisposition, info.csFilename);
 #ifdef _DEBUG
 	CString csDebug;
-	csDebug.Format(_T("Content-Transfer-Encoding:%s\r\n"), csTransferEncod);
+	csDebug.Format(_T("Content-Transfer-Encoding:%s\r\n------------------------------------------------\r\n"), csTransferEncod);
 	OutputDebugString(csDebug);
 #endif
 	info.csEncoding = csTransferEncod;
@@ -851,7 +856,7 @@ long CMailAnalysis::GetContentInfo(const CString& csSrc, CString& csContent, CSt
 	}
 #ifdef _DEBUG
 	CString csDebug;
-	csDebug.Format(_T("Content-type:%s\tcharset=%s\tname=%s\tboundary=%s\r\n"),
+	csDebug.Format(_T("------------------------------------------------\r\nContent-type:%s\tcharset=%s\tname=%s\tboundary=%s\r\n"),
 		csContentType, csCharset, csName, csBoundary);
 	OutputDebugString(csDebug);
 #endif
