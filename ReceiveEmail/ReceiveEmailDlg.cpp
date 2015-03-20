@@ -458,10 +458,10 @@ BOOL CReceiveEmailDlg::LoadFromConfig()
 	GetPrivateProfileStringA("DataBase", "passwd", "123456", chTemp, 512, chConfigPath);
 	sprintf_s(m_dbinfo.chPasswd, 32, "%s", chTemp);
 	memset(&m_sqldbinfo, 0, sizeof(SQLDBInfo));
-	GetPrivateProfileString(_T("DataBase"), _T("sql_dbadd"), _T(""), m_sqldbinfo.szDBAdd, 32, szConfigPath);
-	GetPrivateProfileString(_T("DataBase"), _T("sql_db"), _T(""), m_sqldbinfo.szDBName, 32, szConfigPath);
-	GetPrivateProfileString(_T("DataBase"), _T("sql_username"), _T(""), m_sqldbinfo.szUserName, 32, szConfigPath);
-	GetPrivateProfileString(_T("DataBase"), _T("sql_passwd"), _T(""), m_sqldbinfo.szPasswd, 32, szConfigPath);
+	GetPrivateProfileString(_T("DataBase"), _T("sql_dbadd"), _T("OFFICE-PC\\SQLSERVER"), m_sqldbinfo.szDBAdd, 32, szConfigPath);
+	GetPrivateProfileString(_T("DataBase"), _T("sql_db"), _T("ReportEmailDB"), m_sqldbinfo.szDBName, 32, szConfigPath);
+	GetPrivateProfileString(_T("DataBase"), _T("sql_username"), _T("sa"), m_sqldbinfo.szUserName, 32, szConfigPath);
+	GetPrivateProfileString(_T("DataBase"), _T("sql_passwd"), _T("test.123"), m_sqldbinfo.szPasswd, 32, szConfigPath);
 
 	memset(&m_fsinfo, 0, sizeof(ForwardSet));
 	GetPrivateProfileStringA("ForwardSet", "srvadd", "", m_fsinfo.srvadd, 64, chConfigPath);
@@ -498,15 +498,24 @@ void CReceiveEmailDlg::OnDestroy()
 	}*/
 }
 
-BOOL CReceiveEmailDlg::GetMailBoxInfo(MailBoxInfo& info,long lStatus)
+BOOL CReceiveEmailDlg::GetMailBoxInfo(CString&csUserName, MailBoxInfo& info, long lStatus)
 {
 	::EnterCriticalSection(&_cs_);
+	BOOL bFound = FALSE;
+	if (m_lLastPos > m_mailList.size())
+		m_lLastPos = 0;
+	long lCurrPos(0);
 	memset(&info, 0, sizeof(MailBoxInfo));
 	map<CString, MailBoxInfo>::iterator ite = m_mailList.begin();
-	if (ite != m_mailList.end())
+	while(ite != m_mailList.end())
 	{
-		if (ite->second.lStatus)
+		if (lCurrPos == m_lLastPos)
 		{
+			if (ite->second.lStatus == lStatus)
+				break;
+			else
+				ite->second.lStatus = lStatus;
+			csUserName = ite->first;
 			wsprintf(info.szName, ite->second.szName);
 			wsprintf(info.szPasswd, ite->second.szPasswd);
 			wsprintf(info.szServerAdd, ite->second.szServerAdd);
@@ -514,22 +523,20 @@ BOOL CReceiveEmailDlg::GetMailBoxInfo(MailBoxInfo& info,long lStatus)
 			wsprintf(info.szAbbreviation, ite->second.szAbbreviation);
 			info.bSendMail = ite->second.bSendMail;
 			wsprintf(info.szMailAdd, ite->second.szMailAdd);
+			m_lLastPos++;
 		}
+		lCurrPos++;
 		ite++;
-	}
-	else
-	{
-		::LeaveCriticalSection(&_cs_);
-		return FALSE;
 	}
 	::LeaveCriticalSection(&_cs_);
 	return TRUE;
 }
 
-void CReceiveEmailDlg::GetDataBaseInfo(MongoDBInfo& dbinfo)
+void CReceiveEmailDlg::GetDataBaseInfo(MongoDBInfo& dbinfo, SQLDBInfo& sqlinfo)
 {
 	memset(&dbinfo, 0, sizeof(MongoDBInfo));
 	memcpy_s(&dbinfo, sizeof(MongoDBInfo), &m_dbinfo, sizeof(MongoDBInfo));
+	memcpy_s(&sqlinfo, sizeof(SQLDBInfo), &m_sqldbinfo, sizeof(SQLDBInfo));
 }
 
 
@@ -1227,7 +1234,7 @@ void CReceiveEmailDlg::StopMain()
 	{
 		if (m_hProcess[i])
 		{
-			if (WaitForSingleObject(m_hProcess[i], 10000L) != WAIT_OBJECT_0)
+			if (WaitForSingleObject(m_hProcess[i], INFINITE) != WAIT_OBJECT_0)
 			{
 				TerminateThread(m_hProcess[i], 0);
 			}
@@ -1255,6 +1262,7 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 	string strUDIL, strName;
 	vector<string> UidlData;
 	std::vector<string>::iterator ite = UidlData.begin();
+	CString csUserName;
 #ifdef _DEBUG
 	CString csDebug;
 	char chDebug[512] = { 0 };
@@ -1272,17 +1280,24 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 			memset(&info, 0, sizeof(MailBoxInfo));
 			memset(&dbinfo, 0, sizeof(MongoDBInfo));
 			memset(&sqlinfo, 0, sizeof(SQLDBInfo));
+			csUserName.Empty();
 			UidlData.clear();
 			if (WaitForSingleObject(__HEVENT_MAIN_EXIT__, 10L) == WAIT_OBJECT_0)
-				break;
-			if (pDlg->GetMailBoxInfo(info))
 			{
-				pDlg->GetDataBaseInfo(dbinfo);
+#ifdef _DEBUG
+				OutputDebugString(_T("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\r\n"));
+#endif
+				break;
+			}
+			pDlg->GetMailBoxInfo(csUserName, info, 1);
+			if (!csUserName.IsEmpty())
+			{
+				pDlg->GetDataBaseInfo(dbinfo,sqlinfo);
 				wsprintf(szLogPath, _T("%s\\Log\\%s.txt"), __Main_Path__, info.szName);
 				WideCharToMultiByte(CP_ACP, 0, szLogPath, MAX_PATH, chLogPath, MAX_PATH, NULL, NULL);
 				pop3.SetLogPath(chLogPath);
 				pop3.SetInfo(info.szName, info, dbinfo, __Main_Path__, lstrlen(__Main_Path__));
-				lResult = pop3.Login(info.szServerAdd, info.lPort, info.szName, info.szPasswd);
+				lResult = pop3.Login(info.szServerAdd, info.lPort, csUserName, info.szPasswd);
 				if (lResult >= 0)
 				{
 					if (pop3.ConnectDataBase() && sql.Connect(sqlinfo))
@@ -1292,6 +1307,16 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 						{
 							for (i = 1; i < lResult + 1; i++)
 							{
+								if (WaitForSingleObject(__HEVENT_MAIN_EXIT__, 10L) == WAIT_OBJECT_0)
+								{
+#ifdef _DEBUG
+									OutputDebugString(_T("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\r\n"));
+#endif
+									pop3.QuitDataBase();
+									sql.CloseDB();
+									pop3.Close();
+									break;
+								}
 #ifdef _DEBUG
 								csDebug.Format(_T("%s Count = %d\r\n"), info.szName, i);
 								OutputDebugString(csDebug);
@@ -1349,6 +1374,7 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 								Sleep(50);
 							}
 							pop3.QuitDataBase();
+							pDlg->GetMailBoxInfo(csUserName, info,0);
 						}
 					}
 				}
@@ -1363,6 +1389,9 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 #endif
 				}
 				pop3.Close();
+#ifdef _DEBUG
+				//break;
+#endif
 			}
 			else
 			{

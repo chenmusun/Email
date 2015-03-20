@@ -225,14 +225,6 @@ long POP3::GetEMLFile(long lCurrPos,const string& strUIDL)
 		{
 			n = 0;
 			n = m_Socket.ReceiveData(chTemp, 65535);
-			if (!pMyJob->Wait())
-			{
-#ifdef DEBUG
-				OutputDebugString(_T("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\n"));
-#endif
-				strEMail.clear();
-				break;
-			}
 			if (n > 0)
 			{
 				strEMail.append(chTemp);
@@ -281,10 +273,6 @@ long POP3::GetEMLFile(long lCurrPos,const string& strUIDL)
 			Sleep(10);
 		} while (1);
 
-		if (!pMyJob->Wait())
-		{
-			strEMail.clear();
-		}
 		if (strEMail.length()>0 && !m_bFailed)
 		{
 			error = fopen_s(&pFile, chPath, "w+b");

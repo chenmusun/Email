@@ -91,8 +91,8 @@ public:
 	BOOL LoadFromConfig();//º”‘ÿ≈‰÷√Œƒº˛
 	virtual void OnCancel();
 	afx_msg void OnDestroy();
-	BOOL GetMailBoxInfo(MailBoxInfo& info,long lStatus=0);
-	void GetDataBaseInfo(MongoDBInfo& dbinfo);
+	BOOL GetMailBoxInfo(CString&csUserName,MailBoxInfo& info,long lStatus=0);
+	void GetDataBaseInfo(MongoDBInfo& dbinfo,SQLDBInfo& sqlinfo);
 	
 	afx_msg void OnBnClickedButtonStop();
 	void LayoutDialog(long cx, long cy);
