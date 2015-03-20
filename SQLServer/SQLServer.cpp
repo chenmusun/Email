@@ -584,7 +584,7 @@ void CADODatabase::dump_com_error(_com_error &e)
 	m_strLastError = _T("Connection String = " + GetConnectionString() + '\n' + ErrorStr);
 	m_dwLastError = e.Error();
 #ifdef _DEBUG
-	AfxMessageBox(ErrorStr, MB_OK | MB_ICONERROR);
+	//AfxMessageBox(ErrorStr, MB_OK | MB_ICONERROR);
 #endif
 }
 
@@ -2489,7 +2489,7 @@ void CADORecordset::dump_com_error(_com_error &e)
 	m_strLastError = _T("Query = " + GetQuery() + '\n' + ErrorStr);
 	m_dwLastError = e.Error();
 #ifdef _DEBUG
-	AfxMessageBox(ErrorStr, MB_OK | MB_ICONERROR);
+	//AfxMessageBox(ErrorStr, MB_OK | MB_ICONERROR);
 #endif	
 	// throw CADOException(e.Error(), e.Description());
 }
@@ -2692,7 +2692,7 @@ void CADOCommand::dump_com_error(_com_error &e)
 	m_strLastError = ErrorStr;
 	m_dwLastError = e.Error();
 #ifdef _DEBUG
-	AfxMessageBox(ErrorStr, MB_OK | MB_ICONERROR);
+	//AfxMessageBox(ErrorStr, MB_OK | MB_ICONERROR);
 #endif	
 	// throw CADOException(e.Error(), e.Description());
 }
@@ -3138,7 +3138,7 @@ void CADOParameter::dump_com_error(_com_error &e)
 	m_dwLastError = e.Error();
 
 #ifdef _DEBUG
-	AfxMessageBox(ErrorStr, MB_OK | MB_ICONERROR);
+	//AfxMessageBox(ErrorStr, MB_OK | MB_ICONERROR);
 #endif	
 	// throw CADOException(e.Error(), e.Description());
 }

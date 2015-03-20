@@ -1200,7 +1200,11 @@ long CMailAnalysis::SaveToFile(const CString& csCode, LPCTSTR lpFileName, int nC
 			CFile stream;
 			BOOL bRet = stream.Open(csSavePath, CFile::modeCreate | CFile::modeWrite);
 			if (bRet == FALSE)
+			{
+				MSAFE_DELETE(sbuf);
+				MSAFE_DELETE(pText);
 				return 0;
+			}
 			stream.Write(sbuf, j);
 			stream.Close();
 			MSAFE_DELETE(sbuf);

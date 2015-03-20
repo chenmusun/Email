@@ -501,32 +501,51 @@ void CReceiveEmailDlg::OnDestroy()
 BOOL CReceiveEmailDlg::GetMailBoxInfo(CString&csUserName, MailBoxInfo& info, long lStatus)
 {
 	::EnterCriticalSection(&_cs_);
+#ifdef _DEBUG
+	CString csDebug;
+#endif
 	BOOL bFound = FALSE;
-	if (m_lLastPos > m_mailList.size())
+	if (m_lLastPos > m_mailList.size()-1)
 		m_lLastPos = 0;
-	long lCurrPos(0);
+	long lCurrPos(0),lCount(0);
 	memset(&info, 0, sizeof(MailBoxInfo));
 	map<CString, MailBoxInfo>::iterator ite = m_mailList.begin();
-	while(ite != m_mailList.end())
+	if (lStatus == 1)
 	{
-		if (lCurrPos == m_lLastPos)
+		while (TRUE)
 		{
-			if (ite->second.lStatus == lStatus)
+			if (lCount>1)
 				break;
-			else
-				ite->second.lStatus = lStatus;
-			csUserName = ite->first;
-			wsprintf(info.szName, ite->second.szName);
-			wsprintf(info.szPasswd, ite->second.szPasswd);
-			wsprintf(info.szServerAdd, ite->second.szServerAdd);
-			info.lPort = ite->second.lPort;
-			wsprintf(info.szAbbreviation, ite->second.szAbbreviation);
-			info.bSendMail = ite->second.bSendMail;
-			wsprintf(info.szMailAdd, ite->second.szMailAdd);
-			m_lLastPos++;
+			if (ite->second.lStatus ==0 && lCurrPos >= m_lLastPos)
+			{
+				csUserName = ite->first;
+				wsprintf(info.szName, ite->second.szName);
+				wsprintf(info.szPasswd, ite->second.szPasswd);
+				wsprintf(info.szServerAdd, ite->second.szServerAdd);
+				info.lPort = ite->second.lPort;
+				wsprintf(info.szAbbreviation, ite->second.szAbbreviation);
+				info.bSendMail = ite->second.bSendMail;
+				wsprintf(info.szMailAdd, ite->second.szMailAdd);
+				m_lLastPos++;
+				ite->second.lStatus = 1;
+				break;
+			}
+			ite++;
+			if (ite == m_mailList.end())
+			{
+				ite = m_mailList.begin();
+				lCount++;
+			}
+			lCurrPos++;
 		}
-		lCurrPos++;
-		ite++;
+	}
+	else
+	{
+		ite = m_mailList.find(csUserName);
+		if (ite != m_mailList.end())
+		{
+			ite->second.lStatus = 0;
+		}
 	}
 	::LeaveCriticalSection(&_cs_);
 	return TRUE;
@@ -1332,7 +1351,7 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 									{
 										if (pop3.GetEMLFile(i, strUDIL) == 0)
 										{
-											if (pDlg->MailAnalysis(pop3, sql, strUDIL, info.szAbbreviation, 1)<0)
+											if (pDlg->MailAnalysis(pop3, sql, strUDIL, info.szAbbreviation, 0)<0)
 											{
 												sprintf_s(chDebug, 512, "Analysis [%s] Error!", strUDIL.c_str());
 #ifdef _DEBUG
