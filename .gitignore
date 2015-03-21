@@ -63,3 +63,6 @@ ReceiveEmail/Mail
 ReceiveEmail/Email
 ReceiveEmail/Log
 *.ini.bak
+*.tlh
+ReceiveEmail/x64/Release/msado25.tli
+*.tlh

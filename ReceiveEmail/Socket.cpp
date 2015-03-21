@@ -3,6 +3,8 @@
 #include <winsock2.h>
 #include <Ws2tcpip.h>
 #include "../ReceiveEmail/public.h"
+
+//#define _WINSOCK_DEPRECATED_NO_WARNINGS
 MailSocket::MailSocket() :m_MySocket(INVALID_SOCKET)
 {}
 
@@ -27,7 +29,7 @@ BOOL MailSocket::CloseMySocket()
 
 long MailSocket::InitSocket(LPCTSTR lpAddr, UINT nHostPort)
 {
-	struct hostent *remoteHost;
+	//struct hostent *remoteHost;
 	char chSrvAdd[64] = { 0 }, chResult[256] = { 0 }, chPort[32] = {0};
 	int iResult(0), i(0);
 	long noDelay(1);
@@ -52,12 +54,14 @@ long MailSocket::InitSocket(LPCTSTR lpAddr, UINT nHostPort)
 	}
 	WideCharToMultiByte(CP_ACP, 0, lpAddr, 64, chSrvAdd, 64, NULL, NULL);
 	sockaddr_in addr_sev;
-	addr_sev.sin_family = AF_INET;
-	addr_sev.sin_addr.s_addr = inet_addr(chSrvAdd);
-	addr_sev.sin_port = htons(nHostPort);
-	remoteHost = gethostbyname(chSrvAdd);
+	memset(&addr_sev,0,sizeof(sockaddr_in));
+	////addr_sev.sin_family = AF_INET;
+	//addr_sev.sin_addr.s_addr = inet_addr(chSrvAdd);
+	//inet_pton(AF_INET, chSrvAdd, (PVOID)addr_sev.sin_addr.s_addr);
+	//addr_sev.sin_port = htons(nHostPort);
+	//remoteHost = gethostbyname(chSrvAdd);
 	
-	/*DWORD dwRetval(0);
+	DWORD dwRetval(0);
 	inet_pton(AF_INET, chSrvAdd, (PVOID)addr_sev.sin_addr.s_addr);
 	BOOL bFound = FALSE;
 	sprintf_s(chPort,32,"%d",nHostPort);
@@ -84,9 +88,9 @@ long MailSocket::InitSocket(LPCTSTR lpAddr, UINT nHostPort)
 		freeaddrinfo(result);
 		return NO_INTERNET;
 	}
-	freeaddrinfo(result);*/
+	freeaddrinfo(result);
 
-	i = 0;
+	/*i = 0;
 	if (remoteHost && remoteHost->h_addrtype == AF_INET)
 	{
 		while (remoteHost->h_addr_list[i] != 0) {
@@ -94,7 +98,7 @@ long MailSocket::InitSocket(LPCTSTR lpAddr, UINT nHostPort)
 			sprintf_s(chResult, 256, "\tIP Address #%d: %s\n", i, inet_ntoa(addr_sev.sin_addr));
 		}
 	}
-	else return NO_INTERNET;
+	else return NO_INTERNET;*/
 	u_long iMode = 1;
 	iResult = ::ioctlsocket(m_MySocket, FIONBIO, &iMode);//设置成非阻塞模式
 	if (iResult != NO_ERROR)

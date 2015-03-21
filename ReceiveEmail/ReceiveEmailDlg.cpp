@@ -1282,10 +1282,8 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 	vector<string> UidlData;
 	std::vector<string>::iterator ite = UidlData.begin();
 	CString csUserName;
-#ifdef _DEBUG
-	CString csDebug;
 	char chDebug[512] = { 0 };
-#endif
+	CString csDebug;
 	try
 	{
 		POP3 pop3;
