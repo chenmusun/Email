@@ -77,7 +77,7 @@ long MailSocket::InitSocket(LPCTSTR lpAddr, UINT nHostPort)
 	dwRetval = getaddrinfo(chSrvAdd, chPort, &hints, &result);
 	if (dwRetval != 0)
 	{
-
+		return GETADDRINFO_ERROR;
 	}
 	for (ptr = result; ptr != NULL; ptr = ptr->ai_next)
 	{

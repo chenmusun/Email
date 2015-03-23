@@ -96,6 +96,9 @@ inline LPTSTR GetErrorMessage(DWORD error, LPTSTR lpMessage)
 	case HOST_UNREACHABLE:
 		lstrcpy(lpMessage, _T("目标主机不可达！"));
 		break;
+	case GETADDRINFO_ERROR:
+		lstrcpy(lpMessage, _T("获取地址信息失败！"));
+		break;
 	default:
 		break;
 	}

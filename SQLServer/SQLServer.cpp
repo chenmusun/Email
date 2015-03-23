@@ -216,11 +216,14 @@ long CSQLServer::SaveToDB(EMAIL_ITEM& email)
 void CSQLServer::GetGUID(CString &guid)
 {
 	guid.Empty();
-
 	try
 	{
-		if (m_pGuidRs->Open(_T("SELECT newid() as GUID")) == FALSE) throw;
-		if (m_pGuidRs->GetFieldValue(_T("GUID"), guid) == FALSE) throw;
+		if (m_db.IsOpen() && m_pGuidRs)
+		{
+			if (m_pGuidRs->Open(_T("SELECT newid() as GUID")) == FALSE) throw;
+			if (m_pGuidRs->GetFieldValue(_T("GUID"), guid) == FALSE) throw;
+			m_pGuidRs->Close();
+		}
 	}
 	catch (_com_error &e)
 	{
@@ -232,8 +235,6 @@ void CSQLServer::GetGUID(CString &guid)
 		OutputDebugString(csDebug);
 #endif
 	}
-
-	m_pGuidRs->Close();
 }
 
 BOOL CSQLServer::Connect(SQLDBInfo& sqlinfo, int nType)

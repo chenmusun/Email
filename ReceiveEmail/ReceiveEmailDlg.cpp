@@ -335,27 +335,26 @@ HCURSOR CReceiveEmailDlg::OnQueryDragIcon()
 void CReceiveEmailDlg::OnBnClickedMfcbuttonSet()
 {
 	// TODO:  在此添加控件通知处理程序代码
-	DWORD id(0);
+	StopMain();
+	DWORD dwId[5] = { 0 };
 	if (m_listMailBox.GetItemCount() > 0)
 	{
-		/*if (NULL == m_pTestTheradPool)
+		if (__HEVENT_MAIN_EXIT__ == NULL)
+			__HEVENT_MAIN_EXIT__ = CreateEvent(NULL, TRUE, FALSE, NULL);
+		for (int i = 0; i < sizeof(m_hProcess) / sizeof(m_hProcess[0]); i++)
 		{
-			m_pTestTheradPool = new CFThreadPool<MyJobParam*>(this);
-			if (m_mailList.size() < 5)
-				m_pTestTheradPool->Start(1, 1);
-			else m_pTestTheradPool->Start(2, 5);
-		}*/
-		if (__HEVENT_EXIT__ == NULL)
-			__HEVENT_EXIT__ = CreateEvent(NULL, TRUE, FALSE, NULL);
-		if (m_hMain == NULL)
-		{
+			if (m_hProcess[i] == NULL)
+			{
+				m_hProcess[i] = CreateThread(NULL, 0, _AfxMainProcess, (LPVOID)this, 0, &dwId[i]);
 #ifdef _DEBUG
-			SetShowInfo(0, _T("test@go-goal.com--[89%]--解析[ MD50000000395MSG2089395304311982956754580.eml ]"),50);
+				CString csDebug;
+				csDebug.Format(_T("ThreadID = [%d]\r\n"),dwId[i]);
+				OutputDebugString(csDebug);
 #endif
-			//m_hMain = CreateThread(NULL, 0, _AfxMain, (LPVOID)this, 0, &id);
-			m_btnStop.EnableWindow(TRUE);
-			m_btnSet.EnableWindow(FALSE);
+			}
 		}
+		m_btnStop.EnableWindow(TRUE);
+		m_btnSet.EnableWindow(FALSE);
 	}
 	else
 		AfxMessageBox(_T("请检查配置文件！"));
@@ -562,10 +561,9 @@ void CReceiveEmailDlg::GetDataBaseInfo(MongoDBInfo& dbinfo, SQLDBInfo& sqlinfo)
 void CReceiveEmailDlg::OnBnClickedButtonStop()
 {
 	// TODO:  在此添加控件通知处理程序代码
-	Stop();
+	StopMain();
 	m_btnStop.EnableWindow(FALSE);
 	m_btnSet.EnableWindow(TRUE);
-	WriteToConfig();
 }
 
 void CReceiveEmailDlg::LayoutDialog(long cx, long cy)
@@ -1079,20 +1077,7 @@ void CReceiveEmailDlg::OnBnClickedButtonSet()
 	if (setting.DoModal() == IDOK)
 	{
 		AfxMessageBox(_T("Test"));
-	}*/
-#ifdef _DEBUG
-	if (m_csTestText.IsEmpty())
-		m_csTestText.Format(_T("MD50000021244MSG15341385304331051223377027"));
-#endif
-	StopMain();
-	DWORD dwId[5] = { 0 };
-	if (__HEVENT_MAIN_EXIT__ == NULL)
-		__HEVENT_MAIN_EXIT__ = CreateEvent(NULL, TRUE, FALSE, NULL);
-	for (int i = 0; i < sizeof(m_hProcess) / sizeof(m_hProcess[0]);i++)
-	{
-		if (m_hProcess[i]==NULL)
-			m_hProcess[i] = CreateThread(NULL, 0, _AfxMainProcess, (LPVOID)this, 0, &dwId[i]);
-	}
+	}*/	
 }
 
 void CReceiveEmailDlg::GetForwardInfo(ForwardSet& fdsinfo)
@@ -1335,7 +1320,7 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 									break;
 								}
 #ifdef _DEBUG
-								csDebug.Format(_T("%s Count = %d\r\n"), info.szName, i);
+								csDebug.Format(_T("%s Count = %d\tTotal = %d\r\n"), info.szName, i,lResult);
 								OutputDebugString(csDebug);
 #endif
 								if (pop3.GetStatus())
@@ -1413,7 +1398,8 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 			else
 			{
 #ifdef _DEBUG
-				OutputDebugString(_T("Thread will wait 5sec!\r\n"));
+				csDebug.Format(_T("Thread [%d] will wait 5sec!\r\n"), GetCurrentThreadId());
+				OutputDebugString(csDebug);
 #endif
 				if (WaitForSingleObject(__HEVENT_MAIN_EXIT__, 5000L) == WAIT_OBJECT_0)
 					break;

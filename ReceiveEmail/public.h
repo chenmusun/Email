@@ -4,6 +4,7 @@
 
 enum ErrorCode
 {
+	SUCCESS = 0,
 	SOCKETINIT_ERROR = -1,
 	SEND_ERROR = -2,
 	RECEIVE_ERROR = -3,
@@ -12,7 +13,7 @@ enum ErrorCode
 	LOGIN_ERROR_LOCK = -6,
 	RETURN_FAIL = -7,
 	HOST_UNREACHABLE = -8,
-	SUCCESS = 0
+	GETADDRINFO_ERROR = -9
 };
 
 const UINT __umymessage__fres_hprogress__(WM_USER + 0x1001);//跟新进度条消息
