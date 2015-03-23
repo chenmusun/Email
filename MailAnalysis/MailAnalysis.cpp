@@ -545,6 +545,8 @@ long CMailAnalysis::AnalysisBoundary(const CString& csBoundary, vector<ATTACH>& 
 			{
 				vector<ATTACH> attach;
 				attach = AnalysisBody(ite->csText, stBouHead.csBoundary);
+				if (!ite->csText.IsEmpty())
+					ite->csText.TrimLeft();
 				AnalysisBoundary(stBouHead.csBoundary, attach);
 			}
 				break;
@@ -982,6 +984,7 @@ vector<ATTACH> CMailAnalysis::AnalysisBody(const CString& csBody, const CString&
 	vector<ATTACH> stAttach;
 	CStringArray csaText, csaContent;
 	CString csTemp(csBody), csData, cskey, csEncodie, csHead, csText;
+	csTemp.TrimLeft();
 	int nOffset(0), nStart(0), nSize(0), nSave(-1), nKeyPos;
 	nSize = csTemp.GetLength();
 	do
@@ -1037,7 +1040,6 @@ vector<ATTACH> CMailAnalysis::AnalysisBody(const CString& csBody, const CString&
 					case _CONTENT_TRANSFER_ENCODING2_:
 					{
 						csaContent.Add(csData);
-						bText = TRUE;//对于多层嵌套有问题！！！！ 
 					}
 						break;
 					default:
@@ -1058,7 +1060,6 @@ vector<ATTACH> CMailAnalysis::AnalysisBody(const CString& csBody, const CString&
 					case _CONTENT_TRANSFER_ENCODING2_:
 					{
 						csaContent.Add(csData);
-						bText = TRUE;
 					}
 						break;
 					default:
@@ -1070,6 +1071,11 @@ vector<ATTACH> CMailAnalysis::AnalysisBody(const CString& csBody, const CString&
 					break;
 				}
 				nSave = -1;
+				if (n == sizeof(g_MailBoundaryHeadItem) / sizeof(g_MailBoundaryHeadItem[0])-1)
+				{
+					bText = TRUE;
+					csText.AppendFormat(_T("%s\n"), csData);
+				}
 			}
 		}
 		else
@@ -1080,10 +1086,13 @@ vector<ATTACH> CMailAnalysis::AnalysisBody(const CString& csBody, const CString&
 	return stAttach;
 }
 
-long CMailAnalysis::SaveToFile(const CString& csCode, LPCTSTR lpFileName, int nCharset, int nCodeType)
+long CMailAnalysis::SaveToFile(CString& csCode, LPCTSTR lpFileName, int nCharset, int nCodeType)
 {
 	char*pCode = NULL;
 	CString csSavePath, csDeCode,csFileName(lpFileName);
+	if (csCode.IsEmpty() || csFileName.IsEmpty())
+		return -1;
+	csCode.TrimLeft();
 	if ((GetFileAttributes(m_csSavePath) == 0xFFFFFFFF))
 		CreateDirectory(m_csSavePath, NULL);
 	if (csFileName.Find(_T(".")) < 0)
@@ -1108,13 +1117,14 @@ long CMailAnalysis::SaveToFile(const CString& csCode, LPCTSTR lpFileName, int nC
 	return 0;
 }
 
-long CMailAnalysis::SaveToFile(const CString& csCode, LPCTSTR lpFileName, int nCodeType)
+long CMailAnalysis::SaveToFile(CString& csCode, LPCTSTR lpFileName, int nCodeType)
 {
 	char*pCode = NULL;
 	CString csSavePath, csDeCode, csFileName(lpFileName);
 	string strDecode;
 	if (csCode.IsEmpty() || csFileName.IsEmpty())
 		return -1;
+	csCode.TrimLeft();
 	if ((GetFileAttributes(m_csSavePath) == 0xFFFFFFFF))
 		CreateDirectory(m_csSavePath, NULL);
 	if (csFileName.Find(_T(".")) < 0)

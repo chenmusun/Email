@@ -51,8 +51,8 @@ private:
 	void GetDispositionInfo(const CString& csSrc, CString& csDis, CString& csExtra);
 	void GetDescription(const CStringArray& csaSrc, CString& csDescription);
 	inline void SetMainPath(LPCTSTR lpPath){ wsprintf(m_szMainPath, _T("%s"), lpPath); }//设置当前路径
-	long SaveToFile(const CString& csCode, LPCTSTR lpFileName, int nCharset, int nCodeType);//保存文件
-	long SaveToFile(const CString& csCode, LPCTSTR lpFileName, int nCodeType);//保存文件
+	long SaveToFile(CString& csCode, LPCTSTR lpFileName, int nCharset, int nCodeType);//保存文件
+	long SaveToFile(CString& csCode, LPCTSTR lpFileName, int nCodeType);//保存文件
 private:
 	CStringArray m_csText;//原文
 	long long m_lHeadRowCount;//

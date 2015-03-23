@@ -509,13 +509,15 @@ BOOL CReceiveEmailDlg::GetMailBoxInfo(CString&csUserName, MailBoxInfo& info, lon
 	long lCurrPos(0),lCount(0);
 	memset(&info, 0, sizeof(MailBoxInfo));
 	map<CString, MailBoxInfo>::iterator ite = m_mailList.begin();
-	if (lStatus == 1)
+	switch (lStatus)
+	{
+	case 1:
 	{
 		while (TRUE)
 		{
-			if (lCount>1)
+			if (lCount > 1)
 				break;
-			if (ite->second.lStatus ==0 && lCurrPos >= m_lLastPos)
+			if (ite->second.lStatus == 0 && lCurrPos >= m_lLastPos)
 			{
 				csUserName = ite->first;
 				wsprintf(info.szName, ite->second.szName);
@@ -538,13 +540,31 @@ BOOL CReceiveEmailDlg::GetMailBoxInfo(CString&csUserName, MailBoxInfo& info, lon
 			lCurrPos++;
 		}
 	}
-	else
+		break;
+	case 0:
 	{
 		ite = m_mailList.find(csUserName);
 		if (ite != m_mailList.end())
 		{
 			ite->second.lStatus = 0;
 		}
+		else
+		{
+			int a = 0;
+		}
+	}
+		break;
+	case 3:
+	{
+		while (ite!=m_mailList.end())
+		{
+			ite->second.lStatus = 0;
+			ite++;
+		}
+	}
+		break;
+	default:
+		break;
 	}
 	::LeaveCriticalSection(&_cs_);
 	return TRUE;
@@ -1153,7 +1173,7 @@ void CReceiveEmailDlg::OnBnClickedButton1()
 	m_editpath.GetWindowText(m_csTestText);
 #ifdef _DEBUG
 	if (m_csTestText.IsEmpty())
-		m_csTestText.Format(_T("MD50000021244MSG15341385304331051223377027"));
+		m_csTestText.Format(_T("MD50000037639MSG710212304340091163091443"));
 #endif
 	if (!m_csTestText.IsEmpty())
 	{
@@ -1289,6 +1309,7 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 #ifdef _DEBUG
 				OutputDebugString(_T("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\r\n"));
 #endif
+				pDlg->GetMailBoxInfo(csUserName, info, 0);
 				break;
 			}
 			pDlg->GetMailBoxInfo(csUserName, info, 1);
@@ -1314,6 +1335,7 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 #ifdef _DEBUG
 									OutputDebugString(_T("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\r\n"));
 #endif
+									pDlg->GetMailBoxInfo(csUserName, info, 0);
 									pop3.QuitDataBase();
 									sql.CloseDB();
 									pop3.Close();
@@ -1358,18 +1380,15 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 								csDebug.Format(_T("%s Del-Count = %d\r\n"), info.szName, i);
 								OutputDebugString(csDebug);
 #endif
-								if (1)
+								strUDIL.clear();
+								strUDIL = pop3.GetUIDL(i);
+								if (strUDIL.length() > 0)
 								{
-									strUDIL.clear();
-									strUDIL = pop3.GetUIDL(i);
-									if (strUDIL.length() > 0)
+									ite = std::find(UidlData.begin(), UidlData.end(), strUDIL);
+									if (ite != UidlData.end())
 									{
-										ite = std::find(UidlData.begin(), UidlData.end(), strUDIL);
-										if (ite != UidlData.end())
-										{
-											if (pop3.DelEmail(i, strUDIL) == SUCCESS)
-												UidlData.erase(ite);
-										}
+										if (pop3.DelEmail(i, strUDIL) == SUCCESS)
+											UidlData.erase(ite);
 									}
 								}
 								else break;
@@ -1397,6 +1416,7 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 			}
 			else
 			{
+				//pDlg->GetMailBoxInfo(csUserName, info, 0);
 #ifdef _DEBUG
 				csDebug.Format(_T("Thread [%d] will wait 5sec!\r\n"), GetCurrentThreadId());
 				OutputDebugString(csDebug);
