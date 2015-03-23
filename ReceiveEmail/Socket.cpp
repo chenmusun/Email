@@ -29,7 +29,6 @@ BOOL MailSocket::CloseMySocket()
 
 long MailSocket::InitSocket(LPCTSTR lpAddr, UINT nHostPort)
 {
-	//struct hostent *remoteHost;
 	char chSrvAdd[64] = { 0 }, chResult[256] = { 0 }, chPort[32] = {0};
 	int iResult(0), i(0);
 	long noDelay(1);
@@ -53,30 +52,42 @@ long MailSocket::InitSocket(LPCTSTR lpAddr, UINT nHostPort)
 		return SOCKETINIT_ERROR;
 	}
 	WideCharToMultiByte(CP_ACP, 0, lpAddr, 64, chSrvAdd, 64, NULL, NULL);
-	sockaddr_in addr_sev;
+	/*sockaddr_in addr_sev;
 	memset(&addr_sev,0,sizeof(sockaddr_in));
-	////addr_sev.sin_family = AF_INET;
-	//addr_sev.sin_addr.s_addr = inet_addr(chSrvAdd);
-	//inet_pton(AF_INET, chSrvAdd, (PVOID)addr_sev.sin_addr.s_addr);
-	//addr_sev.sin_port = htons(nHostPort);
-	//remoteHost = gethostbyname(chSrvAdd);
+	addr_sev.sin_family = AF_INET;
+	addr_sev.sin_addr.s_addr = inet_addr(chSrvAdd);
+	inet_pton(AF_INET, chSrvAdd, (PVOID)addr_sev.sin_addr.s_addr);
+	addr_sev.sin_port = htons(nHostPort);
+	struct hostent *remoteHost=NULL;
+	remoteHost = gethostbyname(chSrvAdd);*/
 	
 	DWORD dwRetval(0);
+	struct sockaddr_in  addr_sev;
+	memset(&addr_sev, 0, sizeof(sockaddr_in));
 	inet_pton(AF_INET, chSrvAdd, (PVOID)addr_sev.sin_addr.s_addr);
 	BOOL bFound = FALSE;
-	sprintf_s(chPort,32,"%d",nHostPort);
+	sprintf_s(chPort, 32, "%d", nHostPort);
 	struct addrinfo *result = NULL;
 	struct addrinfo *ptr = NULL;
 	struct addrinfo hints;
 	ZeroMemory(&hints, sizeof(hints));
-	hints.ai_flags = AI_NUMERICHOST;
 	hints.ai_family = AF_UNSPEC;
+	hints.ai_socktype = SOCK_STREAM;
+	hints.ai_protocol = IPPROTO_TCP;
 	dwRetval = getaddrinfo(chSrvAdd, chPort, &hints, &result);
+	if (dwRetval != 0)
+	{
+
+	}
 	for (ptr = result; ptr != NULL; ptr = ptr->ai_next)
 	{
 		switch (ptr->ai_family)
 		{
 		case AF_INET:
+			memcpy_s(&addr_sev, sizeof(sockaddr_in), (struct sockaddr_in *) ptr->ai_addr, sizeof(sockaddr_in));
+#ifdef _DEBUG
+			sprintf_s(chResult, 256, "\tIP Address #%d: %s\n", i, inet_ntoa(addr_sev.sin_addr));
+#endif
 			bFound = TRUE;
 			break;
 		default:
