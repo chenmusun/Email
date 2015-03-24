@@ -1464,8 +1464,7 @@ long CReceiveEmailDlg::MailAnalysis(POP3& pop3, CSQLServer& sql, const string& s
 		}
 		pop3.SaveFileToDB(ana.GetEmailItem());
 		sql.SaveToDB(ana.GetEmailItem());
-		ana.Clear(0);
-		sql.CloseDB();
+		ana.Clear(lType);
 #ifdef _DEBUG
 		dwTime = GetTickCount() - dwTime;
 		CString csDebug;
