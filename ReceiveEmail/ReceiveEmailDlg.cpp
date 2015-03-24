@@ -1081,8 +1081,7 @@ DWORD WINAPI  CReceiveEmailDlg::_AfxMainTestAna(LPVOID lpParam)
 		OutputDebugString(csDebug);
 		pDlg->m_log.Log(csDebug, csDebug.GetLength());
 #endif
-		break;
-	} while (0);
+	} while (1);
 	if (bRet)
 		pDlg->PostMessage(__umymessage__anacomplete__);
 	else pDlg->PostMessage(__umymessage__anauncomplete__);
@@ -1173,7 +1172,7 @@ void CReceiveEmailDlg::OnBnClickedButton1()
 	m_editpath.GetWindowText(m_csTestText);
 #ifdef _DEBUG
 	if (m_csTestText.IsEmpty())
-		m_csTestText.Format(_T("MD50000037639MSG710212304340091163091443"));
+		m_csTestText.Format(_T("MD50000001611MSG130825304347762836833635"));
 #endif
 	if (!m_csTestText.IsEmpty())
 	{
@@ -1392,7 +1391,7 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 									}
 								}
 								else break;
-								Sleep(50);
+								Sleep(10);
 							}
 							pop3.QuitDataBase();
 							pDlg->GetMailBoxInfo(csUserName, info,0);
@@ -1434,6 +1433,7 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 
 long CReceiveEmailDlg::MailAnalysis(POP3& pop3, CSQLServer& sql, const string& strUIDL, LPCTSTR lpAbb, long lType)
 {
+	BOOL bRet = TRUE;
 	CString csUIDL(strUIDL.c_str()), csPath(pop3.GetCurrPath());
 	CMailAnalysis ana;
 	ana.SetAbbreviation(lpAbb);
@@ -1442,24 +1442,37 @@ long CReceiveEmailDlg::MailAnalysis(POP3& pop3, CSQLServer& sql, const string& s
 	DWORD dwTime(0);
 	dwTime = GetTickCount();
 #endif
-	if (ana.AnalysisHead() < 0)
+	do
 	{
-		ana.Clear(1);
-		return -1;
-	}
-	if (ana.AnalysisBody(ana.GetBoundry(), ana.GetHeadRowCount()) < 0)
-	{
-		ana.Clear(1);
-		return -1;
-	}
-	if (ana.AnalysisBoundary(ana.GetBoundry(), ana.GetAttach()) < 0)
-	{
-		ana.Clear(1);
-		return -1;
-	}
-	sql.SaveToDB(ana.GetEmailItem());
-	pop3.SaveFileToDB(ana.GetEmailItem());
-	ana.Clear(lType);
+		if (ana.AnalysisHead() < 0)
+		{
+			ana.Clear(1);
+			bRet = FALSE;
+			break;
+		}
+		if (ana.AnalysisBody(ana.GetBoundry(), ana.GetHeadRowCount()) < 0)
+		{
+			ana.Clear(1);
+			bRet = FALSE;
+			break;
+		}
+		if (ana.AnalysisBoundary(ana.GetBoundry(), ana.GetAttach()) < 0)
+		{
+			ana.Clear(1);
+			bRet = FALSE;
+			break;
+		}
+		pop3.SaveFileToDB(ana.GetEmailItem());
+		sql.SaveToDB(ana.GetEmailItem());
+		ana.Clear(0);
+		sql.CloseDB();
+#ifdef _DEBUG
+		dwTime = GetTickCount() - dwTime;
+		CString csDebug;
+		csDebug.Format(_T("Process Time = %d\tAnalysis [%s] Complete!\r\n"), dwTime / 1000, csUIDL);
+		OutputDebugString(csDebug);
+#endif
+	} while (1);
 #ifdef _DEBUG
 	dwTime = GetTickCount() - dwTime;
 	CString csDebug;
@@ -1467,5 +1480,8 @@ long CReceiveEmailDlg::MailAnalysis(POP3& pop3, CSQLServer& sql, const string& s
 	OutputDebugString(csDebug);
 	OutputDebugString(_T("\r\n"));
 #endif
-	return 0;
+	if (bRet)
+		return 0;
+	else
+		return -1;
 }
