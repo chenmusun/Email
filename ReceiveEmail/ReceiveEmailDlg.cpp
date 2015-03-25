@@ -1081,7 +1081,7 @@ DWORD WINAPI  CReceiveEmailDlg::_AfxMainTestAna(LPVOID lpParam)
 		OutputDebugString(csDebug);
 		pDlg->m_log.Log(csDebug, csDebug.GetLength());
 #endif
-	} while (1);
+	} while (0);
 	if (bRet)
 		pDlg->PostMessage(__umymessage__anacomplete__);
 	else pDlg->PostMessage(__umymessage__anauncomplete__);
@@ -1172,7 +1172,7 @@ void CReceiveEmailDlg::OnBnClickedButton1()
 	m_editpath.GetWindowText(m_csTestText);
 #ifdef _DEBUG
 	if (m_csTestText.IsEmpty())
-		m_csTestText.Format(_T("MD50000001611MSG130825304347762836833635"));
+		m_csTestText.Format(_T("MD50000022573MSG173703043447316636099"));
 #endif
 	if (!m_csTestText.IsEmpty())
 	{
@@ -1222,7 +1222,7 @@ void CReceiveEmailDlg::StopTest()
 		SetEvent(__HEVENT_TEST_EXIT__);
 	if (m_hMainTest)
 	{
-		if (WaitForSingleObject(m_hMainTest, INFINITE) != WAIT_OBJECT_0)
+		if (WaitForSingleObject(m_hMainTest, 10000L) != WAIT_OBJECT_0)
 		{
 			TerminateThread(m_hMainTest, 0);
 		}
@@ -1257,7 +1257,7 @@ void CReceiveEmailDlg::StopMain()
 	{
 		if (m_hProcess[i])
 		{
-			if (WaitForSingleObject(m_hProcess[i], INFINITE) != WAIT_OBJECT_0)
+			if (WaitForSingleObject(m_hProcess[i], 10000L) != WAIT_OBJECT_0)
 			{
 				TerminateThread(m_hProcess[i], 0);
 			}
@@ -1280,7 +1280,7 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 	MongoDBInfo dbinfo;
 	SQLDBInfo sqlinfo;
 	TCHAR szLogPath[MAX_PATH] = { 0 };
-	char chFilePath[MAX_PATH] = { 0 }, chLogPath[MAX_PATH] = { 0 };
+	char chTemp[MAX_PATH] = { 0 }, chLogPath[MAX_PATH] = { 0 };
 	long lResult(0), lReturnvalue(0), n(0), lCount(0),i(1);
 	string strUDIL, strName;
 	vector<string> UidlData;
@@ -1301,6 +1301,7 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 			memset(&info, 0, sizeof(MailBoxInfo));
 			memset(&dbinfo, 0, sizeof(MongoDBInfo));
 			memset(&sqlinfo, 0, sizeof(SQLDBInfo));
+			memset(&chTemp, 0, MAX_PATH);
 			csUserName.Empty();
 			UidlData.clear();
 			if (WaitForSingleObject(__HEVENT_MAIN_EXIT__, 10L) == WAIT_OBJECT_0)
@@ -1319,6 +1320,8 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 				WideCharToMultiByte(CP_ACP, 0, szLogPath, MAX_PATH, chLogPath, MAX_PATH, NULL, NULL);
 				pop3.SetLogPath(chLogPath);
 				pop3.SetInfo(info.szName, info, dbinfo, __Main_Path__, lstrlen(__Main_Path__));
+				WideCharToMultiByte(CP_ACP, 0, info.szAbbreviation, 64, chTemp, MAX_PATH, NULL, NULL);
+				strName = chTemp;
 				lResult = pop3.Login(info.szServerAdd, info.lPort, csUserName, info.szPasswd);
 				if (lResult >= 0)
 				{
@@ -1462,16 +1465,23 @@ long CReceiveEmailDlg::MailAnalysis(POP3& pop3, CSQLServer& sql, const string& s
 			bRet = FALSE;
 			break;
 		}
-		pop3.SaveFileToDB(ana.GetEmailItem());
-		sql.SaveToDB(ana.GetEmailItem());
-		ana.Clear(lType);
+		if (sql.SaveToDB(ana.GetEmailItem()) == 0)
+		{
+			pop3.SaveFileToDB(ana.GetEmailItem());
+			ana.Clear(lType);
+		}
+		else
+		{
+			ana.Clear(0);
+		}
+		
 #ifdef _DEBUG
 		dwTime = GetTickCount() - dwTime;
 		CString csDebug;
 		csDebug.Format(_T("Process Time = %d\tAnalysis [%s] Complete!\r\n"), dwTime / 1000, csUIDL);
 		OutputDebugString(csDebug);
 #endif
-	} while (1);
+	} while (0);
 #ifdef _DEBUG
 	dwTime = GetTickCount() - dwTime;
 	CString csDebug;

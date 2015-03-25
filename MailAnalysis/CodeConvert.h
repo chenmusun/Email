@@ -28,7 +28,10 @@ public:
 
 };
 
+BYTE GetB64Code(char cChar);
 std::string base64_encode(const string& src);
 std::string base64_decode(const string & src);
 std::string quotedprintable_encode(const string&src);
 std::string quotedprintable_decode(const string&src);
+BOOL base64_decode(const char* pcSrcData, long lDataSize, char* pDestData, long &lDestSize);
+BOOL quotedprintable_decode(const char* pcSrcData, long lDataSize, char* pDestData, long &lDestSize);

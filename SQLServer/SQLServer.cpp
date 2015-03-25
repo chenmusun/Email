@@ -155,17 +155,19 @@ long CSQLServer::SaveToDB(EMAIL_ITEM& email)
 				if (!csPath.IsEmpty())
 				{
 					size = 0;
-					file.Open(csPath, CFile::modeRead);
-					size = file.GetLength();
-					pContentData = new char[size + 1];
-					memset(pContentData, 0, size + 1);
-					for (DWORD index = 0; index < size; index)
+					if(file.Open(csPath, CFile::modeRead))
 					{
-						index += file.Read(pContentData + index, size - index);
+						size = file.GetLength();
+						pContentData = new char[size + 1];
+						memset(pContentData, 0, size + 1);
+						for (DWORD index = 0; index < size; index)
+						{
+							index += file.Read(pContentData + index, size - index);
+						}
+						file.Close();
+						if (pContentData != NULL && size > 0)
+							m_pEMRs->AppendChunk(_T("EmailContent"), pContentData, size + 1);
 					}
-					file.Close();
-					if (pContentData != NULL && size > 0)
-						m_pEMRs->AppendChunk(_T("EmailContent"), pContentData, size);
 				}
 				if (pContentData != NULL&& size > 0)
 				{

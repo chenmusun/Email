@@ -11,8 +11,6 @@
 #define new DEBUG_NEW
 #endif
 
-const char BCODE[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
-
 
 TCHAR  g_MailHeadItem[][50] = {
 	_T("date:"),			//日期和时间 
@@ -109,14 +107,6 @@ void CMailAnalysis::Test()
 }
 
 
-BYTE GetBCode(char c)
-{
-	for (BYTE i = 0; i < sizeof(BCODE); i++)
-	{
-		if (c == BCODE[i]) return i;
-	}
-	return -1;
-}
 
 long CMailAnalysis::LoadFile(LPCTSTR lpPath, LPCTSTR lpUIDL, long lType)
 {
@@ -471,12 +461,18 @@ long CMailAnalysis::AnalysisBody(const CString& csBoundry, long long lCurrentRow
 			if (csTemp.IsEmpty() && !bFirst)//空格之后为内容
 			{
 				lStatus = 1;
+				continue;
 			}
 			switch (lStatus)
 			{
 			case 0:
-				csHead.AppendFormat(_T("%s\n"), csItem);
-				csaHead.Add(csItem);
+			{
+				if (!csItem.IsEmpty())
+				{
+					csHead.AppendFormat(_T("%s\n"), csItem);
+					csaHead.Add(csItem);
+				}
+			}
 				break;
 			case 1:
 				csText.AppendFormat(_T("%s\n"), csItem);
@@ -507,7 +503,7 @@ long CMailAnalysis::AnalysisBoundary(const CString& csBoundary, vector<ATTACH>& 
 			case TEXT_PLAIN:
 			{
 				wsprintf(chMainname, _T("main%d.txt"), m_lAttachmentCount);
-				if (SaveToFile(ite->csText, chMainname, stBouHead.lEncode) == 0)
+				if (SaveToFile(ite->csText, chMainname, stBouHead.lCharset,stBouHead.lEncode) == 0)
 				{
 					attachfile.Init();
 					attachfile.lType = 0;
@@ -518,13 +514,12 @@ long CMailAnalysis::AnalysisBoundary(const CString& csBoundary, vector<ATTACH>& 
 					m_stEmail.vecAttachFiles.push_back(attachfile);
 					m_lAttachmentCount++;
 				}
-				
 			}
 				break;
 			case TEXT_HTML://
 			{
 				wsprintf(chMainname, _T("main%d.html"), m_lAttachmentCount);
-				if (SaveToFile(ite->csText, chMainname, stBouHead.lEncode) == 0)
+				if (SaveToFile(ite->csText, chMainname, stBouHead.lCharset, stBouHead.lEncode) == 0)
 				{
 					attachfile.Init();
 					attachfile.lType = 0;
@@ -696,6 +691,8 @@ long CMailAnalysis::AnalysisBoundaryHead(list<CString>& lsHead, const CString& c
 			info.lCharset = UTF8;
 		else if (csExtra.Find(_T("iso-8859-1")) >= 0)
 			info.lCharset = UTF8;
+		else if (csExtra.Find(_T("gbk")) >= 0)
+			info.lCharset = GBK;
 		else info.lCharset = UTF8;
 	}
 		break;
@@ -775,6 +772,8 @@ long CMailAnalysis::GetContentInfo(const CString& csSrc, CString& csContent, CSt
 			lConttype = IMG_JPG;
 		else if (csContentType.Find(_T("application/msword")) >= 0)
 			lConttype = APP_MSWD;
+		else if (csContentType.Find(_T("application/vnd.openxmlformats-officedocument.wordprocessingml.document")) >= 0)
+			lConttype = APP_MSWD;
 		else if (csContentType.Find(_T("application/mspowerpoint")) >= 0)
 			lConttype = APP_MSPT;
 		else lConttype = UNKNOWN_TYPE;
@@ -818,7 +817,7 @@ long CMailAnalysis::GetContentInfo(const CString& csSrc, CString& csContent, CSt
 								}
 								else
 								{
-									nPos += 2;
+									//nPos += 2;
 									csNameTemp = csName.Mid(nLast, nPos - nLast);
 									nLast = nPos + 1;
 									csNameTemp.Replace(_T("\t"), _T(""));
@@ -919,7 +918,7 @@ void CMailAnalysis::GetDispositionInfo(const CString& csSrc, CString& csDis, CSt
 							}
 							else
 							{
-								nPos += 2;
+								//nPos += 2;
 								csFNTemp = csText.Mid(nLast, nPos - nLast);
 								nLast = nPos + 1;
 								csFNTemp.Replace(_T("\t"), _T(""));
@@ -1092,7 +1091,6 @@ long CMailAnalysis::SaveToFile(CString& csCode, LPCTSTR lpFileName, int nCharset
 	CString csSavePath, csDeCode,csFileName(lpFileName);
 	if (csCode.IsEmpty() || csFileName.IsEmpty())
 		return -1;
-	csCode.TrimLeft();
 	if ((GetFileAttributes(m_csSavePath) == 0xFFFFFFFF))
 		CreateDirectory(m_csSavePath, NULL);
 	if (csFileName.Find(_T(".")) < 0)
@@ -1124,7 +1122,6 @@ long CMailAnalysis::SaveToFile(CString& csCode, LPCTSTR lpFileName, int nCodeTyp
 	string strDecode;
 	if (csCode.IsEmpty() || csFileName.IsEmpty())
 		return -1;
-	csCode.TrimLeft();
 	if ((GetFileAttributes(m_csSavePath) == 0xFFFFFFFF))
 		CreateDirectory(m_csSavePath, NULL);
 	if (csFileName.Find(_T(".")) < 0)
@@ -1136,6 +1133,11 @@ long CMailAnalysis::SaveToFile(CString& csCode, LPCTSTR lpFileName, int nCodeTyp
 	char*pText = new char[LEN + 1];
 	memset(pText, 0, LEN + 1);
 	WideCharToMultiByte(CP_ACP, WC_COMPOSITECHECK, csCode, -1, pText, LEN, NULL, NULL);
+	char*pPath = NULL;
+	int nLen = WideCharToMultiByte(CP_ACP, 0, csSavePath, -1, NULL, 0, NULL, NULL);
+	pPath = new char[nLen + 1];
+	memset(pPath, 0, nLen + 1);
+	WideCharToMultiByte(CP_ACP, WC_COMPOSITECHECK, csSavePath, -1, pPath, nLen, NULL, NULL);
 	switch (nCodeType)
 	{
 	case BASE64:
@@ -1164,19 +1166,16 @@ long CMailAnalysis::SaveToFile(CString& csCode, LPCTSTR lpFileName, int nCodeTyp
 						if (offset >= LEN) break;
 					}
 					if (offset >= LEN) break;
-					n[i] = GetBCode(pText[offset++]);
+					n[i] = GetB64Code(pText[offset++]);
 				}
 				if (offset >= LEN) break;
-
 				if (n[0] == 64 || n[1] == 64) break;
-
 				temp[0] = ((n[0] << 2) & 0xFC) + ((n[1] >> 4) & 0x03);
 				if (n[2] == 64) //判断是否是'='
 				{
 					sbuf[j++] = temp[0];
 					break;
 				}
-
 				temp[1] = ((n[1] << 4) & 0xF0) + ((n[2] >> 2) & 0x0F);
 				if (n[3] == 64) //判断是否是'='
 				{
@@ -1204,7 +1203,7 @@ long CMailAnalysis::SaveToFile(CString& csCode, LPCTSTR lpFileName, int nCodeTyp
 			MSAFE_DELETE(sbuf);
 			return -1;
 		}
-
+		
 		try
 		{
 			CFile stream;
@@ -1231,11 +1230,6 @@ long CMailAnalysis::SaveToFile(CString& csCode, LPCTSTR lpFileName, int nCodeTyp
 	case QUOTED_PRINTABLE:
 	{
 		FILE *fp = NULL;
-		int nLen = WideCharToMultiByte(CP_ACP, 0, csSavePath, -1, NULL, 0, NULL, NULL);
-		char*pPath = NULL;
-		pPath = new char[nLen + 1];
-		memset(pPath, 0, nLen + 1);
-		WideCharToMultiByte(CP_ACP, WC_COMPOSITECHECK, csSavePath, -1, pPath, nLen, NULL, NULL);
 		try
 		{
 			if ((fopen_s(&fp, pPath, "w+b")) != 0) return -1;
@@ -1244,6 +1238,8 @@ long CMailAnalysis::SaveToFile(CString& csCode, LPCTSTR lpFileName, int nCodeTyp
 		catch (...)
 		{
 			MSAFE_DELETE(pText);
+			MSAFE_DELETE(pPath);
+			fclose(fp);
 			return -1;
 		}
 		try
@@ -1290,7 +1286,6 @@ long CMailAnalysis::SaveToFile(CString& csCode, LPCTSTR lpFileName, int nCodeTyp
 			//将最后没有编码的字节保存
 			if (pbefore < LEN) fwrite(pText + pbefore, sizeof(char), LEN - pbefore, fp);
 			fclose(fp);
-			MSAFE_DELETE(pPath);
 		}
 		catch (...)
 		{
@@ -1303,31 +1298,27 @@ long CMailAnalysis::SaveToFile(CString& csCode, LPCTSTR lpFileName, int nCodeTyp
 		break;
 	default:
 	{
-			   FILE *fp = NULL;
-			   int nLen = WideCharToMultiByte(CP_ACP, 0, csSavePath, -1, NULL, 0, NULL, NULL);
-			   char*pPath = NULL;
-			   pPath = new char[nLen + 1];
-			   memset(pPath, 0, nLen + 1);
-			   WideCharToMultiByte(CP_ACP, WC_COMPOSITECHECK, csSavePath, -1, pPath, nLen, NULL, NULL);
-			   try
-			   {
-				   if (fopen_s(&fp, pPath, "w+b") == 0)
-				   {
-					   fwrite(pText, LEN, 1, fp);
-					   fclose(fp);
-				   }
-			   }
-			   catch (...)
-			   {
-				   MSAFE_DELETE(pText);
-				   MSAFE_DELETE(pPath);
-				   fclose(fp);
-			   }
-			   MSAFE_DELETE(pPath);
+		FILE *fp = NULL;			   
+		try
+		{
+			if (fopen_s(&fp, pPath, "w+b") == 0)
+			{
+				fwrite(pText, LEN, 1, fp);
+				fclose(fp);
+			}
+		}
+		catch (...)
+		{
+			MSAFE_DELETE(pText);
+			MSAFE_DELETE(pPath);
+			fclose(fp);
+			return -1;
+		}
 	}
 		break;
 	}
 	MSAFE_DELETE(pText);
+	MSAFE_DELETE(pPath);
 	return 0;
 }
 
@@ -1551,14 +1542,20 @@ void CodeConvert(const CString& csSrc, CString&csDest, int nCharset, int nCodety
 		return;
 	wstring wstrText;
 	CString csTemp(csSrc);
-	csTemp.Replace(_T("\r\n"), _T(""));
-	csTemp.Replace(_T("\n"), _T(""));
-	char*pTemp = NULL;
+	if (nCodetype == BASE64)
+	{
+		csTemp.Replace(_T("\r\n"), _T(""));
+		csTemp.Replace(_T("\n"), _T(""));
+	}
+	char*pTemp = NULL,*pValue = NULL;
 	int nSize = WideCharToMultiByte(CP_ACP, 0, csTemp, -1, NULL, 0, NULL, NULL);
 	pTemp = new char[nSize + 1];
 	memset(pTemp, 0, nSize + 1);
+	long lSize = nSize + 1;
+	pValue = new char[lSize];
+	memset(pValue, 0, lSize);
 	WideCharToMultiByte(CP_ACP, WC_COMPOSITECHECK, csTemp, -1, pTemp, nSize, NULL, NULL);
-	string strTemp = pTemp, strValue;
+	string strValue,strTemp = pTemp;
 	switch (nCodetype)
 	{
 	case BASE64:
@@ -1568,12 +1565,15 @@ void CodeConvert(const CString& csSrc, CString&csDest, int nCharset, int nCodety
 	}
 		break;
 	case QUOTED_PRINTABLE:
-		strValue = quotedprintable_decode(strTemp);
-		csDest = strValue.c_str();
+		quotedprintable_decode(pTemp, nSize, pValue, lSize);
+		strValue = pValue;
+		csDest = pValue;
 		break;
 	default:
 		break;
 	}
+	MSAFE_DELETE(pTemp);
+	MSAFE_DELETE(pValue);
 	switch (nCharset)
 	{
 	case UTF8://UTF-8
@@ -1591,7 +1591,6 @@ void CodeConvert(const CString& csSrc, CString&csDest, int nCharset, int nCodety
 	default:
 		break;
 	}
-	MSAFE_DELETE(pTemp);
 }
 
 long GetKeyWords(const CString&csSrc1, const CString& csSrc2, LPCTSTR lpKey, LPCTSTR lpEnd, CString& csDest)

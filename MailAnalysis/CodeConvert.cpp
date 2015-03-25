@@ -228,6 +228,15 @@ static const std::string base64_chars =
 static const char base64_table[] =
 "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
+BYTE GetB64Code(char cChar)
+{
+	for (BYTE byCode = 0; byCode < sizeof(base64_table); byCode++)
+	{
+		if (cChar == base64_table[byCode]) return byCode;
+	}
+	return -1;
+}
+
 
 static inline bool is_base64(unsigned char c) {
 	return (isalnum(c) || (c == '+') || (c == '/'));
@@ -374,4 +383,145 @@ std::string quotedprintable_decode(const string& src)
 	}       // 输出加个结束符     
 	dst += end;
 	return dst;
+}
+
+
+BOOL base64_decode(const char* pcSrcData, long lDataSize, char* pDestData, long &lDestSize)
+{
+	if (pcSrcData == NULL || pDestData == NULL || lDestSize <= 0) return FALSE;
+
+	long lSrcSize = 0;
+	lSrcSize = (lDataSize <= 0 ? strlen(pcSrcData) : lDataSize);
+	if (lDestSize < lSrcSize) return FALSE;
+
+	memset(pDestData, 0, sizeof(pDestData));
+
+	BYTE bySrcSeg[4] = { 0 }, byDestSeg[3] = { 0 };
+	long lSrcOff, lDestOff, lIdx;
+	lSrcOff = lDestOff = lIdx = 0;
+
+	try
+	{
+		do
+		{
+			memset(byDestSeg, 0, sizeof(byDestSeg));
+			for (lIdx = 0; lIdx < 4; lIdx++)
+			{
+				while (pcSrcData[lSrcOff] == 0x09 || pcSrcData[lSrcOff] == 0x0A ||
+					pcSrcData[lSrcOff] == 0x0D || pcSrcData[lSrcOff] == 0x20)
+				{
+					//跳过回车换行空格字符
+					lSrcOff++;
+					if (lSrcOff >= lSrcSize) break;
+				}
+				if (lSrcOff >= lSrcSize) break;
+
+				bySrcSeg[lIdx] = GetB64Code(pcSrcData[lSrcOff++]);
+				if (lSrcOff >= lSrcSize) break;
+			}
+			if (bySrcSeg[0] == 64 || bySrcSeg[1] == 64) break;
+			byDestSeg[0] = ((bySrcSeg[0] << 2) & 0xFC) + ((bySrcSeg[1] >> 4) & 0x03);
+			if (bySrcSeg[2] == 64) //判断是否是'='
+			{
+				memcpy(pDestData + lDestOff, byDestSeg, 1);
+				lDestOff++;
+				break;
+			}
+
+			byDestSeg[1] = ((bySrcSeg[1] << 4) & 0xF0) + ((bySrcSeg[2] >> 2) & 0x0F);
+			if (bySrcSeg[3] == 64) //判断是否是'='
+			{
+				memcpy(pDestData + lDestOff, byDestSeg, 2);
+				lDestOff += 2;
+				break;
+			}
+
+			byDestSeg[2] = ((bySrcSeg[2] << 6) & 0xC0) + ((bySrcSeg[3]) & 0x03F);
+			memcpy(pDestData + lDestOff, byDestSeg, 3);
+			lDestOff += 3;
+		} while (lSrcOff < lSrcSize);
+
+		// 回车换行
+		memcpy(pDestData + lDestOff, "\r\n", 2);
+
+		lDestSize = lDestOff + 2;
+		return TRUE;
+	}
+	catch (...)
+	{
+	}
+
+	return FALSE;
+}
+
+
+BOOL quotedprintable_decode(const char* pcSrcData, long lDataSize, char* pDestData, long &lDestSize)
+{
+	if (pcSrcData == NULL || pDestData == NULL || lDestSize <= 0) return FALSE;
+
+	long lSrcSize = 0;
+	lSrcSize = (lDataSize <= 0 ? strlen(pcSrcData) : lDataSize);
+	if (lDestSize <= lSrcSize) return FALSE;
+
+	memset(pDestData, 0, sizeof(pDestData));
+
+	BYTE bySrcSeg[4] = { 0 }, byDestSeg[3] = { 0 };
+	long lSrcBgn, lSrcOff, lDestOff, lIdx;
+	lSrcBgn = lSrcOff = lDestOff = lIdx = 0;
+	try
+	{
+		do
+		{
+			if (pcSrcData[lSrcOff] != '=')
+			{
+				lSrcOff++;
+				continue;
+			}
+
+			memcpy(pDestData + lDestOff, pcSrcData + lSrcBgn, lSrcOff - lSrcBgn);
+			lDestOff += lSrcOff - lSrcBgn;
+			lSrcBgn = lSrcOff + 1;
+			lSrcOff++;
+
+			if (pcSrcData[lSrcOff] == 0x0D || pcSrcData[lSrcOff] == 0x0A)
+			{
+				lSrcBgn = lSrcOff + 1;
+				lSrcOff++;
+				if (pcSrcData[lSrcOff] == 0x0D || pcSrcData[lSrcOff] == 0x0A)
+				{
+					lSrcBgn = lSrcOff + 1;
+					lSrcOff++;
+				}
+				continue;
+			}
+
+			byDestSeg[0] = pcSrcData[lSrcOff];
+			byDestSeg[0] = (byDestSeg[0] < 0x41 ? byDestSeg[0] - 0x30 : (byDestSeg[0] < 0x61 ? byDestSeg[0] - 0x37 : byDestSeg[0] - 0x57));
+
+			lSrcOff++;
+			byDestSeg[1] = pcSrcData[lSrcOff];
+			byDestSeg[1] = (byDestSeg[1] < 0x41 ? byDestSeg[1] - 0x30 : (byDestSeg[1] < 0x61 ? byDestSeg[1] - 0x37 : byDestSeg[1] - 0x57));
+
+			byDestSeg[2] = (byDestSeg[0] << 4) | (byDestSeg[1] & 0x0F);
+
+			memcpy(pDestData + lDestOff, byDestSeg + 2, 1);
+			lDestOff += 1;
+
+			lSrcBgn = lSrcOff + 1;
+			lSrcOff++;
+		} while (lSrcOff < lSrcSize);
+
+		if (lSrcBgn < lSrcSize)
+		{
+			memcpy(pDestData + lDestOff, pcSrcData + lSrcBgn, lSrcSize - lSrcBgn);
+			lDestOff += lSrcSize - lSrcBgn;
+		}
+
+		lDestSize = lDestOff;
+		return TRUE;
+	}
+	catch (...)
+	{
+	}
+	return FALSE;
 }

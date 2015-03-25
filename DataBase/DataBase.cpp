@@ -196,3 +196,24 @@ long CDataBase::SaveFileToMongoDB(string& remotename, string& strPath, string& s
 	else return -1;
 	return 0;
 }
+
+BOOL CDataBase::DelUIDL(const string& strUIDL, const string& strName)
+{
+	if (strUIDL.length() <= 0)
+		return FALSE;
+	string strIndexName(m_dbinfo.chDBName),strValue;
+	strIndexName.append(".");
+	strIndexName.append(m_dbinfo.chTable);
+	BSONObj cmd, obj = BSON("UIDL" << strUIDL << "DATE" << DATENOW << "TO" << strName)
+		, bsoReturnValue, bsoQuery = BSON("UIDL" << strUIDL), bsoValue;
+	if (connect.isStillConnected())
+	{
+		bsoReturnValue = connect.findAndRemove(strIndexName, bsoQuery);
+		if (bsoReturnValue.isEmpty())
+			return FALSE;
+		else
+			strValue = bsoReturnValue.toString();
+	}
+	else return FALSE;
+	return TRUE;
+}

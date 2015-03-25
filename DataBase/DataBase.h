@@ -35,6 +35,7 @@ public:
 	long long GetTimeStamp();
 	inline int GetUseDB(){ return m_dbinfo.nUseDB; }
 	long SaveFileToMongoDB(string& remotename,string& strPath,string& strRtr);
+	BOOL DelUIDL(const string& strUIDL,const string& strName);
 private:
 	DBClientConnection connect;//MongoÁ¬½ÓÊµÀý
 	MongoDBInfo m_dbinfo;
