@@ -1270,6 +1270,12 @@ void CReceiveEmailDlg::StopMain()
 		CloseHandle(__HEVENT_MAIN_EXIT__);
 		__HEVENT_MAIN_EXIT__ = NULL;
 	}
+	map<CString, MailBoxInfo>::iterator ite = m_mailList.begin();
+	while (ite != m_mailList.end())
+	{
+		ite->second.lStatus = 0;
+		ite++;
+	}
 }
 
 
