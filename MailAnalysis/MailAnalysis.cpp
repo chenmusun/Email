@@ -1559,17 +1559,14 @@ void CodeConvert(const CString& csSrc, CString&csDest, int nCharset, int nCodety
 	switch (nCodetype)
 	{
 	case BASE64:
-	{
 		strValue = base64_decode(strTemp);
-		csDest = strValue.c_str();
-	}
 		break;
 	case QUOTED_PRINTABLE:
 		quotedprintable_decode(pTemp, nSize, pValue, lSize);
 		strValue = pValue;
-		csDest = pValue;
 		break;
 	case BIT8:
+		strValue = pTemp;
 		break;
 	default:
 		break;
@@ -1591,6 +1588,7 @@ void CodeConvert(const CString& csSrc, CString&csDest, int nCharset, int nCodety
 	}
 		break;
 	default:
+		csDest = strValue.c_str();
 		break;
 	}
 }
@@ -1624,66 +1622,63 @@ long GetKeyWords(const CString&csSrc1, const CString& csSrc2, LPCTSTR lpKey, LPC
 
 CString StringEncode(const CString& csSrc)
 {
-	int nOffset(0), nEnd(0), nCount(0), nCharset(-1), nCodetype(-1);
+	int nOffset(0), nEnd(0), nStart(0), nCharset(-1), nCodetype(-1);
 	CString csRet, csTemp, csTemp2(csSrc);
 	StringProcess(csSrc, csRet);
 	csTemp = csRet;
 	csTemp.MakeLower();
 
-	nOffset = csTemp.Find(_T("gb2312?"));
-	if (nOffset >= 0)
-		nCharset = GB2312;
-	else
+	do 
 	{
+		nOffset = csTemp.Find(_T("gb2312?"));
+		if (nOffset >= 0)
+		{
+			nCharset = GB2312;
+			nStart += 7;
+			break;
+		}
 		nOffset = csTemp.Find(_T("utf-8?"));
 		if (nOffset >= 0)
-			nCharset = UTF8;
-		else
 		{
-			nOffset = csTemp.Find(_T("gbk?"));
-			if (nOffset >= 0)
-				nCharset = GBK;
-			else return csTemp2;
+			nCharset = UTF8;
+			nStart += 6;
+			break;
 		}
-	}
-
-	switch (nCharset)
+		nOffset = csTemp.Find(_T("gbk?"));
+		if (nOffset >= 0)
+		{
+			nCharset = GBK;
+			nStart += 5;
+			break;
+		}
+		nOffset = csTemp.Find(_T("8bit?"));
+		if (nOffset >= 0)
+		{
+			nCharset = BIT8;
+			nStart += 5;
+			break;
+		}
+		return csTemp2;
+	} while (0);
+	
+	do 
 	{
-	case GB2312:
-	{
-		nOffset += 7;
-	}
-		break;
-	case UTF8:
-	{
-		nOffset += 6;
-	}
-		break;
-	case GBK:
-	{
-		nOffset += 4;
-	}
-		break;
-	default:
-		break;
-	}
-
-	nEnd = csTemp.Find(_T("b?"), nOffset);
-	if (nEnd > 0)
-	{
-		nCodetype = BASE64;
-		csTemp2 = csRet.Mid(nEnd + 2);
-	}
-	else
-	{
+		nEnd = csTemp.Find(_T("b?"), nStart);
+		if (nEnd > 0)
+		{
+			nCodetype = BASE64;
+			csTemp2 = csRet.Mid(nEnd + 2);
+			break;
+		}
 		nEnd = csTemp.Find(_T("q?"), nOffset);
 		if (nEnd > 0)
 		{
 			nCodetype = QUOTED_PRINTABLE;
 			csTemp2 = csRet.Mid(nEnd + 2);
+			break;
 		}
-		else return csTemp2;
-	}
+		return csTemp2;
+	} while (0);
 	CodeConvert(csTemp2, csRet, nCharset, nCodetype);
 	return csRet;
 }
