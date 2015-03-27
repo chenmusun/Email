@@ -114,6 +114,7 @@ enum CODE
 	QUOTED_PRINTABLE,
 	BINARY,
 	GBK,
+	BIT8,
 };
 
 

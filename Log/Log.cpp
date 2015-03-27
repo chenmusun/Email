@@ -26,7 +26,6 @@ CLog::CLog() :m_fp(NULL), m_lLevel(0)
 
 CLog::~CLog()
 {
-
 }
 
 

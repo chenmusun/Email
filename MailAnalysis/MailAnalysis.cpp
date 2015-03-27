@@ -1569,6 +1569,8 @@ void CodeConvert(const CString& csSrc, CString&csDest, int nCharset, int nCodety
 		strValue = pValue;
 		csDest = pValue;
 		break;
+	case BIT8:
+		break;
 	default:
 		break;
 	}

@@ -180,21 +180,28 @@ long CDataBase::SaveFileToMongoDB(string& remotename, string& strPath, string& s
 		strRtr = "Path is Empty!";
 		return -1;
 	}
-	string strerr;
-	if (connect.isStillConnected())
+	try
 	{
-		GridFS fs(connect, m_dbinfo.chDBName);
-		//fs.storeFile(strPath, remotename);
-		BSONObj obj = fs.storeFile(strPath, remotename);
-		if (!obj.isEmpty())
+		string strerr;
+		if (connect.isStillConnected())
 		{
-			BSONElement em = obj.getField("md5");
-			strRtr = em.toString();
+			GridFS fs(connect, m_dbinfo.chDBName);
+			//fs.storeFile(strPath, remotename);
+			BSONObj obj = fs.storeFile(strPath, remotename);
+			if (!obj.isEmpty())
+			{
+				BSONElement em = obj.getField("md5");
+				strRtr = em.toString();
+			}
+			else return -1;
 		}
 		else return -1;
+		return 0;
 	}
-	else return -1;
-	return 0;
+	catch (...)
+	{
+		return -1;
+	}
 }
 
 BOOL CDataBase::DelUIDL(const string& strUIDL, const string& strName)

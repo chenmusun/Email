@@ -235,7 +235,6 @@ BOOL CSQLServer::Connect(SQLDBInfo& sqlinfo, int nType)
 	m_csUser.Empty();
 	m_csPass.Empty();
 	m_nType = nType;
-
 	if (m_db.IsOpen() == TRUE) 
 		return TRUE;
 	try
@@ -381,7 +380,7 @@ BOOL CSQLServer::CloseDB()
 BOOL CSQLServer::IsExist(EMAIL_ITEM& email)
 {
 	COleDateTime oledt = COleDateTime::GetCurrentTime();
-	CString csSQL;
+	CString csSQL,csLog;
 	TCHAR szDate[32] = { 0 };
 	try
 	{
@@ -400,14 +399,14 @@ BOOL CSQLServer::IsExist(EMAIL_ITEM& email)
 			return TRUE;
 		}
 	}
-	catch (_com_error& e)
+	catch (const _com_error& e)
 	{
 		TRACE(_T("\r\n%s"), (TCHAR*)e.ErrorMessage());
 		TRACE(_T("\r\n%s"), (TCHAR*)e.Description());
+		csLog.Format(_T("IsExistError:[%s]\r\n[%s]\r\n[%s]"), csSQL, (TCHAR*)e.ErrorMessage(), (TCHAR*)e.Description());
 #ifdef _DEBUG
-		CString csDebug;
-		csDebug.Format(_T("IsExistError:[%s]\r\n[%s]\r\n[%s]\r\n"), csSQL, (TCHAR*)e.ErrorMessage(), (TCHAR*)e.Description());
-		OutputDebugString(csDebug);
+		csLog.Append(_T("\r\n"));
+		OutputDebugString(csLog);
 #endif
 		return FALSE;
 	}
@@ -467,7 +466,7 @@ long CSQLServer::SaveAttachment(ATTACH_FILE& attach, long lEmailID)
 		}
 		delete pEMAttachCmd;
 	}
-	catch (_com_error&e)
+	catch (const _com_error&e)
 	{
 		TRACE(_T("\r\n%s"), (TCHAR*)e.ErrorMessage());
 		TRACE(_T("\r\n%s"), (TCHAR*)e.Description());
@@ -493,7 +492,7 @@ long CSQLServer::SaveAttachment(ATTACH_FILE& attach, long lEmailID)
 		}
 		delete pMapCmd;
 	}
-	catch (_com_error& e)
+	catch (const _com_error& e)
 	{
 		TRACE(_T("\r\n%s"), (TCHAR*)e.ErrorMessage());
 		TRACE(_T("\r\n%s"), (TCHAR*)e.Description());

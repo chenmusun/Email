@@ -33,41 +33,16 @@ HANDLE __HEVENT_MAIN_EXIT__ = NULL;
 DWORD WINAPI  CReceiveEmailDlg::_AfxMain(LPVOID lpParam)
 {
 	CReceiveEmailDlg*pDlg = (CReceiveEmailDlg*)lpParam;
-	//try
-	//{
-	//	unsigned long lCurrPos = 0;
-	//	size_t lCount=0;
-	//	while (true)
-	//	{
-	//		if (WaitForSingleObject(__HEVENT_EXIT__, 10L) == WAIT_OBJECT_0)
-	//			break;
-	//		pDlg->m_pTestTheradPool->GetWaitJobNum(lCount);
-	//		if (lCount <= 0)
-	//		{
-	//			if (lCurrPos > pDlg->m_mailList.size()-1)
-	//				lCurrPos = 0;
-	//			ATLASSERT(pDlg->m_pTestTheradPool);
-	//			pDlg->m_nHighJobPriority--;
-	//			MyJobParam* pMyJobParam = new MyJobParam();
-	//			pMyJobParam->m_nIntParam = ++pDlg->m_nJobParamIntValue;
-	//			pMyJobParam->m_nStrParam.Format(TEXT("SomeStringValue%d"), pDlg->m_nJobParamIntValue);
-	//			pMyJobParam->m_pDlg = pDlg;
-	//			pMyJobParam->m_lPos = lCurrPos++;
-	//			pDlg->SetTextWnd(1, pMyJobParam->m_lPos);
-	//			CMyJob* pNewJob = new CMyJob(pMyJobParam);
-	//			pNewJob->SetJobPriority(pDlg->m_nHighJobPriority);
-	//			pDlg->m_pTestTheradPool->SubmitJob(pNewJob, &pDlg->m_nCurJobIndex);
-	//			if (WaitForSingleObject(__HEVENT_EXIT__, 500L) == WAIT_TIMEOUT)
-	//				continue;
-	//			else break;
-	//		}
-	//	}//End of while
-	//}
-	//catch (...)
-	//{
-	//}
 	try
 	{
+		unsigned long lCurrPos = 0;
+		size_t lCount=0;
+		while (true)
+		{
+			if (WaitForSingleObject(__HEVENT_EXIT__, 10L) == WAIT_OBJECT_0)
+				break;
+			
+		}//End of while
 	}
 	catch (...)
 	{
@@ -1092,11 +1067,11 @@ DWORD WINAPI  CReceiveEmailDlg::_AfxMainTestAna(LPVOID lpParam)
 void CReceiveEmailDlg::OnBnClickedButtonSet()
 {
 	// TODO:  在此添加控件通知处理程序代码
-	/*CSettingDlg setting;
+	CSettingDlg setting;
 	if (setting.DoModal() == IDOK)
 	{
 		AfxMessageBox(_T("Test"));
-	}*/	
+	}	
 }
 
 void CReceiveEmailDlg::GetForwardInfo(ForwardSet& fdsinfo)
@@ -1200,7 +1175,7 @@ void CReceiveEmailDlg::OnBnClickedButton2()
 	m_editpath.GetWindowText(m_csTestText);
 #ifdef _DEBUG
 	if (m_csTestText.IsEmpty())
-		m_csTestText.Format(_T("MD50000021244MSG15341385304331051223377027"));
+		m_csTestText.Format(_T("ZL1402-XRZ8y~QE2yLsPW46G3bEc52"));
 #endif
 	if (!m_csTestText.IsEmpty())
 	{
@@ -1287,19 +1262,21 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 	SQLDBInfo sqlinfo;
 	TCHAR szLogPath[MAX_PATH] = { 0 };
 	char chTemp[MAX_PATH] = { 0 }, chLogPath[MAX_PATH] = { 0 };
-	long lResult(0), lReturnvalue(0), n(0), lCount(0),i(1);
+	long lResult(0), lReturnvalue(0), lCount(0),i(1),lFailedCount(0);
 	string strUDIL, strName;
 	vector<string> UidlData;
 	std::vector<string>::iterator ite = UidlData.begin();
 	CString csUserName;
 	char chDebug[512] = { 0 };
 	CString csDebug;
+	
 	try
 	{
 		POP3 pop3;
 		CSQLServer sql;
 		while (true)
 		{
+		
 			pop3.Close();
 			sql.CloseDB();
 			memset(&szLogPath, 0, MAX_PATH);
@@ -1310,11 +1287,9 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 			memset(&chTemp, 0, MAX_PATH);
 			csUserName.Empty();
 			UidlData.clear();
+			lFailedCount = 0;
 			if (WaitForSingleObject(__HEVENT_MAIN_EXIT__, 10L) == WAIT_OBJECT_0)
 			{
-#ifdef _DEBUG
-				OutputDebugString(_T("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\r\n"));
-#endif
 				pDlg->GetMailBoxInfo(csUserName, info, 0);
 				break;
 			}
@@ -1340,9 +1315,6 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 							{
 								if (WaitForSingleObject(__HEVENT_MAIN_EXIT__, 10L) == WAIT_OBJECT_0)
 								{
-#ifdef _DEBUG
-									OutputDebugString(_T("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\r\n"));
-#endif
 									pDlg->GetMailBoxInfo(csUserName, info, 0);
 									pop3.QuitDataBase();
 									sql.CloseDB();
@@ -1377,9 +1349,18 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 									else if (lReturnvalue == MONGO_DELETE)
 										UidlData.push_back(strUDIL);
 								}
+								else
+								{
+									lFailedCount++;
+									if (lFailedCount > 10)
+									{
+#ifdef _DEBUG
+										OutputDebugString(_T("Can't get UIDL!\r\n"));
+#endif
+									}
+								}
 							}
 							sql.CloseDB();
-							n = 0; 
 							lCount = UidlData.size();
 							ite = UidlData.begin();
 							for (long i = 1; i < lResult + 1 && UidlData.size()>0; i++)
@@ -1399,43 +1380,40 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 											UidlData.erase(ite);
 									}
 								}
-								else break;
-								Sleep(10);
 							}
 							pop3.QuitDataBase();
 							pDlg->GetMailBoxInfo(csUserName, info,0);
 						}
-					}
+					}// end of if
 				}
 				else
 				{
 					TCHAR szError[256] = { 0 };
 					GetErrorMessage(lResult, szError);
-					csDebug.Format(_T("登陆 %s 出现问题[%s]"), info.szName, szError);
-#ifdef DEBUG
+					csDebug.Format(_T("登陆 %s 出现问题[%s]\r\nThread [0x%x] will wait 5 sec!\r\n"), 
+						info.szName, szError, GetCurrentThreadId());
+					pop3.QuitDataBase();
 					OutputDebugString(csDebug);
 					OutputDebugString(_T("\r\n"));
-#endif
+					if (WaitForSingleObject(__HEVENT_MAIN_EXIT__, 5000L) == WAIT_OBJECT_0)
+						break;
+					pDlg->GetMailBoxInfo(csUserName, info, 0);
 				}
 				pop3.Close();
-#ifdef _DEBUG
-				//break;
-#endif
 			}
 			else
 			{
 				//pDlg->GetMailBoxInfo(csUserName, info, 0);
-#ifdef _DEBUG
-				csDebug.Format(_T("Thread [%d] will wait 5sec!\r\n"), GetCurrentThreadId());
+				csDebug.Format(_T("Thread [0x%x] will wait 5sec!\r\n"), GetCurrentThreadId());
 				OutputDebugString(csDebug);
-#endif
-				if (WaitForSingleObject(__HEVENT_MAIN_EXIT__, 5000L) == WAIT_OBJECT_0)
-					break;
-			}
-		}
-	}
+				WaitForSingleObject(__HEVENT_MAIN_EXIT__, 5000L);
+			}// end of else
+		}// end of while
+	}// end of tyr
 	catch (...)
 	{
+		csDebug.Format(_T("Thread [0x%x] will exit!\r\n"), GetCurrentThreadId());
+		OutputDebugString(csDebug);
 	}
 	return 0;
 }

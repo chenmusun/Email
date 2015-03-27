@@ -180,6 +180,11 @@ long SMTP::SendHead()
 			while (ite != m_lsReceiver.end())
 			{
 				sprintf_s(chReceiver, 127, "%s", (*ite).c_str());
+#ifdef _DEBUG
+				char chTo[128] = { 0 };
+				sprintf_s(chTo, 128, "Send To:%s\r\n", chReceiver);
+				OutputDebugStringA(chTo);
+#endif
 				sprintf_s(chCommand, 1024, "RCPT TO:<%s>\r\n", chReceiver);
 				lValue = m_SendSocket.SendData(chCommand, strlen(chCommand));
 				if (lValue < 0)
