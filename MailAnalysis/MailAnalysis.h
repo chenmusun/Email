@@ -45,7 +45,6 @@ public:
 	void SetLogPath(const char*pPath);
 	inline void SetAbbreviation(LPCTSTR lpAbb){ m_csAbbreviation.Format(_T("%s"), lpAbb); }
 	inline EMAIL_ITEM& GetEmailItem(){ return m_stEmail; }
-	void GetContentType(long lContentType,CString& csContentType);
 private:
 	long GetContentInfo(const CString& csSrc, CString& csContent, CString& csExtra, long& lConttype);
 	void GetDispositionInfo(const CString& csSrc, CString& csDis, CString& csExtra);

@@ -490,11 +490,14 @@ long CMailAnalysis::AnalysisBoundary(const CString& csBoundary, vector<ATTACH>& 
 	TCHAR chMainname[64] = { 0 };
 	BOUNDARY_HEAD stBouHead;
 	ATTACH_FILE attachfile;
+	CString csFileName;
+	long lPos(-1);
 	if (vAttach.size() > 0)
 	{
 		vector<ATTACH>::iterator ite = vAttach.begin();
 		while (ite != vAttach.end())
 		{
+			lPos = -1;
 			stBouHead.Init();
 			AnalysisBoundaryHead(ite->lsHead, csBoundary, stBouHead);
 			switch (stBouHead.lContentType)
@@ -548,17 +551,28 @@ long CMailAnalysis::AnalysisBoundary(const CString& csBoundary, vector<ATTACH>& 
 			case IMG_PNG:
 			default:
 			{
-				if (SaveToFile(ite->csText, stBouHead.csFilename.IsEmpty() ? stBouHead.csName : stBouHead.csFilename, stBouHead.lEncode) == 0)
+				FormatFileName(stBouHead.csFilename);
+				FormatFileName(stBouHead.csName);
+				csFileName.Format(_T("%s"), stBouHead.csFilename.IsEmpty() ? stBouHead.csName : stBouHead.csFilename);
+				lPos = csFileName.ReverseFind(_T('.'));
+				if (lPos > 0)
+				{
+					stBouHead.csAttachmentName.Format(_T("attach%d%s"),m_lAttachmentCount,csFileName.Mid(lPos));
+				}
+				else
+				{
+					stBouHead.csAttachmentName.Format(_T("attach%d.dat"), m_lAttachmentCount);
+				}
+				if (SaveToFile(ite->csText, stBouHead.csAttachmentName, stBouHead.lEncode) == 0)
 				{
 					attachfile.Init();
 					attachfile.lType=1;
 					m_stEmail.lHasAffix = 1;
 					m_lAttachmentCount++;
-					FormatFileName(stBouHead.csFilename);
-					FormatFileName(stBouHead.csName);
-					attachfile.csFileName = stBouHead.csFilename.IsEmpty() ? stBouHead.csName : stBouHead.csFilename;
-					attachfile.csFilePath.Format(_T("%s%s"), m_csSavePath, stBouHead.csFilename.IsEmpty() ? stBouHead.csName : stBouHead.csFilename);
-					GetContentType(stBouHead.lContentType, attachfile.csAffixType);
+					attachfile.csFileName = csFileName;
+					attachfile.csLocalFileName = stBouHead.csAttachmentName;
+					attachfile.csFilePath.Format(_T("%s%s"), m_csSavePath, stBouHead.csAttachmentName);
+					attachfile.csAffixType = stBouHead.csContentType;
 					m_stEmail.vecAttachFiles.push_back(attachfile);
 				}
 			}
@@ -685,15 +699,30 @@ long CMailAnalysis::AnalysisBoundaryHead(list<CString>& lsHead, const CString& c
 	{
 		info.csCharset = csExtra;
 		csExtra.MakeLower();
-		if (csExtra.Find(_T("gb2312")) >= 0)
-			info.lCharset = GB2312;
-		else if (csExtra.Find(_T("utf-8")) >= 0)
+		do 
+		{
+			if (csExtra.Find(_T("gb2312")) >= 0)
+			{
+				info.lCharset = GB2312;
+				break;
+			}
+			if (csExtra.Find(_T("utf-8")) >= 0)
+			{
+				info.lCharset = UTF8;
+				break;
+			}
+			if (csExtra.Find(_T("iso-8859-1")) >= 0)
+			{
+				info.lCharset = UTF8;
+				break;
+			}
+			if (csExtra.Find(_T("gbk")) >= 0)
+			{
+				info.lCharset = GBK;
+				break;
+			}
 			info.lCharset = UTF8;
-		else if (csExtra.Find(_T("iso-8859-1")) >= 0)
-			info.lCharset = UTF8;
-		else if (csExtra.Find(_T("gbk")) >= 0)
-			info.lCharset = GBK;
-		else info.lCharset = UTF8;
+		} while (0);
 	}
 		break;
 	case _NAME_:
@@ -714,14 +743,35 @@ long CMailAnalysis::AnalysisBoundaryHead(list<CString>& lsHead, const CString& c
 #endif
 	info.csEncoding = csTransferEncod;
 	csTransferEncod.MakeLower();
-	if (csTransferEncod.Find(_T("base64")) >= 0)
+	do 
+	{
+		if (csTransferEncod.Find(_T("base64")) >= 0)
+		{
+			info.lEncode = BASE64;
+			break;
+		}
+		if (csTransferEncod.Find(_T("quoted-printable")) >= 0)
+		{
+			info.lEncode = QUOTED_PRINTABLE;
+			break;
+		}
+		if (csTransferEncod.Find(_T("binary")) >= 0)
+		{
+			info.lEncode = BINARY;
+			break;
+		}
+		if (csTransferEncod.Find(_T("8bit")) >= 0)
+		{
+			info.lEncode = BIT8;
+			break;
+		}
+		if (csTransferEncod.Find(_T("7bit")) >= 0)
+		{
+			info.lEncode = BIT7;
+			break;
+		}
 		info.lEncode = BASE64;
-	else if (csTransferEncod.Find(_T("quoted-printable")) >= 0)
-		info.lEncode = QUOTED_PRINTABLE;
-	else if (csTransferEncod.Find(_T("binary")) >= 0)
-		info.lEncode = BINARY;
-	else info.lEncode = BASE64;
-
+	} while (0);
 	return 0;
 }
 
@@ -748,38 +798,86 @@ long CMailAnalysis::GetContentInfo(const CString& csSrc, CString& csContent, CSt
 			GetKeyWords(csTemp, csSrcTemp, _T("content-type:"), NULL, csContentType);
 		StringProcess(csContentType, csContent);
 		csContentType.MakeLower();
-		if (csContentType.Find(_T("text/plain")) >= 0)
-			lConttype = TEXT_PLAIN;
-		else if (csContentType.Find(_T("application/octet-stream")) >= 0)
-			lConttype = APP_OCTET;
-		else if (csContentType.Find(_T("application/pdf")) >= 0)
-			lConttype = APP_PDF;
-		else if (csContentType.Find(_T("multipart/mixed")) >= 0)
-			lConttype = MULTI_MIXED;
-		else if (csContentType.Find(_T("multipart/alternative")) >= 0)
-			lConttype = MULTI_ALTERNATIVE;
-		else if (csContentType.Find(_T("application/zip")) >= 0)
-			lConttype = APP_ZIP;
-		else if (csContentType.Find(_T("text/html")) >= 0)
-			lConttype = TEXT_HTML;
-		else if (csContentType.Find(_T("multipart/related")) >= 0)
-			lConttype = MULTI_RELATED;
-		else if (csContentType.Find(_T("image/png")) >= 0)
-			lConttype = IMG_PNG;
-		else if (csContentType.Find(_T("application/msexcel")) >= 0)
-			lConttype = APP_MSEX;
-		else if (csContentType.Find(_T("image/jpeg")) >= 0)
-			lConttype = IMG_JPG;
-		else if (csContentType.Find(_T("application/msword")) >= 0)
-			lConttype = APP_MSWD;
-		else if (csContentType.Find(_T("application/vnd.openxmlformats-officedocument.wordprocessingml.document")) >= 0)
-			lConttype = APP_MSWD;
-		else if (csContentType.Find(_T("application/mspowerpoint")) >= 0)
-			lConttype = APP_MSPT;
-		else lConttype = UNKNOWN_TYPE;
-
+		do 
+		{
+			if (csContentType.Find(_T("text/plain")) >= 0)
+			{
+				lConttype = TEXT_PLAIN;
+				break;
+			}
+			if (csContentType.Find(_T("application/octet-stream")) >= 0)
+			{
+				lConttype = APP_OCTET;
+				break;
+			}
+			if (csContentType.Find(_T("application/pdf")) >= 0)
+			{
+				lConttype = APP_PDF;
+				break;
+			}
+			if (csContentType.Find(_T("multipart/mixed")) >= 0)
+			{
+				lConttype = MULTI_MIXED;
+				break;
+			}
+			if (csContentType.Find(_T("multipart/alternative")) >= 0)
+			{
+				lConttype = MULTI_ALTERNATIVE;
+				break;
+			}
+			if (csContentType.Find(_T("application/zip")) >= 0)
+			{
+				lConttype = APP_ZIP;
+				break;
+			}
+			if (csContentType.Find(_T("text/html")) >= 0)
+			{
+				lConttype = TEXT_HTML;
+				break;
+			}
+			if (csContentType.Find(_T("multipart/related")) >= 0)
+			{
+				lConttype = MULTI_RELATED;
+				break;
+			}
+			if (csContentType.Find(_T("image/png")) >= 0)
+			{
+				lConttype = IMG_PNG;
+				break;
+			}
+			if (csContentType.Find(_T("application/msexcel")) >= 0)
+			{
+				lConttype = APP_MSEX;
+				break;
+			}
+			if (csContentType.Find(_T("image/jpeg")) >= 0)
+			{
+				lConttype = IMG_JPG;
+				break;
+			}
+			if (csContentType.Find(_T("application/msword")) >= 0)
+			{
+				lConttype = APP_MSWD;
+				break;
+			}
+			if (csContentType.Find(_T("application/vnd.openxmlformats-officedocument.wordprocessingml.document")) >= 0)
+			{
+				lConttype = APP_MSWD;
+				break;
+			}
+			if (csContentType.Find(_T("application/mspowerpoint")) >= 0)
+			{
+				lConttype = APP_MSPT;
+				break;
+			}
+			if (csContentType.Find(_T("application/vnd.ms-powerpoint")) >= 0)
+			{
+				lConttype = APP_MSWD;
+				break;
+			}
+			lConttype = UNKNOWN_TYPE;
+		} while (0);
 		nOffset = nOffset < 0 ? 0 : nOffset;
-
 		if (!csTemp.IsEmpty())
 		{
 			for (size_t i = 0; i < sizeof(g_MailContentTypeItem) / sizeof(g_MailContentTypeItem[0]); i++)
@@ -1093,8 +1191,6 @@ long CMailAnalysis::SaveToFile(CString& csCode, LPCTSTR lpFileName, int nCharset
 		return -1;
 	if ((GetFileAttributes(m_csSavePath) == 0xFFFFFFFF))
 		CreateDirectory(m_csSavePath, NULL);
-	if (csFileName.Find(_T(".")) < 0)
-		csFileName.Append(_T(".dat"));
 	FormatFileName(csFileName);
 	csSavePath.Format(_T("%s%s"), m_csSavePath, csFileName);
 	CodeConvert(csCode, csDeCode, nCharset, nCodeType);
@@ -1124,8 +1220,6 @@ long CMailAnalysis::SaveToFile(CString& csCode, LPCTSTR lpFileName, int nCodeTyp
 		return -1;
 	if ((GetFileAttributes(m_csSavePath) == 0xFFFFFFFF))
 		CreateDirectory(m_csSavePath, NULL);
-	if (csFileName.Find(_T(".")) < 0)
-		csFileName.Append(_T(".dat"));
 	FormatFileName(csFileName);
 	csSavePath.Format(_T("%s%s"), m_csSavePath, csFileName);
 	int LEN(0), ibytes(0);
@@ -1565,6 +1659,7 @@ void CodeConvert(const CString& csSrc, CString&csDest, int nCharset, int nCodety
 		quotedprintable_decode(pTemp, nSize, pValue, lSize);
 		strValue = pValue;
 		break;
+	case BIT7:
 	case BIT8:
 		strValue = pTemp;
 		break;
@@ -1583,10 +1678,8 @@ void CodeConvert(const CString& csSrc, CString&csDest, int nCharset, int nCodety
 		break;
 	case GBK:
 	case GB2312://GB2312
-	{
-		csDest = strValue.c_str();
-	}
-		break;
+	case BIT8:
+	case BIT7:
 	default:
 		csDest = strValue.c_str();
 		break;
@@ -1648,14 +1741,7 @@ CString StringEncode(const CString& csSrc)
 		if (nOffset >= 0)
 		{
 			nCharset = GBK;
-			nStart += 5;
-			break;
-		}
-		nOffset = csTemp.Find(_T("8bit?"));
-		if (nOffset >= 0)
-		{
-			nCharset = BIT8;
-			nStart += 5;
+			nStart += 4;
 			break;
 		}
 		return csTemp2;
@@ -1691,46 +1777,6 @@ void CMailAnalysis::SetLogPath(const char*pPath)
 	}
 }
 
-void CMailAnalysis::GetContentType(long lContentType, CString& csContentType)
-{
-	switch (lContentType)
-	{
-	case TEXT_PLAIN:
-		csContentType.Format(_T("text/plain"));
-		break;
-	case APP_OCTET:
-		csContentType.Format(_T("application/octet-stream"));
-		break;
-	case APP_PDF:
-		csContentType.Format(_T("application/pdf"));
-		break;
-	case APP_ZIP:
-		csContentType.Format(_T("application/zip"));
-		break;
-	case TEXT_HTML:
-		csContentType.Format(_T("text/html"));
-		break;
-	case IMG_PNG:
-		csContentType.Format(_T("image/png"));
-		break;
-	case IMG_JPG:
-		csContentType.Format(_T("image/jpeg"));
-		break;
-	case APP_MSEX:
-		csContentType.Format(_T("application/msexcel"));
-		break;
-	case APP_MSWD:
-		csContentType.Format(_T("application/msword"));
-		break;
-	case APP_MSPT:
-		csContentType.Format(_T("application/mspowerpoint"));
-		break;
-	default:
-		csContentType.Format(_T("unknow"));
-		break;
-	}
-}
-
 void FormatFileName(CString& csFileName)
 {
 	if (csFileName.IsEmpty())
@@ -1744,4 +1790,5 @@ void FormatFileName(CString& csFileName)
 	csFileName.Replace(_T(">"), _T(""));
 	csFileName.Replace(_T("\t"), _T(""));
 	csFileName.Replace(_T(" "), _T(""));
+	csFileName.Replace(_T("\""), _T(""));
 }

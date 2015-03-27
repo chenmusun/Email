@@ -18,6 +18,7 @@ struct BOUNDARY_HEAD
 	CString csFilename;
 	CString csContentDescription;
 	CString csEncoding;
+	CString csAttachmentName;
 
 	void Init()//声明后使用Init函数初始化
 	{
@@ -32,6 +33,7 @@ struct BOUNDARY_HEAD
 		csFilename.Empty();
 		csContentDescription.Empty();
 		csEncoding.Empty();
+		csAttachmentName.Empty();
 	}
 };
 
@@ -51,6 +53,7 @@ struct ATTACH_FILE
 	long lType;			//0：正文；1：附件
 	CString csAffixType;
 	CString csRemoteName;
+	CString csLocalFileName;
 	void Init()
 	{
 		csFileName.Empty();
@@ -61,6 +64,7 @@ struct ATTACH_FILE
 		lType = 1;
 		csAffixType.Empty();
 		csRemoteName.Empty();
+		csLocalFileName.Empty();
 	}
 };
 

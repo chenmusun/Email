@@ -253,6 +253,10 @@ BOOL CReceiveEmailDlg::OnInitDialog()
 	wsprintf(szPath, _T("%s\\Log\\main.txt"),__Main_Path__);
 	m_csLogPath.Format(_T("%s"),szPath);
 	m_log.SetPath(m_csLogPath,m_csLogPath.GetLength());
+#ifdef _DEBUG
+	if (m_csTestText.IsEmpty())
+		m_csTestText.Format(_T("MD50000038726MSG981552304348102561502198"));
+#endif
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
 
@@ -863,7 +867,7 @@ BOOL CReceiveEmailDlg::PreTranslateMessage(MSG* pMsg)
 	if (pMsg->message == __umymessage__anauncomplete__)
 	{
 #ifdef _DEBUG
-		OutputDebugString(_T("Process Error!\r\n"));
+		OutputDebugString(_T("Analysis Error!\r\n"));
 #endif
 #ifndef _DEBUG
 		AfxMessageBox(_T("解析失败！"));
@@ -1052,7 +1056,7 @@ DWORD WINAPI  CReceiveEmailDlg::_AfxMainTestAna(LPVOID lpParam)
 #ifdef _DEBUG
 		dwTime = GetTickCount() - dwTime;
 		CString csDebug;
-		csDebug.Format(_T("Process Time = %d\tAnalysis [%s] Complete!\r\n"), dwTime / 1000, csUIDL);
+		csDebug.Format(_T("Analysis Time = %d\tAnalysis [%s] Complete!\r\n"), dwTime / 1000, csUIDL);
 		OutputDebugString(csDebug);
 		pDlg->m_log.Log(csDebug, csDebug.GetLength());
 #endif
@@ -1144,10 +1148,8 @@ void CReceiveEmailDlg::OnBnClickedButton1()
 {
 	// TODO:  在此添加控件通知处理程序代码
 	StopTest();
+#ifndef _DEBUG
 	m_editpath.GetWindowText(m_csTestText);
-#ifdef _DEBUG
-	if (m_csTestText.IsEmpty())
-		m_csTestText.Format(_T("MD50000022573MSG173703043447316636099"));
 #endif
 	if (!m_csTestText.IsEmpty())
 	{
@@ -1172,11 +1174,10 @@ void CReceiveEmailDlg::OnBnClickedButton2()
 	string strAPIname = "v1/system/guid", strParam;
 	GGDataAPI::PostAsyncRequest(strAPIname, strParam, m_hWnd);
 	StopTest2();
+#ifndef _DEBUG
 	m_editpath.GetWindowText(m_csTestText);
-#ifdef _DEBUG
-	if (m_csTestText.IsEmpty())
-		m_csTestText.Format(_T("ZL1402-XRZ8y~QE2yLsPW46G3bEc52"));
 #endif
+	
 	if (!m_csTestText.IsEmpty())
 	{
 		DWORD id(0);
@@ -1274,9 +1275,11 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 	{
 		POP3 pop3;
 		CSQLServer sql;
+#ifdef _DEBUG
+		DWORD dwTime(0);
+#endif
 		while (true)
 		{
-		
 			pop3.Close();
 			sql.CloseDB();
 			memset(&szLogPath, 0, MAX_PATH);
@@ -1324,6 +1327,7 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 #ifdef _DEBUG
 								csDebug.Format(_T("%s Count = %d\tTotal = %d\r\n"), info.szName, i,lResult);
 								OutputDebugString(csDebug);
+								dwTime = GetTickCount();
 #endif
 								if (pop3.GetStatus())
 									break;
@@ -1359,6 +1363,11 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 #endif
 									}
 								}
+#ifdef _DEBUG
+								dwTime = GetTickCount() - dwTime;
+								csDebug.Format(_T("Process Time = %d\r\n"), dwTime / 1000);
+								OutputDebugString(csDebug);
+#endif
 							}
 							sql.CloseDB();
 							lCount = UidlData.size();
@@ -1458,18 +1467,11 @@ long CReceiveEmailDlg::MailAnalysis(POP3& pop3, CSQLServer& sql, const string& s
 		{
 			ana.Clear(0);
 		}
-		
-#ifdef _DEBUG
-		dwTime = GetTickCount() - dwTime;
-		CString csDebug;
-		csDebug.Format(_T("Process Time = %d\tAnalysis [%s] Complete!\r\n"), dwTime / 1000, csUIDL);
-		OutputDebugString(csDebug);
-#endif
 	} while (0);
 #ifdef _DEBUG
 	dwTime = GetTickCount() - dwTime;
 	CString csDebug;
-	csDebug.Format(_T("Process Time = %d\tAnalysis [%s] Complete!"), dwTime / 1000, csUIDL);
+	csDebug.Format(_T("Analysis Time = %d\tAnalysis [%s] Complete!"), dwTime / 1000, csUIDL);
 	OutputDebugString(csDebug);
 	OutputDebugString(_T("\r\n"));
 #endif

@@ -115,6 +115,7 @@ enum CODE
 	BINARY,
 	GBK,
 	BIT8,
+	BIT7,
 };
 
 
