@@ -45,6 +45,7 @@ public:
 	void SetLogPath(const char*pPath);
 	inline void SetAbbreviation(LPCTSTR lpAbb){ m_csAbbreviation.Format(_T("%s"), lpAbb); }
 	inline EMAIL_ITEM& GetEmailItem(){ return m_stEmail; }
+	friend void SaveAttachMent(CMailAnalysis* pana, ATTACH_FILE& attachfile, BOUNDARY_HEAD& stBouHead, vector<ATTACH>::iterator& ite);
 private:
 	long GetContentInfo(const CString& csSrc, CString& csContent, CString& csExtra, long& lConttype);
 	void GetDispositionInfo(const CString& csSrc, CString& csDis, CString& csExtra);
@@ -91,3 +92,5 @@ extern MAILANALYSIS_API int nMailAnalysis;
 MAILANALYSIS_API int fnMailAnalysis(void);
 
 void FormatFileName(CString& csFileName);
+
+void SaveAttachMent(CMailAnalysis* pana, ATTACH_FILE& attachfile, BOUNDARY_HEAD& stBouHead,  vector<ATTACH>::iterator& ite);

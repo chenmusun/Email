@@ -15,6 +15,15 @@
 #include "../GGDataAPI/ggdataapi.h"
 #include "afxeditbrowsectrl.h"
 
+struct ShowInfo
+{
+	TCHAR szAbbreviation[64];
+	TCHAR szName[128];
+	long lCurr;
+	long lTotal;
+	long lStatus;
+};
+
 
 // CReceiveEmailDlg 对话框
 class CReceiveEmailDlg : public CDialogEx/*, public IFThreadPoolCallBack<MyJobParam*>*/
@@ -58,6 +67,7 @@ private:
 	SQLDBInfo m_sqldbinfo;
 	HANDLE m_hProcess[5];
 	long m_lLastPos;
+	map<DWORD, ShowInfo> m_showinfo;
 public:
 	CMFCButton m_btnSet;//设置按钮
 	CListCtrl m_listMailBox;//表格控件

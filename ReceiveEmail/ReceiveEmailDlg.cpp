@@ -35,13 +35,41 @@ DWORD WINAPI  CReceiveEmailDlg::_AfxMain(LPVOID lpParam)
 	CReceiveEmailDlg*pDlg = (CReceiveEmailDlg*)lpParam;
 	try
 	{
-		unsigned long lCurrPos = 0;
-		size_t lCount=0;
+		TCHAR szInfo[128] = { 0 };
+#ifdef _DEBUG
+		CString csDebug;
+#endif
+		map<DWORD, ShowInfo>::iterator ite = pDlg->m_showinfo.begin();
+		long lCurrPos = 0;
+		double dValue(0);
 		while (true)
 		{
-			if (WaitForSingleObject(__HEVENT_EXIT__, 10L) == WAIT_OBJECT_0)
+			memset(&szInfo, 0, 128);
+			if(WaitForSingleObject(__HEVENT_EXIT__, 100L)==WAIT_OBJECT_0)
 				break;
-			
+			lCurrPos = 0;
+			ite = pDlg->m_showinfo.begin();
+			while (ite!=pDlg->m_showinfo.end())
+			{
+				if (WaitForSingleObject(__HEVENT_EXIT__, 10L) == WAIT_OBJECT_0)
+					break;
+				dValue = (double)ite->second.lCurr / ite->second.lTotal;
+				switch (ite->second.lStatus)
+				{
+				case 0:
+					swprintf_s(szInfo, 128, _T("%s\t[%d/%d]"), ite->second.szName, ite->second.lCurr, ite->second.lTotal);
+					break;
+				case 1:
+					swprintf_s(szInfo, 128, _T("清理----%s\t[%d/%d]"), ite->second.szName, ite->second.lCurr, ite->second.lTotal);
+					break;
+				default:
+					break;
+				}
+				pDlg->SetShowInfo(lCurrPos, szInfo, (long)(dValue * 100));
+				ite++;
+				lCurrPos++;
+			}
+			//pDlg->PostMessage(__umymessage__fres_hprogress__, NULL, NULL);
 		}//End of while
 	}
 	catch (...)
@@ -101,6 +129,7 @@ CReceiveEmailDlg::CReceiveEmailDlg(CWnd* pParent /*=NULL*/)
 	{
 		m_hProcess[i] = NULL;
 	}
+	m_showinfo.clear();
 }
 
 CReceiveEmailDlg::~CReceiveEmailDlg()
@@ -255,7 +284,7 @@ BOOL CReceiveEmailDlg::OnInitDialog()
 	m_log.SetPath(m_csLogPath,m_csLogPath.GetLength());
 #ifdef _DEBUG
 	if (m_csTestText.IsEmpty())
-		m_csTestText.Format(_T("MD50000038726MSG981552304348102561502198"));
+		m_csTestText.Format(_T("MD50000001614MSG1066630436030142166512"));
 #endif
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
@@ -315,7 +344,10 @@ void CReceiveEmailDlg::OnBnClickedMfcbuttonSet()
 {
 	// TODO:  在此添加控件通知处理程序代码
 	StopMain();
-	DWORD dwId[5] = { 0 };
+	Stop();
+	DWORD dwId[5] = { 0 },id;
+	ShowInfo stShow;
+	memset(&stShow, 0, sizeof(ShowInfo));
 	if (m_listMailBox.GetItemCount() > 0)
 	{
 		if (__HEVENT_MAIN_EXIT__ == NULL)
@@ -325,6 +357,7 @@ void CReceiveEmailDlg::OnBnClickedMfcbuttonSet()
 			if (m_hProcess[i] == NULL)
 			{
 				m_hProcess[i] = CreateThread(NULL, 0, _AfxMainProcess, (LPVOID)this, 0, &dwId[i]);
+				m_showinfo.insert(make_pair(dwId[i], stShow));
 #ifdef _DEBUG
 				CString csDebug;
 				csDebug.Format(_T("ThreadID = [%d]\r\n"),dwId[i]);
@@ -332,6 +365,10 @@ void CReceiveEmailDlg::OnBnClickedMfcbuttonSet()
 #endif
 			}
 		}
+		
+		if (__HEVENT_EXIT__ == NULL)
+			__HEVENT_EXIT__ = CreateEvent(NULL, TRUE, FALSE, NULL);
+		m_hMain = CreateThread(NULL, 0, _AfxMain, (LPVOID)this, 0, &id);
 		m_btnStop.EnableWindow(TRUE);
 		m_btnSet.EnableWindow(FALSE);
 	}
@@ -561,6 +598,7 @@ void CReceiveEmailDlg::OnBnClickedButtonStop()
 {
 	// TODO:  在此添加控件通知处理程序代码
 	StopMain();
+	Stop();
 	m_btnStop.EnableWindow(FALSE);
 	m_btnSet.EnableWindow(TRUE);
 }
@@ -710,7 +748,7 @@ void CReceiveEmailDlg::Stop(long lType)//用于停止工作分配线程
 	SetEvent(__HEVENT_EXIT__);
 	if (m_hMain)
 	{
-		if (WaitForSingleObject(m_hMain, 1000L) != WAIT_OBJECT_0)
+		if (WaitForSingleObject(m_hMain, 5000L) != WAIT_OBJECT_0)
 		{
 #ifdef DEBUG
 			OutputDebugString(_T("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\n"));
@@ -784,14 +822,6 @@ BOOL CReceiveEmailDlg::PreTranslateMessage(MSG* pMsg)
 	// TODO:  在此添加专用代码和/或调用基类
 	if (pMsg->message == __umymessage__fres_hprogress__)
 	{
-		long lTextWnd = 0, lProgress = (long)pMsg->lParam;
-		CString csName;
-		lTextWnd = SetTextWnd(0, (long)pMsg->wParam);
-		if (lTextWnd >= 0)
-		{
-			csName = m_listMailBox.GetItemText((long)pMsg->wParam, 1);
-			SetShowInfo(lTextWnd, csName, lProgress);
-		}
 	}
 	if (pMsg->message == __umymessage__kill_hprogress__)
 	{
@@ -1071,11 +1101,11 @@ DWORD WINAPI  CReceiveEmailDlg::_AfxMainTestAna(LPVOID lpParam)
 void CReceiveEmailDlg::OnBnClickedButtonSet()
 {
 	// TODO:  在此添加控件通知处理程序代码
-	CSettingDlg setting;
+	/*CSettingDlg setting;
 	if (setting.DoModal() == IDOK)
 	{
 		AfxMessageBox(_T("Test"));
-	}	
+	}*/
 }
 
 void CReceiveEmailDlg::GetForwardInfo(ForwardSet& fdsinfo)
@@ -1252,6 +1282,9 @@ void CReceiveEmailDlg::StopMain()
 		ite->second.lStatus = 0;
 		ite++;
 	}
+	map<DWORD, ShowInfo>::iterator ite1 = m_showinfo.begin();
+	if (ite1 != m_showinfo.end())
+		m_showinfo.clear();
 }
 
 
@@ -1270,11 +1303,11 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 	CString csUserName;
 	char chDebug[512] = { 0 };
 	CString csDebug;
-	
 	try
 	{
 		POP3 pop3;
 		CSQLServer sql;
+		DWORD dwID = GetCurrentThreadId();
 #ifdef _DEBUG
 		DWORD dwTime(0);
 #endif
@@ -1312,6 +1345,10 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 					if (pop3.ConnectDataBase() && sql.Connect(sqlinfo))
 					{
 						lResult = pop3.GetMailCount();
+						pDlg->m_showinfo[dwID].lTotal = lResult;
+						swprintf_s(pDlg->m_showinfo[dwID].szAbbreviation, 64, _T("%s"), info.szAbbreviation);
+						swprintf_s(pDlg->m_showinfo[dwID].szName, 128, _T("%s"), info.szName);
+						pDlg->m_showinfo[dwID].lStatus = 0;
 						if (lResult > 0)
 						{
 							for (i = 1; i < lResult + 1; i++)
@@ -1368,26 +1405,34 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 								csDebug.Format(_T("Process Time = %d\r\n"), dwTime / 1000);
 								OutputDebugString(csDebug);
 #endif
+								pDlg->m_showinfo[dwID].lCurr = i;
+								
 							}
 							sql.CloseDB();
 							lCount = UidlData.size();
-							ite = UidlData.begin();
-							for (long i = 1; i < lResult + 1 && UidlData.size()>0; i++)
+							if (lCount>0)
 							{
-#ifdef _DEBUG
-								csDebug.Format(_T("%s Del-Count = %d\r\n"), info.szName, i);
-								OutputDebugString(csDebug);
-#endif
-								strUDIL.clear();
-								strUDIL = pop3.GetUIDL(i);
-								if (strUDIL.length() > 0)
+								ite = UidlData.begin();
+								pDlg->m_showinfo[dwID].lStatus = 1;
+								pDlg->m_showinfo[dwID].lTotal = lCount;
+								for (long i = 1; i < lResult + 1; i++)
 								{
-									ite = std::find(UidlData.begin(), UidlData.end(), strUDIL);
-									if (ite != UidlData.end())
+#ifdef _DEBUG
+									csDebug.Format(_T("%s Del-Count = %d\r\n"), info.szName, i);
+									OutputDebugString(csDebug);
+#endif
+									strUDIL.clear();
+									strUDIL = pop3.GetUIDL(i);
+									if (strUDIL.length() > 0)
 									{
-										if (pop3.DelEmail(i, strUDIL) == SUCCESS)
-											UidlData.erase(ite);
+										ite = std::find(UidlData.begin(), UidlData.end(), strUDIL);
+										if (ite != UidlData.end())
+										{
+											if (pop3.DelEmail(i, strUDIL) == SUCCESS)
+												UidlData.erase(ite);
+										}
 									}
+									pDlg->m_showinfo[dwID].lCurr = i;
 								}
 							}
 							pop3.QuitDataBase();
