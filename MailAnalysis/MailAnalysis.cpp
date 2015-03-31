@@ -32,6 +32,7 @@ TCHAR g_MailBoundaryHeadItem[][50] =
 	_T("content-transfer-encoding:"),
 	_T("content-description:"),
 	_T("content-disposition:"),
+	_T("content-id:"),
 };
 
 TCHAR g_MailContentTypeItem[][50] =
@@ -574,7 +575,8 @@ long CMailAnalysis::AnalysisBoundaryHead(list<CString>& lsHead, const CString& c
 {
 	BOOL bStart = FALSE;
 	CString csTemp, csItem, cskey, csFileName,
-		csTransferEncod, csDescription, csDisposition, csContentType;
+		csTransferEncod, csDescription, csDisposition, 
+		csContentType,csContentID;
 	CStringArray csaDescription;
 	int nOffset(0), nEnd(0), nSave(-1), nKeyPos(-1), nBoundary(-1);
 	long lSize = lsHead.size();
@@ -632,6 +634,9 @@ long CMailAnalysis::AnalysisBoundaryHead(list<CString>& lsHead, const CString& c
 					GetKeyWords(csTemp, csItem, cskey, NULL, info.csEncoding);
 				}
 					break;
+				case _CONTENT_ID2_:
+					GetKeyWords(csTemp, csItem, cskey, NULL, csContentID);
+					break;
 				default:
 					break;
 				}
@@ -665,6 +670,9 @@ long CMailAnalysis::AnalysisBoundaryHead(list<CString>& lsHead, const CString& c
 				{
 					GetKeyWords(csTemp, csItem, cskey, NULL, csTransferEncod);
 				}
+					break;
+				case _CONTENT_ID2_:
+					GetKeyWords(csTemp, csItem, cskey, NULL, csContentID);
 					break;
 				default:
 					break;

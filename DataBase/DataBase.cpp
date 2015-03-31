@@ -180,6 +180,11 @@ long CDataBase::SaveFileToMongoDB(string& remotename, string& strPath, string& s
 		strRtr = "Path is Empty!";
 		return -1;
 	}
+	if (m_dbinfo.nUseDB != 1)
+	{
+		strRtr = "No use Database!";
+		return -1;
+	}
 	try
 	{
 		string strerr;
