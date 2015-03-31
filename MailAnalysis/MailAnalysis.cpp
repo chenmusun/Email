@@ -521,28 +521,30 @@ long CMailAnalysis::AnalysisBoundary(const CString& csBoundary, vector<ATTACH>& 
 						m_lAttachmentCount++;
 					}
 				}
-				else
-				{
-					SaveAttachMent(this, attachfile, stBouHead, ite);
-				}
+				else SaveAttachMent(this, attachfile, stBouHead, ite);
 			}
 				break;
 			case TEXT_HTML://
 			{
-				wsprintf(chMainname, _T("main%d.html"), m_lAttachmentCount);
-				if (SaveToFile(ite->csText, chMainname, stBouHead.lCharset, stBouHead.lEncode) == 0)
+				attachfile.Init();
+				if (stBouHead.csContentDisposition.Find(_T("attachment")) < 0)
 				{
-					attachfile.Init();
-					attachfile.lType = 0;
-					attachfile.csFilePath.Format(_T("%s%s"), m_csSavePath, chMainname);
-					attachfile.csFileName.Format(_T("%s"),chMainname);
-					if (m_stEmail.csContentType.IsEmpty())
-						m_stEmail.csContentType = _T("text/html");
-					m_stEmail.lHasHtml = 1;
-					m_stEmail.csEmailContentHTML = attachfile.csFilePath;
-					m_stEmail.vecAttachFiles.push_back(attachfile);
-					m_lAttachmentCount++;
-				}				
+					wsprintf(chMainname, _T("main%d.html"), m_lAttachmentCount);
+					if (SaveToFile(ite->csText, chMainname, stBouHead.lCharset, stBouHead.lEncode) == 0)
+					{
+						
+						attachfile.lType = 0;
+						attachfile.csFilePath.Format(_T("%s%s"), m_csSavePath, chMainname);
+						attachfile.csFileName.Format(_T("%s"), chMainname);
+						if (m_stEmail.csContentType.IsEmpty())
+							m_stEmail.csContentType = _T("text/html");
+						m_stEmail.lHasHtml = 1;
+						m_stEmail.csEmailContentHTML = attachfile.csFilePath;
+						m_stEmail.vecAttachFiles.push_back(attachfile);
+						m_lAttachmentCount++;
+					}
+				}
+				else SaveAttachMent(this, attachfile, stBouHead, ite);
 			}
 				break;
 			case MULTI_ALTERNATIVE:

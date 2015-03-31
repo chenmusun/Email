@@ -94,6 +94,9 @@ public:
 	CLog m_log;
 	CButton m_btnTest2;
 	CMFCEditBrowseCtrl m_editpath;
+	CString m_csRunTime;
+	CStatic m_time;
+	COleDateTime m_startdate;
 public:
 	afx_msg void OnBnClickedMfcbuttonSet();
 	afx_msg void OnSize(UINT nType, int cx, int cy);

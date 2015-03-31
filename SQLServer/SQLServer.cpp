@@ -423,7 +423,11 @@ long CSQLServer::SaveAttachment(ATTACH_FILE& attach, long lEmailID)
 	attach.csGUID = csGuid;
 	auto pos = attach.csLocalFileName.ReverseFind(_T('.'));
 	if (pos > 0)
+	{
 		attach.csRemoteName.Format(_T("%s%s"), csGuid, attach.csLocalFileName.Mid(pos));
+		attach.csRemoteName.Replace(_T("{"), _T(""));
+		attach.csRemoteName.Replace(_T("}"), _T(""));
+	}
 	try
 	{
 		if (file.Open(attach.csFilePath, CFile::modeRead))

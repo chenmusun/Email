@@ -45,14 +45,20 @@ DWORD WINAPI  CReceiveEmailDlg::_AfxMain(LPVOID lpParam)
 		while (true)
 		{
 			memset(&szInfo, 0, 128);
-			if(WaitForSingleObject(__HEVENT_EXIT__, 100L)==WAIT_OBJECT_0)
+			if (WaitForSingleObject(__HEVENT_EXIT__, 100L) == WAIT_OBJECT_0)
+			{
+				OutputDebugStringA("WAIT2 __HEVENT_EXIT__\r\n");
 				break;
+			}
 			lCurrPos = 0;
 			ite = pDlg->m_showinfo.begin();
 			while (ite!=pDlg->m_showinfo.end())
 			{
-				if (WaitForSingleObject(__HEVENT_EXIT__, 10L) == WAIT_OBJECT_0)
+				if (WaitForSingleObject(__HEVENT_EXIT__, 0L) == WAIT_OBJECT_0)
+				{
+					OutputDebugStringA("WAIT1 __HEVENT_EXIT__\r\n");
 					break;
+				}
 				dValue = (double)ite->second.lCurr / ite->second.lTotal;
 				switch (ite->second.lStatus)
 				{
@@ -69,7 +75,7 @@ DWORD WINAPI  CReceiveEmailDlg::_AfxMain(LPVOID lpParam)
 				ite++;
 				lCurrPos++;
 			}
-			//pDlg->PostMessage(__umymessage__fres_hprogress__, NULL, NULL);
+			pDlg->PostMessage(__umymessage__fres_hprogress__, NULL, NULL);
 		}//End of while
 	}
 	catch (...)
@@ -117,6 +123,7 @@ CReceiveEmailDlg::CReceiveEmailDlg(CWnd* pParent /*=NULL*/)
 : CDialogEx(CReceiveEmailDlg::IDD, pParent), m_lLastPos(0)
 , m_nHighJobPriority(0), m_nJobParamIntValue(0), m_nCurJobIndex(0)
 , m_hMain(NULL), m_hMainTest(NULL), m_hMainTest2(NULL)
+, m_csRunTime(_T(""))
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 	m_mailList.clear();
@@ -179,6 +186,7 @@ void CReceiveEmailDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_BUTTON_SET, m_btnSetting);
 	DDX_Control(pDX, IDC_BUTTON2, m_btnTest2);
 	DDX_Control(pDX, IDC_MFCEDITBROWSE1, m_editpath);
+	DDX_Control(pDX, IDC_STATIC_TIME, m_time);
 }
 
 BEGIN_MESSAGE_MAP(CReceiveEmailDlg, CDialogEx)
@@ -285,6 +293,11 @@ BOOL CReceiveEmailDlg::OnInitDialog()
 #ifdef _DEBUG
 	if (m_csTestText.IsEmpty())
 		m_csTestText.Format(_T("MD50000000764MSG994823304352032672194825"));
+	m_startdate = COleDateTime::GetCurrentTime();
+	m_csRunTime.Format(_T("%d年%d月%d日 %d:%d:%d")
+		, m_startdate.GetYear(), m_startdate.GetMonth()
+		, m_startdate.GetDay(), m_startdate.GetHour(), m_startdate.GetMinute(), m_startdate.GetSecond());
+	m_time.SetWindowText(m_csRunTime);
 #endif
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
@@ -597,8 +610,8 @@ void CReceiveEmailDlg::GetDataBaseInfo(MongoDBInfo& dbinfo, SQLDBInfo& sqlinfo)
 void CReceiveEmailDlg::OnBnClickedButtonStop()
 {
 	// TODO:  在此添加控件通知处理程序代码
-	StopMain();
 	Stop();
+	StopMain();
 	m_btnStop.EnableWindow(FALSE);
 	m_btnSet.EnableWindow(TRUE);
 }
@@ -731,6 +744,11 @@ void CReceiveEmailDlg::LayoutDialog(long cx, long cy)
 		SetRect(&rtTmp, 243, cy - BTN_HEIGHT*2 - GAP*2, 243 + BTN_LENGTH * 3 + HORIZON_GAP, cy - BTN_HEIGHT-GAP*2);
 		m_editpath.MoveWindow(&rtTmp);
 	}
+	if (m_time.m_hWnd)
+	{
+		SetRect(&rtTmp,cx - BTN_LENGTH * 3 - GAP * 3, cy - BTN_HEIGHT*2 - GAP*2, cx - GAP, cy - GAP*2-BTN_HEIGHT);
+		m_time.MoveWindow(&rtTmp);
+	}
 	if (m_btnTest.m_hWnd)
 	{
 		SetRect(&rtTmp, 243, cy - BTN_HEIGHT - GAP, 243 + BTN_LENGTH, cy - GAP);
@@ -745,13 +763,17 @@ void CReceiveEmailDlg::LayoutDialog(long cx, long cy)
 
 void CReceiveEmailDlg::Stop(long lType)//用于停止工作分配线程
 {
-	SetEvent(__HEVENT_EXIT__);
+#ifdef _DEBUG
+	OutputDebugStringA("STOP FRESH\r\n");
+#endif
+	if (__HEVENT_EXIT__)
+		SetEvent(__HEVENT_EXIT__);
 	if (m_hMain)
 	{
 		if (WaitForSingleObject(m_hMain, 5000L) != WAIT_OBJECT_0)
 		{
 #ifdef DEBUG
-			OutputDebugString(_T("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\n"));
+			OutputDebugString(_T("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXSTOPXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\n"));
 #endif
 			TerminateThread(m_hMain, 0);
 		}
@@ -762,17 +784,8 @@ void CReceiveEmailDlg::Stop(long lType)//用于停止工作分配线程
 		CloseHandle(__HEVENT_EXIT__);
 		__HEVENT_EXIT__ = NULL;
 	}
-	/*if (lType == 0)
-	{
-		if (m_pTestTheradPool)
-		{
-			m_pTestTheradPool->StopAndWait(FTL_MAX_THREAD_DEADLINE_CHECK);
-			SAFE_DELETE(m_pTestTheradPool);
-		}
-	}*/
 	for (int n = 0; n < 5; n++)
 		m_TextWnd[n] = -1;
-	//InitTextWnd();
 }
 
 void CReceiveEmailDlg::SetShowInfo(long lTextWnd, LPCTSTR lpName, long lProgress)
@@ -822,6 +835,14 @@ BOOL CReceiveEmailDlg::PreTranslateMessage(MSG* pMsg)
 	// TODO:  在此添加专用代码和/或调用基类
 	if (pMsg->message == __umymessage__fres_hprogress__)
 	{
+		COleDateTime date;
+		date = COleDateTime::GetCurrentTime(); 
+		date = date - m_startdate;
+		CString csDate;
+		csDate.Format(_T("%s| RT:%d天%d时%d分%d秒")
+			, m_csRunTime
+			,date.GetDay()-30,date.GetHour(),date.GetMinute(),date.GetSecond());
+		m_time.SetWindowText(csDate);
 	}
 	if (pMsg->message == __umymessage__kill_hprogress__)
 	{
@@ -1285,6 +1306,9 @@ void CReceiveEmailDlg::StopMain()
 	map<DWORD, ShowInfo>::iterator ite1 = m_showinfo.begin();
 	if (ite1 != m_showinfo.end())
 		m_showinfo.clear();
+#ifdef _DEBUG
+	OutputDebugStringA("STOP　MAIN\r\n");
+#endif
 }
 
 
@@ -1324,7 +1348,7 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 			csUserName.Empty();
 			UidlData.clear();
 			lFailedCount = 0;
-			if (WaitForSingleObject(__HEVENT_MAIN_EXIT__, 10L) == WAIT_OBJECT_0)
+			if (WaitForSingleObject(__HEVENT_MAIN_EXIT__, 0L) == WAIT_OBJECT_0)
 			{
 				pDlg->GetMailBoxInfo(csUserName, info, 0);
 				break;
