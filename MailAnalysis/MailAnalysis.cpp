@@ -505,11 +505,11 @@ long CMailAnalysis::AnalysisBoundary(const CString& csBoundary, vector<ATTACH>& 
 			case NO_ATT:
 			case TEXT_PLAIN:
 			{
-				wsprintf(chMainname, _T("main%d.txt"), m_lAttachmentCount);
-				if (SaveToFile(ite->csText, chMainname, stBouHead.lCharset,stBouHead.lEncode) == 0)
+				attachfile.Init();
+				if (stBouHead.csContentDisposition.Find(_T("attachment")) < 0)
 				{
-					attachfile.Init();
-					if (stBouHead.csContentDisposition.Find(_T("attachment"))<0)
+					wsprintf(chMainname, _T("main%d.txt"), m_lAttachmentCount);
+					if (SaveToFile(ite->csText, chMainname, stBouHead.lCharset, stBouHead.lEncode) == 0)
 					{
 						attachfile.lType = 0;
 						attachfile.csFilePath.Format(_T("%s%s"), m_csSavePath, chMainname);
@@ -519,10 +519,10 @@ long CMailAnalysis::AnalysisBoundary(const CString& csBoundary, vector<ATTACH>& 
 						m_stEmail.vecAttachFiles.push_back(attachfile);
 						m_lAttachmentCount++;
 					}
-					else
-					{
-						SaveAttachMent(this, attachfile, stBouHead, ite);
-					}
+				}
+				else
+				{
+					SaveAttachMent(this, attachfile, stBouHead, ite);
 				}
 			}
 				break;
@@ -558,31 +558,6 @@ long CMailAnalysis::AnalysisBoundary(const CString& csBoundary, vector<ATTACH>& 
 			case IMG_PNG:
 			default:
 			{
-				/*FormatFileName(stBouHead.csFilename);
-				FormatFileName(stBouHead.csName);
-				csFileName.Format(_T("%s"), stBouHead.csFilename.IsEmpty() ? stBouHead.csName : stBouHead.csFilename);
-				lPos = csFileName.ReverseFind(_T('.'));
-				if (lPos > 0)
-				{
-					stBouHead.csAttachmentName.Format(_T("attach%d%s"),m_lAttachmentCount,csFileName.Mid(lPos));
-				}
-				else
-				{
-					stBouHead.csAttachmentName.Format(_T("attach%d.dat"), m_lAttachmentCount);
-				}
-				if (SaveToFile(ite->csText, stBouHead.csAttachmentName, stBouHead.lEncode) == 0)
-				{
-					attachfile.Init();
-					attachfile.lType=1;
-					m_stEmail.lHasAffix = 1;
-					m_lAttachmentCount++;
-					attachfile.csFileName = csFileName;
-					attachfile.csLocalFileName = stBouHead.csAttachmentName;
-					attachfile.csFilePath.Format(_T("%s%s"), m_csSavePath, stBouHead.csAttachmentName);
-					attachfile.csAffixType = stBouHead.csContentType;
-					m_stEmail.vecAttachFiles.push_back(attachfile);
-				}*/
-
 				SaveAttachMent(this, attachfile, stBouHead, ite);
 			}
 				break;
@@ -1652,9 +1627,9 @@ void CodeConvert(const CString& csSrc, CString&csDest, int nCharset, int nCodety
 	}
 	char*pTemp = NULL,*pValue = NULL;
 	int nSize = WideCharToMultiByte(CP_ACP, 0, csTemp, -1, NULL, 0, NULL, NULL);
-	pTemp = new char[nSize + 1];
-	memset(pTemp, 0, nSize + 1);
-	long lSize = nSize + 1;
+	long lSize = nSize+1;
+	pTemp = new char[nSize+1];
+	memset(pTemp, 0, nSize+1);
 	pValue = new char[lSize];
 	memset(pValue, 0, lSize);
 	WideCharToMultiByte(CP_ACP, WC_COMPOSITECHECK, csTemp, -1, pTemp, nSize, NULL, NULL);

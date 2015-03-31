@@ -457,71 +457,70 @@ BOOL base64_decode(const char* pcSrcData, long lDataSize, char* pDestData, long 
 
 BOOL quotedprintable_decode(const char* pcSrcData, long lDataSize, char* pDestData, long &lDestSize)
 {
-	if (pcSrcData == NULL || pDestData == NULL || lDestSize <= 0) return FALSE;
-
-	long lSrcSize = 0;
-	lSrcSize = (lDataSize <= 0 ? strlen(pcSrcData) : lDataSize);
-	if (lDestSize <= lSrcSize) return FALSE;
-
-	memset(pDestData, 0, sizeof(pDestData));
-
-	BYTE bySrcSeg[4] = { 0 }, byDestSeg[3] = { 0 };
-	long lSrcBgn, lSrcOff, lDestOff, lIdx;
-	lSrcBgn = lSrcOff = lDestOff = lIdx = 0;
+	if (lDataSize > lDestSize)
+		return FALSE;
+	long LEN = lDataSize;
+	int step = 0;
 	try
 	{
+		char temp[3];
+		long pbefore = 0;
+		long offset = 0;
 		do
 		{
-			if (pcSrcData[lSrcOff] != '=')
+			if (pcSrcData[offset] != '=')
 			{
-				lSrcOff++;
+				offset++;
 				continue;
 			}
 
-			memcpy(pDestData + lDestOff, pcSrcData + lSrcBgn, lSrcOff - lSrcBgn);
-			lDestOff += lSrcOff - lSrcBgn;
-			lSrcBgn = lSrcOff + 1;
-			lSrcOff++;
+			memcpy(pDestData + step, pcSrcData + pbefore, offset - pbefore);
+			step += offset - pbefore;
+			pbefore = offset + 1;
 
-			if (pcSrcData[lSrcOff] == 0x0D || pcSrcData[lSrcOff] == 0x0A)
+			offset++;
+			if ((pcSrcData[offset] == 0x0D) || (pcSrcData[offset] == 0x0A))
 			{
-				lSrcBgn = lSrcOff + 1;
-				lSrcOff++;
-				if (pcSrcData[lSrcOff] == 0x0D || pcSrcData[lSrcOff] == 0x0A)
+				pbefore = offset + 1;
+				offset++;
+
+				if ((pcSrcData[offset] == 0x0D) || (pcSrcData[offset] == 0x0A))
 				{
-					lSrcBgn = lSrcOff + 1;
-					lSrcOff++;
+					pbefore = offset + 1;
+					offset++;
 				}
 				continue;
 			}
 
-			byDestSeg[0] = pcSrcData[lSrcOff];
-			byDestSeg[0] = (byDestSeg[0] < 0x41 ? byDestSeg[0] - 0x30 : (byDestSeg[0] < 0x61 ? byDestSeg[0] - 0x37 : byDestSeg[0] - 0x57));
+			temp[0] = pcSrcData[offset];
+			temp[0] = temp[0] < 0x41 ? temp[0] - 0x30 : (temp[0] < 0x61 ? temp[0] - 0x37 : temp[0] - 0x57);
 
-			lSrcOff++;
-			byDestSeg[1] = pcSrcData[lSrcOff];
-			byDestSeg[1] = (byDestSeg[1] < 0x41 ? byDestSeg[1] - 0x30 : (byDestSeg[1] < 0x61 ? byDestSeg[1] - 0x37 : byDestSeg[1] - 0x57));
+			offset++;
+			temp[1] = pcSrcData[offset];
+			temp[1] = temp[1] < 0x41 ? temp[1] - 0x30 : (temp[1] < 0x61 ? temp[1] - 0x37 : temp[1] - 0x57);
 
-			byDestSeg[2] = (byDestSeg[0] << 4) | (byDestSeg[1] & 0x0F);
+			temp[2] = (temp[0] << 4) | (temp[1] & 0x0F);
 
-			memcpy(pDestData + lDestOff, byDestSeg + 2, 1);
-			lDestOff += 1;
+			memcpy(pDestData + step, temp + 2, 1);
+			step += 1;
 
-			lSrcBgn = lSrcOff + 1;
-			lSrcOff++;
-		} while (lSrcOff < lSrcSize);
+			pbefore = offset + 1;
+			offset++;
 
-		if (lSrcBgn < lSrcSize)
+		} while (offset < LEN);
+
+		if (pbefore < LEN)
 		{
-			memcpy(pDestData + lDestOff, pcSrcData + lSrcBgn, lSrcSize - lSrcBgn);
-			lDestOff += lSrcSize - lSrcBgn;
+			memcpy(pDestData + step, pcSrcData + pbefore, LEN - pbefore);
+			step += LEN - pbefore;
 		}
-
-		lDestSize = lDestOff;
-		return TRUE;
 	}
 	catch (...)
 	{
+		pDestData[step] = 0x00;
+		return FALSE;
 	}
-	return FALSE;
+
+	pDestData[step] = 0x00;
+	return TRUE;
 }

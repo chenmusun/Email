@@ -284,7 +284,7 @@ BOOL CReceiveEmailDlg::OnInitDialog()
 	m_log.SetPath(m_csLogPath,m_csLogPath.GetLength());
 #ifdef _DEBUG
 	if (m_csTestText.IsEmpty())
-		m_csTestText.Format(_T("MD50000001614MSG1066630436030142166512"));
+		m_csTestText.Format(_T("MD50000040012MSG3327330435882491606320"));
 #endif
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
