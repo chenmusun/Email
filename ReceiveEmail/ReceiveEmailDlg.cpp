@@ -240,8 +240,8 @@ BOOL CReceiveEmailDlg::OnInitDialog()
 	CRect rt;
 	m_listMailBox.GetWindowRect(&rt);
 	m_listMailBox.SetExtendedStyle(m_listMailBox.GetExtendedStyle() | LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES | LVS_EX_CHECKBOXES);
-	m_listMailBox.InsertColumn(0, _T("ÐòºÅ"), LVCFMT_CENTER,40);
-	m_listMailBox.InsertColumn(1, _T("ÓÊÏäÃû³Æ"), LVCFMT_LEFT, rt.right - 40);
+	m_listMailBox.InsertColumn(0, _T("ÐòºÅ"), LVCFMT_CENTER,50);
+	m_listMailBox.InsertColumn(1, _T("ÓÊÏäÃû³Æ"), LVCFMT_LEFT, rt.right - 50);
 
 
 	if (LoadFromConfig())
@@ -1303,9 +1303,7 @@ void CReceiveEmailDlg::StopMain()
 		ite->second.lStatus = 0;
 		ite++;
 	}
-	map<DWORD, ShowInfo>::iterator ite1 = m_showinfo.begin();
-	if (ite1 != m_showinfo.end())
-		m_showinfo.clear();
+	m_showinfo.clear();
 #ifdef _DEBUG
 	OutputDebugStringA("STOP¡¡MAIN\r\n");
 #endif
