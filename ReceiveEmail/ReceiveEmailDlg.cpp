@@ -157,11 +157,6 @@ CReceiveEmailDlg::~CReceiveEmailDlg()
 		CloseHandle(__HEVENT_MAIN_EXIT__);
 		__HEVENT_MAIN_EXIT__ = NULL;
 	}
-	for (int i = 0; i < sizeof(m_hProcess) / sizeof(m_hProcess[0]); i++)
-	{
-		m_hProcess[i] = NULL;
-	}
-	m_showinfo.clear();
 }
 
 void CReceiveEmailDlg::DoDataExchange(CDataExchange* pDX)
@@ -295,16 +290,15 @@ BOOL CReceiveEmailDlg::OnInitDialog()
 	wsprintf(szPath, _T("%s\\Log\\main.txt"),__Main_Path__);
 	m_csLogPath.Format(_T("%s"),szPath);
 	m_log.SetPath(m_csLogPath,m_csLogPath.GetLength());
-#ifdef _DEBUG
+//#ifdef _DEBUG
 	if (m_csTestText.IsEmpty())
-		m_csTestText.Format(_T("MD50000006977MSG757465304365801070985866"));
-#endif
+		m_csTestText.Format(_T("MD50000000764MSG994823304352032672194825"));
 	m_startdate = COleDateTime::GetCurrentTime();
 	m_csRunTime.Format(_T("%d年%d月%d日 %d:%d:%d")
 		, m_startdate.GetYear(), m_startdate.GetMonth()
 		, m_startdate.GetDay(), m_startdate.GetHour(), m_startdate.GetMinute(), m_startdate.GetSecond());
 	m_time.SetWindowText(m_csRunTime);
-
+//#endif
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
 
@@ -367,7 +361,6 @@ void CReceiveEmailDlg::OnBnClickedMfcbuttonSet()
 	DWORD dwId[5] = { 0 },id;
 	ShowInfo stShow;
 	memset(&stShow, 0, sizeof(ShowInfo));
-	m_showinfo.clear();
 	if (m_listMailBox.GetItemCount() > 0)
 	{
 		if (__HEVENT_MAIN_EXIT__ == NULL)
@@ -1310,7 +1303,7 @@ void CReceiveEmailDlg::StopMain()
 		ite->second.lStatus = 0;
 		ite++;
 	}
-	//m_showinfo.clear();
+	m_showinfo.clear();
 //#ifdef _DEBUG
 	OutputDebugStringA("STOP　MAIN\r\n");
 //#endif
@@ -1366,7 +1359,6 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 				WideCharToMultiByte(CP_ACP, 0, szLogPath, MAX_PATH, chLogPath, MAX_PATH, NULL, NULL);
 				pop3.SetLogPath(chLogPath);
 				pop3.SetInfo(info.szName, info, dbinfo, __Main_Path__, lstrlen(__Main_Path__));
-				sql.SetLogPath(chLogPath);
 				WideCharToMultiByte(CP_ACP, 0, info.szAbbreviation, 64, chTemp, MAX_PATH, NULL, NULL);
 				strName = chTemp;
 				lResult = pop3.Login(info.szServerAdd, info.lPort, csUserName, info.szPasswd);
