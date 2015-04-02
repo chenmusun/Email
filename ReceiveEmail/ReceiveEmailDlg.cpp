@@ -36,9 +36,9 @@ DWORD WINAPI  CReceiveEmailDlg::_AfxMain(LPVOID lpParam)
 	try
 	{
 		TCHAR szInfo[128] = { 0 };
-#ifdef _DEBUG
+//#ifdef _DEBUG
 		CString csDebug;
-#endif
+//#endif
 		map<DWORD, ShowInfo>::iterator ite = pDlg->m_showinfo.begin();
 		long lCurrPos = 0;
 		double dValue(0);
@@ -290,7 +290,7 @@ BOOL CReceiveEmailDlg::OnInitDialog()
 	wsprintf(szPath, _T("%s\\Log\\main.txt"),__Main_Path__);
 	m_csLogPath.Format(_T("%s"),szPath);
 	m_log.SetPath(m_csLogPath,m_csLogPath.GetLength());
-#ifdef _DEBUG
+//#ifdef _DEBUG
 	if (m_csTestText.IsEmpty())
 		m_csTestText.Format(_T("MD50000000764MSG994823304352032672194825"));
 	m_startdate = COleDateTime::GetCurrentTime();
@@ -298,7 +298,7 @@ BOOL CReceiveEmailDlg::OnInitDialog()
 		, m_startdate.GetYear(), m_startdate.GetMonth()
 		, m_startdate.GetDay(), m_startdate.GetHour(), m_startdate.GetMinute(), m_startdate.GetSecond());
 	m_time.SetWindowText(m_csRunTime);
-#endif
+//#endif
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
 
@@ -371,11 +371,11 @@ void CReceiveEmailDlg::OnBnClickedMfcbuttonSet()
 			{
 				m_hProcess[i] = CreateThread(NULL, 0, _AfxMainProcess, (LPVOID)this, 0, &dwId[i]);
 				m_showinfo.insert(make_pair(dwId[i], stShow));
-#ifdef _DEBUG
+//#ifdef _DEBUG
 				CString csDebug;
 				csDebug.Format(_T("ThreadID = [%d]\r\n"),dwId[i]);
 				OutputDebugString(csDebug);
-#endif
+//#endif
 			}
 		}
 		
@@ -529,9 +529,9 @@ void CReceiveEmailDlg::OnDestroy()
 BOOL CReceiveEmailDlg::GetMailBoxInfo(CString&csUserName, MailBoxInfo& info, long lStatus)
 {
 	::EnterCriticalSection(&_cs_);
-#ifdef _DEBUG
+//#ifdef _DEBUG
 	CString csDebug;
-#endif
+//#endif
 	BOOL bFound = FALSE;
 	if (m_lLastPos > m_mailList.size()-1)
 		m_lLastPos = 0;
@@ -763,18 +763,18 @@ void CReceiveEmailDlg::LayoutDialog(long cx, long cy)
 
 void CReceiveEmailDlg::Stop(long lType)//用于停止工作分配线程
 {
-#ifdef _DEBUG
+//#ifdef _DEBUG
 	OutputDebugStringA("STOP FRESH\r\n");
-#endif
+//#endif
 	if (__HEVENT_EXIT__)
 		SetEvent(__HEVENT_EXIT__);
 	if (m_hMain)
 	{
 		if (WaitForSingleObject(m_hMain, 5000L) != WAIT_OBJECT_0)
 		{
-#ifdef DEBUG
+//#ifdef DEBUG
 			OutputDebugString(_T("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXSTOPXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\n"));
-#endif
+//#endif
 			TerminateThread(m_hMain, 0);
 		}
 	}
@@ -853,9 +853,9 @@ BOOL CReceiveEmailDlg::PreTranslateMessage(MSG* pMsg)
 	}
 	if (pMsg->message == __umymessage_api_netcommand__)
 	{
-#ifdef _DEBUG
+//#ifdef _DEBUG
 	CStringA csApiParam;
-#endif
+//#endif
 		GGJsonAdapter jsonAdapter;
 		char *pData = (char*)pMsg->lParam;
 		std::string strContent(pData);
@@ -864,35 +864,35 @@ BOOL CReceiveEmailDlg::PreTranslateMessage(MSG* pMsg)
 			delete[] pData;
 			pData = NULL;
 		}
-#ifdef _DEBUG
+//#ifdef _DEBUG
 		OutputDebugStringA(strContent.c_str());
 		OutputDebugStringA("\r\n");
-#endif
+//#endif
 		if (!jsonAdapter.Parse(strContent))//解析
 		{
-#ifdef _DEBUG
+//#ifdef _DEBUG
 			
 			csApiParam.Append("------------服务器无返回！");
 			OutputDebugStringA(csApiParam);
 			OutputDebugString(_T("\r\n"));
-#endif
+//#endif
 		}
 		else
 		{
 			if (jsonAdapter.ReadValueLongFromNum(_T("code")))//返回值不为0，则表示不成功
 			{
-#ifdef DEBUG
+//#ifdef DEBUG
 				csApiParam.Append("------------服务器返回Code非0！");
 				OutputDebugStringA(csApiParam);
 				OutputDebugString(_T("\r\n"));
-#endif
+//#endif
 			}
 			else
 			{
-#ifdef _DEBUG
+//#ifdef _DEBUG
 				csApiParam.Format("Success!\r\n");
 				OutputDebugStringA(csApiParam);
-#endif
+//#endif
 			}
 
 		}
@@ -917,9 +917,9 @@ BOOL CReceiveEmailDlg::PreTranslateMessage(MSG* pMsg)
 	}
 	if (pMsg->message == __umymessage__anauncomplete__)
 	{
-#ifdef _DEBUG
+//#ifdef _DEBUG
 		OutputDebugString(_T("Analysis Error!\r\n"));
-#endif
+//#endif
 #ifndef _DEBUG
 		AfxMessageBox(_T("解析失败！"));
 #endif
@@ -1071,10 +1071,10 @@ DWORD WINAPI  CReceiveEmailDlg::_AfxMainTestAna(LPVOID lpParam)
 	{
 		return 0;
 	}
-#ifdef _DEBUG
+//#ifdef _DEBUG
 	DWORD dwTime(0);
 	dwTime = GetTickCount();
-#endif
+//#endif
 	do 
 	{
 		if (ana.AnalysisHead() < 0)
@@ -1104,13 +1104,13 @@ DWORD WINAPI  CReceiveEmailDlg::_AfxMainTestAna(LPVOID lpParam)
 		sql.SaveToDB(ana.GetEmailItem());
 		ana.Clear(0);
 		sql.CloseDB();
-#ifdef _DEBUG
+//#ifdef _DEBUG
 		dwTime = GetTickCount() - dwTime;
 		CString csDebug;
 		csDebug.Format(_T("Analysis Time = %d\tAnalysis [%s] Complete!\r\n"), dwTime / 1000, csUIDL);
 		OutputDebugString(csDebug);
 		pDlg->m_log.Log(csDebug, csDebug.GetLength());
-#endif
+//#endif
 	} while (0);
 	if (bRet)
 		pDlg->PostMessage(__umymessage__anacomplete__);
@@ -1304,9 +1304,9 @@ void CReceiveEmailDlg::StopMain()
 		ite++;
 	}
 	m_showinfo.clear();
-#ifdef _DEBUG
+//#ifdef _DEBUG
 	OutputDebugStringA("STOP　MAIN\r\n");
-#endif
+//#endif
 }
 
 
@@ -1330,9 +1330,9 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 		POP3 pop3;
 		CSQLServer sql;
 		DWORD dwID = GetCurrentThreadId();
-#ifdef _DEBUG
+//#ifdef _DEBUG
 		DWORD dwTime(0);
-#endif
+//#endif
 		while (true)
 		{
 			pop3.Close();
@@ -1383,11 +1383,11 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 									pop3.Close();
 									break;
 								}
-#ifdef _DEBUG
+//#ifdef _DEBUG
 								csDebug.Format(_T("%s Count = %d\tTotal = %d\r\n"), info.szName, i,lResult);
 								OutputDebugString(csDebug);
 								dwTime = GetTickCount();
-#endif
+//#endif
 								if (pop3.GetStatus())
 									break;
 								strUDIL.clear();
@@ -1402,10 +1402,10 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 											if (pDlg->MailAnalysis(pop3, sql, strUDIL, info.szAbbreviation, 0)<0)
 											{
 												sprintf_s(chDebug, 512, "Analysis [%s] Error!", strUDIL.c_str());
-#ifdef _DEBUG
+//#ifdef _DEBUG
 												OutputDebugStringA(chDebug);
 												OutputDebugStringA("\r\n");
-#endif
+//#endif
 											}
 										}
 									}
@@ -1417,16 +1417,16 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 									lFailedCount++;
 									if (lFailedCount > 10)
 									{
-#ifdef _DEBUG
+//#ifdef _DEBUG
 										OutputDebugString(_T("Can't get UIDL!\r\n"));
-#endif
+//#endif
 									}
 								}
-#ifdef _DEBUG
+//#ifdef _DEBUG
 								dwTime = GetTickCount() - dwTime;
 								csDebug.Format(_T("Process Time = %d\r\n"), dwTime / 1000);
 								OutputDebugString(csDebug);
-#endif
+//#endif
 								pDlg->m_showinfo[dwID].lCurr = i;
 								
 							}
@@ -1439,10 +1439,10 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 								pDlg->m_showinfo[dwID].lTotal = lCount;
 								for (long i = 1; i < lResult + 1; i++)
 								{
-#ifdef _DEBUG
+//#ifdef _DEBUG
 									csDebug.Format(_T("%s Del-Count = %d\r\n"), info.szName, i);
 									OutputDebugString(csDebug);
-#endif
+//#endif
 									strUDIL.clear();
 									strUDIL = pop3.GetUIDL(i);
 									if (strUDIL.length() > 0)
@@ -1501,10 +1501,10 @@ long CReceiveEmailDlg::MailAnalysis(POP3& pop3, CSQLServer& sql, const string& s
 	CMailAnalysis ana;
 	ana.SetAbbreviation(lpAbb);
 	ana.LoadFile(csPath, csUIDL);
-#ifdef _DEBUG
+//#ifdef _DEBUG
 	DWORD dwTime(0);
 	dwTime = GetTickCount();
-#endif
+//#endif
 	do
 	{
 		if (ana.AnalysisHead() < 0)
@@ -1535,13 +1535,13 @@ long CReceiveEmailDlg::MailAnalysis(POP3& pop3, CSQLServer& sql, const string& s
 			ana.Clear(0);
 		}
 	} while (0);
-#ifdef _DEBUG
+//#ifdef _DEBUG
 	dwTime = GetTickCount() - dwTime;
 	CString csDebug;
 	csDebug.Format(_T("Analysis Time = %d\tAnalysis [%s] Complete!"), dwTime / 1000, csUIDL);
 	OutputDebugString(csDebug);
 	OutputDebugString(_T("\r\n"));
-#endif
+//#endif
 	if (bRet)
 		return 0;
 	else

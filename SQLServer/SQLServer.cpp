@@ -127,15 +127,15 @@ long CSQLServer::SaveToDB(EMAIL_ITEM& email)
 			pEMCmd->SetText(szCmdText);
 			if (pEMCmd->Execute(adCmdText))
 			{
-#ifdef _DEBUG
+//#ifdef _DEBUG
 				OutputDebugString(_T("Insert to SQL Success!\r\n"));
-#endif
+//#endif
 			}
 			else
 			{
-#ifdef _DEBUG
+//#ifdef _DEBUG
 				OutputDebugString(_T("Insert to SQL Failed!\r\n"));
-#endif
+//#endif
 				delete pEMCmd;
 				return -1;
 			}
@@ -176,11 +176,11 @@ long CSQLServer::SaveToDB(EMAIL_ITEM& email)
 				}
 				m_pEMRs->Update();
 				m_pEMRs->GetFieldValue(_T("EMailID"), email.lSn);
-#ifdef _DEBUG
+////#ifdef _DEBUG
 				CString csDebug;
 				csDebug.Format(_T("EMailID = %d\r\n"), email.lSn);
 				OutputDebugString(csDebug);
-#endif
+//#endif
 			}
 			vector<ATTACH_FILE>::iterator ite = email.vecAttachFiles.begin();
 			while (ite!=email.vecAttachFiles.end())
@@ -197,9 +197,9 @@ long CSQLServer::SaveToDB(EMAIL_ITEM& email)
 		}
 		else
 		{
-#ifdef _DEBUG
+//#ifdef _DEBUG
 			OutputDebugString(_T("DataBase is closed!\r\n"));
-#endif
+//#endif
 		}
 	}
 	catch (_com_error& e)
@@ -207,10 +207,10 @@ long CSQLServer::SaveToDB(EMAIL_ITEM& email)
 		m_db.RollbackTransaction();
 		CString csErr;
 		csErr.Format(_T("SaveToDB\r\n%s\r\n%s"), (TCHAR*)e.Description(), (TCHAR*)e.ErrorMessage());
-#ifdef _DEBUG
+//#ifdef _DEBUG
 		OutputDebugString(csErr);
 		OutputDebugString(_T("\r\n"));
-#endif
+//#endif
 	}
 	return 0;
 }
@@ -264,10 +264,10 @@ BOOL CSQLServer::Connect(SQLDBInfo& sqlinfo, int nType)
 	{
 		csCommand.Format(_T("Connect:[%s]-[%s]\r\n[%s]\r\n%s")
 			, m_csServer, m_csDatabase, (TCHAR*)e.Description(), (TCHAR*)e.ErrorMessage());
-#ifdef _DEBUG
+//#ifdef _DEBUG
 		OutputDebugString(csCommand);
 		OutputDebugString(_T("\r\n"));
-#endif
+//#endif
 		return FALSE;
 	}
 	return TRUE;
@@ -289,10 +289,10 @@ BOOL CSQLServer::IsConnect()
 		CString csErr;
 		csErr.Format(_T("IsConnect:[%s]-[%s]\r\n[%s]\r\n[%s]")
 			, m_csServer, m_csDatabase, (TCHAR*)e.Description(), (TCHAR*)e.ErrorMessage());
-#ifdef _DEBUG
+//#ifdef _DEBUG
 		OutputDebugString(csErr);
 		OutputDebugString(_T("\r\n"));
-#endif
+//#endif
 
 	}
 	return FALSE;
@@ -333,10 +333,10 @@ BOOL CSQLServer::ReConnect()
 	{
 		csCommand.Format(_T("ReConnect:[%s]-[%s]\r\n[%s]\r\n[%s]")
 			, m_csServer, m_csDatabase, (TCHAR*)e.Description(), (TCHAR*)e.ErrorMessage());
-#ifdef _DEBUG
+//#ifdef _DEBUG
 		OutputDebugString(csCommand);
 		OutputDebugString(_T("\r\n"));
-#endif
+//#endif
 		return FALSE;
 	}
 	return TRUE;
@@ -358,10 +358,10 @@ BOOL CSQLServer::SQLExec(LPCTSTR lpSql)
 	catch (_com_error&e)
 	{
 		csCmd.Format(_T("SqlExec:[%s]Err\r\n[%s]\r\n[%s]"), lpSql, (TCHAR*)e.Description(), (TCHAR*)e.ErrorMessage());
-#ifdef _DEBUG
+//#ifdef _DEBUG
 		OutputDebugString(csCmd);
 		OutputDebugString(_T("\r\n"));
-#endif
+//#endif
 	}
 	return FALSE;
 }
@@ -404,10 +404,10 @@ BOOL CSQLServer::IsExist(EMAIL_ITEM& email)
 		TRACE(_T("\r\n%s"), (TCHAR*)e.ErrorMessage());
 		TRACE(_T("\r\n%s"), (TCHAR*)e.Description());
 		csLog.Format(_T("IsExistError:[%s]\r\n[%s]\r\n[%s]"), csSQL, (TCHAR*)e.ErrorMessage(), (TCHAR*)e.Description());
-#ifdef _DEBUG
+//#ifdef _DEBUG
 		csLog.Append(_T("\r\n"));
 		OutputDebugString(csLog);
-#endif
+//#endif
 		return FALSE;
 	}
 	return FALSE;
@@ -442,11 +442,11 @@ long CSQLServer::SaveAttachment(ATTACH_FILE& attach, long lEmailID)
 		}
 		else
 		{
-#ifdef _DEBUG
+//#ifdef _DEBUG
 			CString csDebug;
 			csDebug.Format(_T("Open[%s]Error\r\n"), attach.csFilePath);
 			OutputDebugString(csDebug);
-#endif
+//#endif
 			attach.csRemoteName.Empty();
 			return -1;
 		}
@@ -464,9 +464,9 @@ long CSQLServer::SaveAttachment(ATTACH_FILE& attach, long lEmailID)
 		pEMAttachCmd->SetText(szAttachCmdText);
 		if (!pEMAttachCmd->Execute(adCmdText))
 		{
-#ifdef _DEBUG
+//#ifdef _DEBUG
 			OutputDebugString(_T("Execute Error1!\r\n"));
-#endif
+//#endif
 		}
 		delete pEMAttachCmd;
 	}
@@ -474,11 +474,11 @@ long CSQLServer::SaveAttachment(ATTACH_FILE& attach, long lEmailID)
 	{
 		TRACE(_T("\r\n%s"), (TCHAR*)e.ErrorMessage());
 		TRACE(_T("\r\n%s"), (TCHAR*)e.Description());
-#ifdef DEBUG
+//#ifdef _DEBUG
 		CString csDebug;
 		csDebug.Format(_T("SaveAttachmentErr:[%s]\r\n[%s]\r\n"), (TCHAR*)e.ErrorMessage(), (TCHAR*)e.Description());
 		OutputDebugString(csDebug);
-#endif // DEBUG
+//#endif // DEBUG
 	}
 	try
 	{
@@ -490,9 +490,9 @@ long CSQLServer::SaveAttachment(ATTACH_FILE& attach, long lEmailID)
 		pMapCmd->SetText(szMapCmdText);
 		if (!pMapCmd->Execute(adCmdText))
 		{
-#ifdef _DEBUG
+//#ifdef _DEBUG
 			OutputDebugString(_T("Execute Error2!\r\n"));
-#endif
+//#endif
 		}
 		delete pMapCmd;
 	}
@@ -500,11 +500,11 @@ long CSQLServer::SaveAttachment(ATTACH_FILE& attach, long lEmailID)
 	{
 		TRACE(_T("\r\n%s"), (TCHAR*)e.ErrorMessage());
 		TRACE(_T("\r\n%s"), (TCHAR*)e.Description());
-#ifdef _DEBUG
+//#ifdef _DEBUG
 		CString csDebug;
 		csDebug.Format(_T("SaveAttachmentErr:[%s]\r\n[%s]\r\n"), (TCHAR*)e.ErrorMessage(), (TCHAR*)e.Description());
 		OutputDebugString(csDebug);
-#endif
+//#endif
 		return -1;
 	}
 	return 0;
@@ -576,9 +576,9 @@ void CADODatabase::dump_com_error(_com_error &e)
 	m_strErrorDescription = (LPCTSTR)bstrDescription;
 	m_strLastError = _T("Connection String = " + GetConnectionString() + '\n' + ErrorStr);
 	m_dwLastError = e.Error();
-#ifdef _DEBUG
+//#ifdef _DEBUG
 	//AfxMessageBox(ErrorStr, MB_OK | MB_ICONERROR);
-#endif
+//#endif
 }
 
 BOOL CADODatabase::IsOpen()
@@ -2481,9 +2481,9 @@ void CADORecordset::dump_com_error(_com_error &e)
 		e.Error(), e.ErrorMessage(), (LPCTSTR)bstrSource, (LPCTSTR)bstrDescription);
 	m_strLastError = _T("Query = " + GetQuery() + '\n' + ErrorStr);
 	m_dwLastError = e.Error();
-#ifdef _DEBUG
+//#ifdef _DEBUG
 	//AfxMessageBox(ErrorStr, MB_OK | MB_ICONERROR);
-#endif	
+//#endif	
 	// throw CADOException(e.Error(), e.Description());
 }
 
@@ -2684,9 +2684,9 @@ void CADOCommand::dump_com_error(_com_error &e)
 		e.Error(), e.ErrorMessage(), (LPCTSTR)bstrSource, (LPCTSTR)bstrDescription);
 	m_strLastError = ErrorStr;
 	m_dwLastError = e.Error();
-#ifdef _DEBUG
+//#ifdef _DEBUG
 	//AfxMessageBox(ErrorStr, MB_OK | MB_ICONERROR);
-#endif	
+//#endif	
 	// throw CADOException(e.Error(), e.Description());
 }
 
@@ -3130,8 +3130,8 @@ void CADOParameter::dump_com_error(_com_error &e)
 	m_strLastError = ErrorStr;
 	m_dwLastError = e.Error();
 
-#ifdef _DEBUG
+//#ifdef _DEBUG
 	//AfxMessageBox(ErrorStr, MB_OK | MB_ICONERROR);
-#endif	
+//#endif	
 	// throw CADOException(e.Error(), e.Description());
 }

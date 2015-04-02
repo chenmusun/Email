@@ -172,9 +172,9 @@ BOOL POP3::ConnectDataBase()
 
 long POP3::GetEMLFile(long lCurrPos,const string& strUIDL)
 {
-#ifdef _DEBUG
+//#ifdef _DEBUG
 	CString csDebug;
-#endif
+//#endif
 	FILE *pFile;
 	CMyJob* pMyJob = NULL;
 	string strCurrPos, strSize,strEMail;
@@ -231,10 +231,10 @@ long POP3::GetEMLFile(long lCurrPos,const string& strUIDL)
 				memset(chTemp, 0, 65536);
 				lRecSize += n;
 				lLastDataSize = n;
-#ifdef DEBUG
+//#ifdef DEBUG
 				csDebug.Format(_T("Bytes received: %d----Recv:%d----Total:%d\n"), n, lRecSize, lTotalSize);
 				OutputDebugString(csDebug);
-#endif
+//#endif
 			}
 			/*else if (n == 0)
 			{
@@ -290,10 +290,10 @@ long POP3::GetEMLFile(long lCurrPos,const string& strUIDL)
 	char chDebug[256] = { 0 };
 	sprintf_s(chDebug, 256, "Receive [%s] Complete!", strUIDL.c_str());
 	//m_log.Log(chDebug, strlen(chDebug));
-#ifdef _DEBUG
+//#ifdef _DEBUG
 	OutputDebugStringA(chDebug);
 	OutputDebugStringA("\r\n");
-#endif
+//#endif
 	if (m_bFailed)
 		return RETURN_FAIL;
 	return SUCCESS;
@@ -353,9 +353,6 @@ BOOL POP3::SaveFileToDB(EMAIL_ITEM& email)
 	long lCount(0);
 	char chGUID[128] = { 0 }, chFilePath[512] = {0};
 	string strRemote, strPath, strErr;
-#ifdef _DEBUG
-	CString csDebug;
-#endif
 	vector<ATTACH_FILE>::iterator ite = email.vecAttachFiles.begin();
 	while (ite!=email.vecAttachFiles.end())
 	{
