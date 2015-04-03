@@ -2715,7 +2715,7 @@ long CSQLServer::SaveToDB(EMAIL_ITEM& email)
 		return 0;
 	DWORD size = 0;
 	COleDateTime oledt = COleDateTime::GetCurrentTime();
-	CString csTemp, csPath;
+	CString csTemp, csPath,csLog;
 	try
 	{
 		if (m_db.IsOpen())
@@ -2759,9 +2759,10 @@ long CSQLServer::SaveToDB(EMAIL_ITEM& email)
 			}
 			else
 			{
-				//#ifdef _DEBUG
-				OutputDebugString(_T("Insert to SQL Failed!\r\n"));
-				//#endif
+				csLog.Format(_T("[%s]Insert to SQL Failed!"),email.csUIDL);
+				Log(csLog,csLog.GetLength());
+				csLog.Append(_T("\r\n"));
+				OutputDebugString(csLog);
 				delete pEMCmd;
 				return -1;
 			}
@@ -2823,20 +2824,19 @@ long CSQLServer::SaveToDB(EMAIL_ITEM& email)
 		}
 		else
 		{
-			//#ifdef _DEBUG
-			OutputDebugString(_T("DataBase is closed!\r\n"));
-			//#endif
+			csLog.Format(_T("DataBase is closed!"));
+			Log(csLog, csLog.GetLength());
+			csLog.Append(_T("\r\n"));
+			OutputDebugString(csLog);
 		}
 	}
 	catch (_com_error& e)
 	{
 		m_db.RollbackTransaction();
-		CString csErr;
-		csErr.Format(_T("SaveToDB\r\n%s\r\n%s"), (TCHAR*)e.Description(), (TCHAR*)e.ErrorMessage());
-		//#ifdef _DEBUG
-		OutputDebugString(csErr);
-		OutputDebugString(_T("\r\n"));
-		//#endif
+		csLog.Format(_T("SaveToDB\r\n%s\r\n%s"), (TCHAR*)e.Description(), (TCHAR*)e.ErrorMessage());
+		Log(csLog, csLog.GetLength());
+		csLog.Append(_T("\r\n"));
+		OutputDebugString(csLog);
 	}
 	return 0;
 }
@@ -2855,7 +2855,7 @@ void CSQLServer::GetGUID(CString &guid)
 BOOL CSQLServer::Connect(SQLDBInfo& sqlinfo, int nType)
 {
 	::CoInitialize(NULL);
-	CString csCommand;
+	CString csCommand,csLog;
 	m_csServer.Empty();
 	m_csDatabase.Empty();
 	m_csUser.Empty();
@@ -2863,6 +2863,12 @@ BOOL CSQLServer::Connect(SQLDBInfo& sqlinfo, int nType)
 	m_nType = nType;
 	if (m_db.IsOpen() == TRUE)
 		return TRUE;
+	m_csServer.Format(_T("%s"),sqlinfo.szDBAdd);
+	m_csDatabase.Format(_T("%s"), sqlinfo.szDBName);
+	m_csUser.Format(_T("%s"), sqlinfo.szUserName);
+	m_csPass.Format(_T("%s"), sqlinfo.szPasswd);
+	if (m_csServer.IsEmpty() || m_csDatabase.IsEmpty())
+		return FALSE;
 	try
 	{
 		switch (m_nType)
@@ -2884,7 +2890,10 @@ BOOL CSQLServer::Connect(SQLDBInfo& sqlinfo, int nType)
 		}
 		m_db.SetConnectionTimeout(180);
 		if (!m_db.Open(csCommand))
+		{
+			csLog.Format(_T("ConnectError:[%s]-[%s]"));
 			return FALSE;
+		}
 	}
 	catch (_com_error&e)
 	{
