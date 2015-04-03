@@ -717,6 +717,7 @@ public:
 	long SaveToDB(EMAIL_ITEM& email);
 	BOOL Connect(SQLDBInfo& sqlinfo, int nType = 0);//0:混合验证；1:Windows验证
 	BOOL CloseDB();
+	void SetLogPath(const char*pPath);
 private:
 	CString m_csServer;
 	CString m_csDatabase;
@@ -727,6 +728,8 @@ private:
 	CADORecordset *	m_pEMRs;
 	CADORecordset *	m_pGuidRs;
 	CADORecordset *	m_pSubjectRs;
+	char m_chLogPath[MAX_PATH];
+	FILE *m_fp;
 private:
 	void GetGUID(CString &guid);
 	BOOL IsConnect();
@@ -734,6 +737,8 @@ private:
 	BOOL SQLExec(LPCTSTR lpSql);
 	BOOL IsExist(EMAIL_ITEM& email);
 	long SaveAttachment(ATTACH_FILE& attach, long lEmailID);
+	void Log(LPCTSTR lpText, int nLen);
+	void GetCurrTime(char* pTime, long lLen);
 public:
 };
 

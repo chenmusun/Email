@@ -357,12 +357,11 @@ long CMailAnalysis::AnalysisHead()
 	csDebug.Format(_T("Date:%s\r\n"),csDate);
 	OutputDebugString(csDebug);
 #endif
-	csTemp.Empty();
 	CString csOutPut;
 	for (long long i = 0; i < csSubject.GetSize(); i++)
 	{
+		csTemp.Empty();
 		StringProcess(csSubject.GetAt(i), csTemp, _SUBJECT_);
-		StringProcess(csTemp, csTemp);
 		csOutPut.AppendFormat(_T("%s"), StringEncode(csTemp));
 	}
 	if (!csOutPut.IsEmpty())
