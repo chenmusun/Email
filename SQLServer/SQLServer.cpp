@@ -2892,15 +2892,17 @@ BOOL CSQLServer::Connect(SQLDBInfo& sqlinfo, int nType)
 		if (!m_db.Open(csCommand))
 		{
 			csLog.Format(_T("ConnectError:[%s]-[%s]"));
+			Log(csLog, csLog.GetLength());
 			return FALSE;
 		}
 	}
 	catch (_com_error&e)
 	{
-		csCommand.Format(_T("Connect:[%s]-[%s]\r\n[%s]\r\n%s")
+		csLog.Format(_T("Connect:[%s]-[%s]\r\n[%s]\r\n%s")
 			, m_csServer, m_csDatabase, (TCHAR*)e.Description(), (TCHAR*)e.ErrorMessage());
+		Log(csLog, csLog.GetLength());
 		//#ifdef _DEBUG
-		OutputDebugString(csCommand);
+		OutputDebugString(csLog);
 		OutputDebugString(_T("\r\n"));
 		//#endif
 		return FALSE;
@@ -2928,7 +2930,7 @@ BOOL CSQLServer::IsConnect()
 		OutputDebugString(csErr);
 		OutputDebugString(_T("\r\n"));
 		//#endif
-
+		Log(csErr, csErr.GetLength());
 	}
 	return FALSE;
 }
@@ -2972,6 +2974,7 @@ BOOL CSQLServer::ReConnect()
 		OutputDebugString(csCommand);
 		OutputDebugString(_T("\r\n"));
 		//#endif
+		Log(csCommand, csCommand.GetLength());
 		return FALSE;
 	}
 	return TRUE;
@@ -2997,6 +3000,7 @@ BOOL CSQLServer::SQLExec(LPCTSTR lpSql)
 		OutputDebugString(csCmd);
 		OutputDebugString(_T("\r\n"));
 		//#endif
+		Log(csCmd, csCmd.GetLength());
 	}
 	return FALSE;
 }
@@ -3039,10 +3043,9 @@ BOOL CSQLServer::IsExist(EMAIL_ITEM& email)
 		TRACE(_T("\r\n%s"), (TCHAR*)e.ErrorMessage());
 		TRACE(_T("\r\n%s"), (TCHAR*)e.Description());
 		csLog.Format(_T("IsExistError:[%s]\r\n[%s]\r\n[%s]"), csSQL, (TCHAR*)e.ErrorMessage(), (TCHAR*)e.Description());
-		//#ifdef _DEBUG
+		Log(csLog, csLog.GetLength());
 		csLog.Append(_T("\r\n"));
 		OutputDebugString(csLog);
-		//#endif
 		return FALSE;
 	}
 	return FALSE;
@@ -3051,7 +3054,7 @@ BOOL CSQLServer::IsExist(EMAIL_ITEM& email)
 long CSQLServer::SaveAttachment(ATTACH_FILE& attach, long lEmailID)
 {
 	CFile file;
-	CString csGuid;
+	CString csGuid,csLog;
 	GetGUID(csGuid);
 	if (csGuid.IsEmpty() || attach.csLocalFileName.IsEmpty())
 		return -1;
@@ -3077,11 +3080,10 @@ long CSQLServer::SaveAttachment(ATTACH_FILE& attach, long lEmailID)
 		}
 		else
 		{
-			//#ifdef _DEBUG
-			CString csDebug;
-			csDebug.Format(_T("Open[%s]Error\r\n"), attach.csFilePath);
-			OutputDebugString(csDebug);
-			//#endif
+			csLog.Format(_T("Open[%s]Error"), attach.csFilePath);
+			Log(csLog, csLog.GetLength());
+			csLog.Append(_T("\r\n"));
+			OutputDebugString(csLog);
 			attach.csRemoteName.Empty();
 			return -1;
 		}
@@ -3099,9 +3101,10 @@ long CSQLServer::SaveAttachment(ATTACH_FILE& attach, long lEmailID)
 		pEMAttachCmd->SetText(szAttachCmdText);
 		if (!pEMAttachCmd->Execute(adCmdText))
 		{
-			//#ifdef _DEBUG
-			OutputDebugString(_T("Execute Error1!\r\n"));
-			//#endif
+			csLog.Format(_T("Insert to [T_REPORT_FILES] Error![%s%s]"),attach.csFilePath,attach.csLocalFileName);
+			Log(csLog, csLog.GetLength());
+			csLog.Append(_T("\r\n"));
+			OutputDebugString(csLog);
 		}
 		delete pEMAttachCmd;
 	}
@@ -3109,11 +3112,12 @@ long CSQLServer::SaveAttachment(ATTACH_FILE& attach, long lEmailID)
 	{
 		TRACE(_T("\r\n%s"), (TCHAR*)e.ErrorMessage());
 		TRACE(_T("\r\n%s"), (TCHAR*)e.Description());
-		//#ifdef _DEBUG
-		CString csDebug;
-		csDebug.Format(_T("SaveAttachmentErr:[%s]\r\n[%s]\r\n"), (TCHAR*)e.ErrorMessage(), (TCHAR*)e.Description());
-		OutputDebugString(csDebug);
-		//#endif // DEBUG
+		csLog.Format(_T("Insert to [T_REPORT_FILES] Error![%s%s]\r\n%s\r\n%s"), attach.csFilePath, attach.csLocalFileName
+			, (TCHAR*)e.ErrorMessage(), (TCHAR*)e.Description());
+		Log(csLog, csLog.GetLength());
+		csLog.Append(_T("\r\n"));
+		OutputDebugString(csLog);
+		return -1;
 	}
 	try
 	{
@@ -3125,9 +3129,10 @@ long CSQLServer::SaveAttachment(ATTACH_FILE& attach, long lEmailID)
 		pMapCmd->SetText(szMapCmdText);
 		if (!pMapCmd->Execute(adCmdText))
 		{
-			//#ifdef _DEBUG
-			OutputDebugString(_T("Execute Error2!\r\n"));
-			//#endif
+			csLog.Format(_T("Insert to [T_FILE_AND_REPORT] Error![%s%s]"), attach.csFilePath, attach.csLocalFileName);
+			Log(csLog, csLog.GetLength());
+			csLog.Append(_T("\r\n"));
+			OutputDebugString(csLog);
 		}
 		delete pMapCmd;
 	}
@@ -3135,11 +3140,11 @@ long CSQLServer::SaveAttachment(ATTACH_FILE& attach, long lEmailID)
 	{
 		TRACE(_T("\r\n%s"), (TCHAR*)e.ErrorMessage());
 		TRACE(_T("\r\n%s"), (TCHAR*)e.Description());
-		//#ifdef _DEBUG
-		CString csDebug;
-		csDebug.Format(_T("SaveAttachmentErr:[%s]\r\n[%s]\r\n"), (TCHAR*)e.ErrorMessage(), (TCHAR*)e.Description());
-		OutputDebugString(csDebug);
-		//#endif
+		csLog.Format(_T("Insert to [T_FILE_AND_REPORT] Error![%s%s]\r\n%s\r\n%s"), attach.csFilePath, attach.csLocalFileName
+			, (TCHAR*)e.ErrorMessage(), (TCHAR*)e.Description());
+		Log(csLog, csLog.GetLength());
+		csLog.Append(_T("\r\n"));
+		OutputDebugString(csLog);
 		return -1;
 	}
 	return 0;
