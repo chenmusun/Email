@@ -718,6 +718,7 @@ public:
 	BOOL Connect(SQLDBInfo& sqlinfo, int nType = 0);//0:混合验证；1:Windows验证
 	BOOL CloseDB();
 	void SetLogPath(const char*pPath);
+	BOOL DeleteFromSQL(EMAIL_ITEM& email);
 private:
 	CString m_csServer;
 	CString m_csDatabase;

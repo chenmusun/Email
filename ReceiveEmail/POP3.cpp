@@ -376,4 +376,18 @@ BOOL POP3::SaveFileToDB(EMAIL_ITEM& email)
 		return FALSE;
 	return TRUE;
 }
+
+BOOL POP3::DeleteFromDB(EMAIL_ITEM& email)
+{
+	char chTemp[MAX_PATH] = { 0 };
+	string strUIDL, strTo;
+	WideCharToMultiByte(CP_ACP, 0, email.csUIDL, email.csUIDL.GetLength(), chTemp, MAX_PATH, NULL, NULL);
+	strUIDL = chTemp;
+	memset(&chTemp, 0, MAX_PATH);
+	WideCharToMultiByte(CP_ACP, 0, email.csTo, email.csTo.GetLength(), chTemp, MAX_PATH, NULL, NULL);
+	strTo = chTemp;
+	if(m_db.DelUIDL(strUIDL,strTo))
+		return TRUE;
+	return FALSE;
+}
 /////////////////////////////////////////////////////////////////////

@@ -297,7 +297,7 @@ BOOL CReceiveEmailDlg::OnInitDialog()
 	m_log.SetPath(m_csLogPath,m_csLogPath.GetLength());
 #ifdef _DEBUG
 	if (m_csTestText.IsEmpty())
-		m_csTestText.Format(_T("MD50000000764MSG994823304352032672194825"));
+		m_csTestText.Format(_T("MD50000007766MSG1347790304363772117458219"));
 #endif
 	m_startdate = COleDateTime::GetCurrentTime();
 	m_csRunTime.Format(_T("%dƒÍ%d‘¬%d»’ %d:%d:%d")
@@ -1538,6 +1538,8 @@ long CReceiveEmailDlg::MailAnalysis(POP3& pop3, CSQLServer& sql, const string& s
 		}
 		else
 		{
+			pop3.DeleteFromDB(ana.GetEmailItem());
+			sql.DeleteFromSQL(ana.GetEmailItem());
 			ana.Clear(0);
 		}
 	} while (0);

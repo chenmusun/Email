@@ -216,7 +216,7 @@ BOOL CDataBase::DelUIDL(const string& strUIDL, const string& strName)
 	string strIndexName(m_dbinfo.chDBName),strValue;
 	strIndexName.append(".");
 	strIndexName.append(m_dbinfo.chTable);
-	BSONObj cmd, obj = BSON("UIDL" << strUIDL << "DATE" << DATENOW << "TO" << strName)
+	BSONObj cmd, obj = BSON("UIDL" << strUIDL << "TO" << strName)
 		, bsoReturnValue, bsoQuery = BSON("UIDL" << strUIDL), bsoValue;
 	if (connect.isStillConnected())
 	{

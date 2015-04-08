@@ -2711,6 +2711,7 @@ CSQLServer::~CSQLServer()
 
 long CSQLServer::SaveToDB(EMAIL_ITEM& email)
 {
+	BOOL bFailed = FALSE;
 	if (IsExist(email))
 		return 0;
 	DWORD size = 0;
@@ -2817,7 +2818,11 @@ long CSQLServer::SaveToDB(EMAIL_ITEM& email)
 					ite++;
 					continue;
 				}
-				SaveAttachment((*ite), email.lSn);
+				if (SaveAttachment((*ite), email.lSn) < 0)
+				{
+					bFailed = TRUE;
+					break;
+				}
 				ite++;
 			}
 			m_db.CommitTransaction();
@@ -2838,6 +2843,8 @@ long CSQLServer::SaveToDB(EMAIL_ITEM& email)
 		csLog.Append(_T("\r\n"));
 		OutputDebugString(csLog);
 	}
+	if (bFailed)
+		return -1;
 	return 0;
 }
 
@@ -2891,7 +2898,7 @@ BOOL CSQLServer::Connect(SQLDBInfo& sqlinfo, int nType)
 		m_db.SetConnectionTimeout(180);
 		if (!m_db.Open(csCommand))
 		{
-			csLog.Format(_T("ConnectError:[%s]-[%s]"));
+			csLog.Format(_T("ConnectError:[%s]-[%s]"),m_csServer,m_csDatabase);
 			Log(csLog, csLog.GetLength());
 			return FALSE;
 		}
@@ -3053,6 +3060,7 @@ BOOL CSQLServer::IsExist(EMAIL_ITEM& email)
 
 long CSQLServer::SaveAttachment(ATTACH_FILE& attach, long lEmailID)
 {
+	BOOL bRet = FALSE;
 	CFile file;
 	CString csGuid,csLog;
 	GetGUID(csGuid);
@@ -3089,7 +3097,7 @@ long CSQLServer::SaveAttachment(ATTACH_FILE& attach, long lEmailID)
 		}
 		CADOCommand * pEMAttachCmd = new CADOCommand(&m_db);
 		if (pEMAttachCmd == NULL) throw;
-		TCHAR szAttachCmdText[512] = _T("INSERT INTO [ReportEmailDB].[dbo].[T_REPORT_FILES](GUID, FileName, FileSize,AffixType) VALUES(CONVERT(UNIQUEIDENTIFIER, ?), ?, ?,?)");
+		TCHAR szAttachCmdText[512] = _T("INSERT INTO [ReportEmailDB].[dbo].[T_REPORT_FILES](GUID, FileName, FileSize,AffixType,EmailID) VALUES(CONVERT(UNIQUEIDENTIFIER, ?), ?, ?,?,?)");
 		pEMAttachCmd->AddParameter(_T("GUID"), adGUID, CADOParameter::paramInput, csGuid.GetLength()*sizeof(TCHAR), _bstr_t(csGuid.GetBuffer(0)));
 		if (attach.csFileName.IsEmpty())
 			attach.csFileName.Format(_T("unknow"));
@@ -3098,21 +3106,25 @@ long CSQLServer::SaveAttachment(ATTACH_FILE& attach, long lEmailID)
 		if (attach.csAffixType.IsEmpty())
 			attach.csAffixType.Format(_T("unknow"));
 		pEMAttachCmd->AddParameter(_T("AffixType"), adVarChar, CADOParameter::paramInput, attach.csAffixType.GetLength()*sizeof(TCHAR), _bstr_t(attach.csAffixType.GetBuffer(0)));
+		pEMAttachCmd->AddParameter(_T("EMailID"), adInteger, CADOParameter::paramInput, sizeof(long), lEmailID);
 		pEMAttachCmd->SetText(szAttachCmdText);
 		if (!pEMAttachCmd->Execute(adCmdText))
 		{
-			csLog.Format(_T("Insert to [T_REPORT_FILES] Error![%s%s]"),attach.csFilePath,attach.csLocalFileName);
+			csLog.Format(_T("Insert to [T_REPORT_FILES] Error![%s]"),attach.csFilePath);
 			Log(csLog, csLog.GetLength());
 			csLog.Append(_T("\r\n"));
 			OutputDebugString(csLog);
+			bRet = TRUE;
 		}
 		delete pEMAttachCmd;
+		if (bRet)
+			return -1;
 	}
 	catch (const _com_error&e)
 	{
 		TRACE(_T("\r\n%s"), (TCHAR*)e.ErrorMessage());
 		TRACE(_T("\r\n%s"), (TCHAR*)e.Description());
-		csLog.Format(_T("Insert to [T_REPORT_FILES] Error![%s%s]\r\n%s\r\n%s"), attach.csFilePath, attach.csLocalFileName
+		csLog.Format(_T("Insert to [T_REPORT_FILES] Error![%s]\r\n%s\r\n%s"), attach.csFilePath
 			, (TCHAR*)e.ErrorMessage(), (TCHAR*)e.Description());
 		Log(csLog, csLog.GetLength());
 		csLog.Append(_T("\r\n"));
@@ -3129,18 +3141,21 @@ long CSQLServer::SaveAttachment(ATTACH_FILE& attach, long lEmailID)
 		pMapCmd->SetText(szMapCmdText);
 		if (!pMapCmd->Execute(adCmdText))
 		{
-			csLog.Format(_T("Insert to [T_FILE_AND_REPORT] Error![%s%s]"), attach.csFilePath, attach.csLocalFileName);
+			csLog.Format(_T("Insert to [T_FILE_AND_REPORT] Error![%s]"), attach.csFilePath);
 			Log(csLog, csLog.GetLength());
 			csLog.Append(_T("\r\n"));
 			OutputDebugString(csLog);
+			bRet = TRUE;
 		}
 		delete pMapCmd;
+		if (bRet)
+			return -1;
 	}
 	catch (const _com_error& e)
 	{
 		TRACE(_T("\r\n%s"), (TCHAR*)e.ErrorMessage());
 		TRACE(_T("\r\n%s"), (TCHAR*)e.Description());
-		csLog.Format(_T("Insert to [T_FILE_AND_REPORT] Error![%s%s]\r\n%s\r\n%s"), attach.csFilePath, attach.csLocalFileName
+		csLog.Format(_T("Insert to [T_FILE_AND_REPORT] Error![%s]\r\n%s\r\n%s"), attach.csFilePath
 			, (TCHAR*)e.ErrorMessage(), (TCHAR*)e.Description());
 		Log(csLog, csLog.GetLength());
 		csLog.Append(_T("\r\n"));
@@ -3194,5 +3209,36 @@ void CSQLServer::Log(LPCTSTR lpText, int nLen)
 			pText = NULL;
 		}
 	}
+}
+
+BOOL CSQLServer::DeleteFromSQL(EMAIL_ITEM& email)
+{
+	BOOL bValue(TRUE);
+	CADOCommand * pCmd = new CADOCommand(&m_db);
+	CString csSql;
+	do 
+	{
+		csSql.Format(_T("DELETE [dbo].[T_REPORT_EMAIL] WHERE EmailID = %d and EmailUIDL = '%s'")
+			, email.lSn, email.csUIDL);
+		if (!SQLExec(csSql))
+		{
+			bValue = FALSE;
+			break;
+		}
+		csSql.Format(_T("DELETE [dbo].[T_FILE_AND_REPORT] WHERE EmailID =%d"), email.lSn);
+		if (!SQLExec(csSql))
+		{
+			bValue = FALSE;
+			break;
+		}
+		csSql.Format(_T("DELETE [dbo].[T_REPORT_FILES] WHERE EmailID = %d"), email.lSn);
+		if (!SQLExec(csSql))
+		{
+			bValue = FALSE;
+			break;
+		}
+	} while (0);
+
+	return bValue;
 }
 ///////////////////////////////////////////////////////

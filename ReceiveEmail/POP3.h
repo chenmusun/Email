@@ -29,6 +29,7 @@ public:
 	inline void SetParent(void* pParent){ if (pParent) m_pParent = pParent; }
 	BOOL SaveFileToDB(EMAIL_ITEM& email);
 	inline BOOL GetStatus(){ return m_bFailed; }
+	BOOL DeleteFromDB(EMAIL_ITEM& email);
 private:
 	CDataBase m_db;//数据库操作实例
 	MailSocket m_Socket;//POP3套接字
