@@ -54,6 +54,9 @@ struct ATTACH_FILE
 	CString csAffixType;
 	CString csRemoteName;
 	CString csLocalFileName;
+	CString csFileText;
+	int nTime;
+	int nPageNum;
 	void Init()
 	{
 		csFileName.Empty();
@@ -65,6 +68,9 @@ struct ATTACH_FILE
 		csAffixType.Empty();
 		csRemoteName.Empty();
 		csLocalFileName.Empty();
+		csFileText.Empty();
+		nTime = -1;
+		nPageNum = 0;
 	}
 };
 

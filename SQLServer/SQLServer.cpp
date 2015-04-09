@@ -3061,6 +3061,7 @@ BOOL CSQLServer::IsExist(EMAIL_ITEM& email)
 long CSQLServer::SaveAttachment(ATTACH_FILE& attach, long lEmailID)
 {
 	BOOL bRet = FALSE;
+	DWORD size = 0;
 	CFile file;
 	CString csGuid,csLog;
 	GetGUID(csGuid);
@@ -3097,16 +3098,17 @@ long CSQLServer::SaveAttachment(ATTACH_FILE& attach, long lEmailID)
 		}
 		CADOCommand * pEMAttachCmd = new CADOCommand(&m_db);
 		if (pEMAttachCmd == NULL) throw;
-		TCHAR szAttachCmdText[512] = _T("INSERT INTO [ReportEmailDB].[dbo].[T_REPORT_FILES](GUID, FileName, FileSize,AffixType,EmailID) VALUES(CONVERT(UNIQUEIDENTIFIER, ?), ?, ?,?,?)");
+		TCHAR szAttachCmdText[512] = _T("INSERT INTO [ReportEmailDB].[dbo].[T_REPORT_FILES](GUID, FileName, FileSize,AffixType,EmailID,ElapsedTime) VALUES(CONVERT(UNIQUEIDENTIFIER, ?), ?, ?,?,?,?)");
 		pEMAttachCmd->AddParameter(_T("GUID"), adGUID, CADOParameter::paramInput, csGuid.GetLength()*sizeof(TCHAR), _bstr_t(csGuid.GetBuffer(0)));
 		if (attach.csFileName.IsEmpty())
-			attach.csFileName.Format(_T("unknow"));
+			attach.csFileName.Format(_T("NULL"));
 		pEMAttachCmd->AddParameter(_T("FileName"), adVarChar, CADOParameter::paramInput, attach.csFileName.GetLength()*sizeof(TCHAR), _bstr_t(attach.csFileName.GetBuffer(0)));
 		pEMAttachCmd->AddParameter(_T("FileSize"), adInteger, CADOParameter::paramInput, sizeof(long), attach.lSize);
 		if (attach.csAffixType.IsEmpty())
-			attach.csAffixType.Format(_T("unknow"));
+			attach.csAffixType.Format(_T("NULL"));
 		pEMAttachCmd->AddParameter(_T("AffixType"), adVarChar, CADOParameter::paramInput, attach.csAffixType.GetLength()*sizeof(TCHAR), _bstr_t(attach.csAffixType.GetBuffer(0)));
 		pEMAttachCmd->AddParameter(_T("EMailID"), adInteger, CADOParameter::paramInput, sizeof(long), lEmailID);
+		pEMAttachCmd->AddParameter(_T("ElapsedTime"), adInteger, CADOParameter::paramInput, sizeof(long), attach.nTime);
 		pEMAttachCmd->SetText(szAttachCmdText);
 		if (!pEMAttachCmd->Execute(adCmdText))
 		{
@@ -3119,7 +3121,48 @@ long CSQLServer::SaveAttachment(ATTACH_FILE& attach, long lEmailID)
 		delete pEMAttachCmd;
 		if (bRet)
 			return -1;
-	}
+//////////////////////////////////////////////////////////////////////////////////////////////////
+		//TCHAR szQuerySQL[512] = { 0 };
+		//CString csTemp;
+		//csTemp = attach.csGUID;
+		//csTemp.Replace(_T("{"), _T(""));
+		//csTemp.Replace(_T("}"), _T(""));
+		//swprintf_s(szQuerySQL,
+		//	_T("SELECT GUID, FileName,FileSize,FileText,AffixType,EmailID FROM [ReportEmailDB].[dbo].[T_REPORT_FILES] WHERE GUID ='%s' AND FileName='%s' AND  AffixType='%s' AND EmailID=%d"),
+		//	csTemp, attach.csFileName, attach.csAffixType, lEmailID);
+		//if (m_pEMRs->Open(szQuerySQL, CADORecordset::openQuery))
+		//{
+		//	m_pEMRs->Edit();
+		//	FILE* fp = NULL;
+		//	char * pContentData = NULL;
+		//	csTemp = attach.csFileText;
+		//	if (!csTemp.IsEmpty())
+		//	{
+		//		char chPath[512] = { 0 };
+		//		memset(&chPath, 0, 512);
+		//		WideCharToMultiByte(CP_ACP, 0, csTemp, csTemp.GetLength(), chPath, 512, NULL, NULL);
+		//		if (fopen_s(&fp, chPath, "rb") == 0)
+		//		{
+		//			fseek(fp, 0, SEEK_END);
+		//			size = ftell(fp);
+		//			fseek(fp, 0, SEEK_SET);
+		//			pContentData = new char[size + 1];
+		//			memset(pContentData, 0, size + 1);
+		//			fread_s(pContentData, size, size, 1, fp);
+		//			fclose(fp);
+		//			if (pContentData != NULL && size > 0)
+		//				m_pEMRs->AppendChunk(_T("FileText"), pContentData, size + 1);
+		//		}
+		//		if (pContentData != NULL&& size > 0)
+		//		{
+		//			delete  pContentData;
+		//			pContentData = NULL;
+		//		}
+		//	}
+		//	m_pEMRs->Update();
+		//}//end of if
+//////////////////////////////////////////////////////////////////////////////////////////////////
+	}// end of try
 	catch (const _com_error&e)
 	{
 		TRACE(_T("\r\n%s"), (TCHAR*)e.ErrorMessage());

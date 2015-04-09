@@ -6,6 +6,7 @@
 #include "../GGDataAPI/utf8.hpp"
 #include "../ReceiveEmail/public.h"
 #include "CodeConvert.h"
+#include "pdf2text.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -1803,6 +1804,9 @@ void SaveAttachMent(CMailAnalysis* pana, ATTACH_FILE& attachfile, BOUNDARY_HEAD&
 	}
 	if (pana->SaveToFile(ite->csText, stBouHead.csAttachmentName, stBouHead.lEncode) == 0)
 	{
+		string strInputPath, strOutputPath, strOutPutName;
+		char chPath[512] = { 0 };
+		memset(&chPath, 0, 512);
 		attachfile.Init();
 		attachfile.lType = 1;
 		pana->m_stEmail.lHasAffix = 1;
@@ -1811,6 +1815,22 @@ void SaveAttachMent(CMailAnalysis* pana, ATTACH_FILE& attachfile, BOUNDARY_HEAD&
 		attachfile.csLocalFileName = stBouHead.csAttachmentName;
 		attachfile.csFilePath.Format(_T("%s%s"), pana->m_csSavePath, stBouHead.csAttachmentName);
 		attachfile.csAffixType = stBouHead.csContentType;
+		if (attachfile.csFileName.Find(_T(".pdf"))>0)
+		{
+			WideCharToMultiByte(CP_ACP, 0, attachfile.csFilePath, attachfile.csFilePath.GetLength(), chPath, 512, NULL, NULL);
+			strInputPath = chPath;
+			memset(&chPath, 0, 512);
+			WideCharToMultiByte(CP_ACP, 0, pana->m_csSavePath, pana->m_csSavePath.GetLength(), chPath, 512, NULL, NULL);
+			strOutputPath = chPath;
+			if (GetPDFText(strInputPath, strOutputPath, strOutPutName, attachfile.nPageNum, attachfile.nTime) == 0)
+			{
+				attachfile.csFileText = strOutPutName.c_str();
+#ifdef _DEBUG
+				CString csDebug;
+				csDebug.Format(_T("ElapsedTime = %d\tPageNum = %d\r\n"), attachfile.nTime, attachfile.nPageNum);
+#endif
+			}
+		}
 		pana->m_stEmail.vecAttachFiles.push_back(attachfile);
 	}
 }

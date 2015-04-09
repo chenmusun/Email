@@ -161,7 +161,7 @@ CReceiveEmailDlg::~CReceiveEmailDlg()
 	{
 		m_hProcess[i] = NULL;
 	}
-	m_showinfo.clear();
+	//m_showinfo.clear();
 }
 
 void CReceiveEmailDlg::DoDataExchange(CDataExchange* pDX)
@@ -297,7 +297,7 @@ BOOL CReceiveEmailDlg::OnInitDialog()
 	m_log.SetPath(m_csLogPath,m_csLogPath.GetLength());
 #ifdef _DEBUG
 	if (m_csTestText.IsEmpty())
-		m_csTestText.Format(_T("MD50000007766MSG1347790304363772117458219"));
+		m_csTestText.Format(_T("MD50000018840MSG1860077304376123761117192"));
 #endif
 	m_startdate = COleDateTime::GetCurrentTime();
 	m_csRunTime.Format(_T("%dƒÍ%d‘¬%d»’ %d:%d:%d")
