@@ -39,7 +39,7 @@
     <ClInclude Include="pdf2text.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="..\comm_src\fgsdk_common.h">
+    <ClInclude Include="fgsdk_common.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
@@ -56,7 +56,7 @@
     <ClCompile Include="pdf2text.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="..\comm_src\fgsdk_common.cpp">
+    <ClCompile Include="fgsdk_common.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

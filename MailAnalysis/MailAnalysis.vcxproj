@@ -153,8 +153,8 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\comm_src\fgsdk_common.h" />
     <ClInclude Include="CodeConvert.h" />
+    <ClInclude Include="fgsdk_common.h" />
     <ClInclude Include="MailAnalysis.h" />
     <ClInclude Include="pdf2text.h" />
     <ClInclude Include="public.h" />
@@ -163,8 +163,8 @@
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\comm_src\fgsdk_common.cpp" />
     <ClCompile Include="CodeConvert.cpp" />
+    <ClCompile Include="fgsdk_common.cpp" />
     <ClCompile Include="MailAnalysis.cpp" />
     <ClCompile Include="pdf2text.cpp" />
     <ClCompile Include="stdafx.cpp">

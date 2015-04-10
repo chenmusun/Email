@@ -297,7 +297,7 @@ BOOL CReceiveEmailDlg::OnInitDialog()
 	m_log.SetPath(m_csLogPath,m_csLogPath.GetLength());
 #ifdef _DEBUG
 	if (m_csTestText.IsEmpty())
-		m_csTestText.Format(_T("MD50000026089MSG182286330438185116446513"));
+		m_csTestText.Format(_T("MD50000026224MSG1225972304382372227113923"));
 #endif
 	m_startdate = COleDateTime::GetCurrentTime();
 	m_csRunTime.Format(_T("%dÄê%dÔÂ%dÈÕ %d:%d:%d")
@@ -366,6 +366,9 @@ void CReceiveEmailDlg::OnBnClickedMfcbuttonSet()
 	DWORD dwId[5] = { 0 },id;
 	ShowInfo stShow;
 	memset(&stShow, 0, sizeof(ShowInfo));
+	if (m_showinfo.size()>0)
+		m_showinfo.clear();
+	InitTextWnd();
 	if (m_listMailBox.GetItemCount() > 0)
 	{
 		if (__HEVENT_MAIN_EXIT__ == NULL)

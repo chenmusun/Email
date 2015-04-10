@@ -11,7 +11,7 @@
  * This file is a demo to extract the text from PDF files and save them as text files.
  **/
 #include "stdafx.h"
-#include "../comm_src/fgsdk_common.h"
+#include "fgsdk_common.h"
 #include "pdf2text.h"
 
 #if defined(FSDK_IOS_DEMO)
