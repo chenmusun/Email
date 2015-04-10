@@ -331,7 +331,7 @@ long SMTP::SendFileBody()
 					fseek(pFile, 0, SEEK_SET);
 					pText = new char[lLen + 1];
 					memset(pText, 0, lLen + 1);
-					fread_s(pText, lLen, 1, lLen, pFile);
+					fread_s(pText, lLen, lLen, 1, pFile);
 					fclose(pFile);
 
 					sprintf_s(chCommand, 1024,

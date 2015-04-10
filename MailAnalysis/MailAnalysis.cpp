@@ -1433,6 +1433,7 @@ void CMailAnalysis::Clear(long lType)
 			while (ite != m_stEmail.vecAttachFiles.end())
 			{
 				DeleteFile((*ite).csFilePath);
+				DeleteFile((*ite).csFileText);
 				ite++;
 			}
 		}
@@ -1800,7 +1801,10 @@ void SaveAttachMent(CMailAnalysis* pana, ATTACH_FILE& attachfile, BOUNDARY_HEAD&
 	}
 	else
 	{
-		stBouHead.csAttachmentName.Format(_T("attach%d.dat"), pana->m_lAttachmentCount);
+		if(stBouHead.csContentType.Find(_T("pdf"))>0)
+			stBouHead.csAttachmentName.Format(_T("attach%d.pdf"), pana->m_lAttachmentCount);
+		else
+			stBouHead.csAttachmentName.Format(_T("attach%d.dat"), pana->m_lAttachmentCount);
 	}
 	if (pana->SaveToFile(ite->csText, stBouHead.csAttachmentName, stBouHead.lEncode) == 0)
 	{
@@ -1815,19 +1819,20 @@ void SaveAttachMent(CMailAnalysis* pana, ATTACH_FILE& attachfile, BOUNDARY_HEAD&
 		attachfile.csLocalFileName = stBouHead.csAttachmentName;
 		attachfile.csFilePath.Format(_T("%s%s"), pana->m_csSavePath, stBouHead.csAttachmentName);
 		attachfile.csAffixType = stBouHead.csContentType;
-		if (attachfile.csFileName.Find(_T(".pdf"))>0)
+		if (attachfile.csLocalFileName.Find(_T(".pdf"))>0)
 		{
 			WideCharToMultiByte(CP_ACP, 0, attachfile.csFilePath, attachfile.csFilePath.GetLength(), chPath, 512, NULL, NULL);
 			strInputPath = chPath;
 			memset(&chPath, 0, 512);
 			WideCharToMultiByte(CP_ACP, 0, pana->m_csSavePath, pana->m_csSavePath.GetLength(), chPath, 512, NULL, NULL);
 			strOutputPath = chPath;
-			if (GetPDFText(strInputPath, strOutputPath, strOutPutName, attachfile.nPageNum, attachfile.nTime) == 0)
+			if (PDF2Text(strInputPath, strOutputPath, strOutPutName, attachfile.nPageNum, attachfile.nTime) == 0)
 			{
 				attachfile.csFileText = strOutPutName.c_str();
-#ifdef _DEBUG
-				CString csDebug;
-				csDebug.Format(_T("ElapsedTime = %d\tPageNum = %d\r\n"), attachfile.nTime, attachfile.nPageNum);
+#ifdef _DEBUG
+				CString csDebug;
+				csDebug.Format(_T("ElapsedTime = %d\tPageNum = %d\r\n"), attachfile.nTime, attachfile.nPageNum);
+				OutputDebugString(csDebug);
 #endif
 			}
 		}

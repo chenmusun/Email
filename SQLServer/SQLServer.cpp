@@ -49,7 +49,6 @@ int _tmain(int argc, TCHAR* argv[], TCHAR* envp[])
 }
 
 
-
 ///////////////////////////////////////////////////////
 //
 // CADODatabase Class
@@ -2676,6 +2675,112 @@ void CADOParameter::dump_com_error(_com_error &e)
 }
 
 
+int  UTF_8ToUnicode(WCHAR* pOut, char *pText)
+{
+	char* uchar = (char *)pOut;
+
+	// 获取UTF-8字符的字节数
+	// Added by Wangwg 20100119
+	int iByteCnt = 0;
+	BYTE byFirstByte = pText[0];
+	while ((byFirstByte & 0x80) == 0x80)
+	{
+		iByteCnt++;
+		byFirstByte = (byFirstByte << 1);
+	};
+
+	// 增加对有一个或两个字节组成的UTF-8字符到Unicode字符的转换
+	// Added by Wangwg 20091103
+	if ((pText[0] & 0xF0) == 0xE0)
+	{
+		uchar[0] = ((pText[1] & 0x03) << 6) + (pText[2] & 0x3F);
+		uchar[1] = ((pText[0] & 0x0F) << 4) + ((pText[1] & 0x3F) >> 2);
+	}
+	else if ((pText[0] & 0xE0) == 0xC0)
+	{
+		uchar[0] = ((pText[0] & 0x03) << 6) + (pText[1] & 0x3F);
+		uchar[1] = ((pText[0] & 0x1F) >> 2);
+	}
+	else if ((pText[0] & 0xC0) == 0x80)
+	{
+		uchar[0] = pText[0] & 0x3F;
+		uchar[1] = 0x00;
+	}
+	else
+	{
+		uchar[0] = uchar[1] = 0x00;
+		iByteCnt = 1;
+	}
+
+	return iByteCnt;
+}
+
+
+void UnicodeToGB2312(char* pOut, WCHAR uData)
+{
+	WideCharToMultiByte(CP_ACP, WC_COMPOSITECHECK, &uData, 1, pOut, sizeof(WCHAR), NULL, NULL);
+	return;
+}
+
+void UTF_8ToGB2312(string &pOut, char *pText, int pLen)
+{
+	//TRACE("\r\nCCodeConvert::UTF_8ToGB2312\r\n");
+	char * newBuf = new char[pLen + 1];
+	memset(newBuf, 0, pLen);
+	//newBuf[pLen]=0x00;
+
+	char Ctemp[4];
+	memset(Ctemp, 0, 4);
+
+	int i = 0;
+	int j = 0;
+	int iByteCnt = 0;
+
+	while (i < pLen)
+	{
+		if (pText[i] > 0)
+		{
+			if ((pText[i] < 0x20))
+			{
+				/*if (pText[i] == '\r' || pText[i] =='\n')
+				newBuf[j++] = pText[i++];
+				else
+				*/newBuf[j++] = '='; i++;
+			}
+			else
+				newBuf[j++] = pText[i++];
+		}
+		else
+		{
+			WCHAR Wtemp;
+			iByteCnt = UTF_8ToUnicode(&Wtemp, pText + i);
+			i += iByteCnt;
+
+			if (Wtemp == 0x20AC) // 对欧元符号的特殊处理
+			{
+				newBuf[j++] = (char)0x80;
+			}
+			else
+			{
+				// 避过四字节及以上UTF-8字符，不做处理
+				// Added by Wangwg 20100119
+				UnicodeToGB2312(Ctemp, Wtemp);
+				if (iByteCnt <= 3 && Ctemp[0] < 0)
+				{
+					newBuf[j++] = Ctemp[0];
+					newBuf[j++] = Ctemp[1];
+				}
+			}
+		}
+	}
+	newBuf[j] = '\0';
+
+	pOut = newBuf;
+	MSAFE_DELETE(newBuf);
+
+	return;
+}
+
 ///////////////////////////////////////////////////////
 CSQLServer::CSQLServer() :m_nType(0), m_pEMRs(NULL), m_pGuidRs(NULL), m_pSubjectRs(NULL)
 {
@@ -2794,7 +2899,7 @@ long CSQLServer::SaveToDB(EMAIL_ITEM& email)
 						}
 						file.Close();
 						if (pContentData != NULL && size > 0)
-							m_pEMRs->AppendChunk(_T("EmailContent"), pContentData, size + 1);
+							m_pEMRs->AppendChunk(_T("EmailContent"), pContentData, size);
 					}
 				}
 				if (pContentData != NULL&& size > 0)
@@ -3098,12 +3203,13 @@ long CSQLServer::SaveAttachment(ATTACH_FILE& attach, long lEmailID)
 		}
 		CADOCommand * pEMAttachCmd = new CADOCommand(&m_db);
 		if (pEMAttachCmd == NULL) throw;
-		TCHAR szAttachCmdText[512] = _T("INSERT INTO [ReportEmailDB].[dbo].[T_REPORT_FILES](GUID, FileName, FileSize,AffixType,EmailID,ElapsedTime) VALUES(CONVERT(UNIQUEIDENTIFIER, ?), ?, ?,?,?,?)");
+		TCHAR szAttachCmdText[512] = _T("INSERT INTO [ReportEmailDB].[dbo].[T_REPORT_FILES](GUID, FileName, FileSize,FilePages,AffixType,EmailID,ElapsedTime) VALUES(CONVERT(UNIQUEIDENTIFIER, ?), ?, ?,?,?,?,?)");
 		pEMAttachCmd->AddParameter(_T("GUID"), adGUID, CADOParameter::paramInput, csGuid.GetLength()*sizeof(TCHAR), _bstr_t(csGuid.GetBuffer(0)));
 		if (attach.csFileName.IsEmpty())
 			attach.csFileName.Format(_T("NULL"));
 		pEMAttachCmd->AddParameter(_T("FileName"), adVarChar, CADOParameter::paramInput, attach.csFileName.GetLength()*sizeof(TCHAR), _bstr_t(attach.csFileName.GetBuffer(0)));
 		pEMAttachCmd->AddParameter(_T("FileSize"), adInteger, CADOParameter::paramInput, sizeof(long), attach.lSize);
+		pEMAttachCmd->AddParameter(_T("FilePages"), adInteger, CADOParameter::paramInput, sizeof(long), attach.nPageNum);
 		if (attach.csAffixType.IsEmpty())
 			attach.csAffixType.Format(_T("NULL"));
 		pEMAttachCmd->AddParameter(_T("AffixType"), adVarChar, CADOParameter::paramInput, attach.csAffixType.GetLength()*sizeof(TCHAR), _bstr_t(attach.csAffixType.GetBuffer(0)));
@@ -3122,45 +3228,47 @@ long CSQLServer::SaveAttachment(ATTACH_FILE& attach, long lEmailID)
 		if (bRet)
 			return -1;
 //////////////////////////////////////////////////////////////////////////////////////////////////
-		//TCHAR szQuerySQL[512] = { 0 };
-		//CString csTemp;
-		//csTemp = attach.csGUID;
-		//csTemp.Replace(_T("{"), _T(""));
-		//csTemp.Replace(_T("}"), _T(""));
-		//swprintf_s(szQuerySQL,
-		//	_T("SELECT GUID, FileName,FileSize,FileText,AffixType,EmailID FROM [ReportEmailDB].[dbo].[T_REPORT_FILES] WHERE GUID ='%s' AND FileName='%s' AND  AffixType='%s' AND EmailID=%d"),
-		//	csTemp, attach.csFileName, attach.csAffixType, lEmailID);
-		//if (m_pEMRs->Open(szQuerySQL, CADORecordset::openQuery))
-		//{
-		//	m_pEMRs->Edit();
-		//	FILE* fp = NULL;
-		//	char * pContentData = NULL;
-		//	csTemp = attach.csFileText;
-		//	if (!csTemp.IsEmpty())
-		//	{
-		//		char chPath[512] = { 0 };
-		//		memset(&chPath, 0, 512);
-		//		WideCharToMultiByte(CP_ACP, 0, csTemp, csTemp.GetLength(), chPath, 512, NULL, NULL);
-		//		if (fopen_s(&fp, chPath, "rb") == 0)
-		//		{
-		//			fseek(fp, 0, SEEK_END);
-		//			size = ftell(fp);
-		//			fseek(fp, 0, SEEK_SET);
-		//			pContentData = new char[size + 1];
-		//			memset(pContentData, 0, size + 1);
-		//			fread_s(pContentData, size, size, 1, fp);
-		//			fclose(fp);
-		//			if (pContentData != NULL && size > 0)
-		//				m_pEMRs->AppendChunk(_T("FileText"), pContentData, size + 1);
-		//		}
-		//		if (pContentData != NULL&& size > 0)
-		//		{
-		//			delete  pContentData;
-		//			pContentData = NULL;
-		//		}
-		//	}
-		//	m_pEMRs->Update();
-		//}//end of if
+		TCHAR szQuerySQL[512] = { 0 };
+		CString csTemp;
+		csTemp = attach.csGUID;
+		csTemp.Replace(_T("{"), _T(""));
+		csTemp.Replace(_T("}"), _T(""));
+		swprintf_s(szQuerySQL,
+			_T("SELECT GUID, FileName,FileSize,FileText,AffixType,EmailID FROM [ReportEmailDB].[dbo].[T_REPORT_FILES] WHERE GUID ='%s' AND FileName='%s' AND  AffixType='%s' AND EmailID=%d"),
+			csTemp, attach.csFileName, attach.csAffixType, lEmailID);
+		if (m_pEMRs->Open(szQuerySQL, CADORecordset::openQuery))
+		{
+			m_pEMRs->Edit();
+			FILE* fp = NULL;
+			char * pContentData = NULL;
+			csTemp = attach.csFileText;
+			if (!csTemp.IsEmpty())
+			{
+				char chPath[512] = { 0 };
+				memset(&chPath, 0, 512);
+				WideCharToMultiByte(CP_ACP, 0, csTemp, csTemp.GetLength(), chPath, 512, NULL, NULL);
+				if (fopen_s(&fp, chPath, "r") == 0)
+				{
+					fseek(fp, 0, SEEK_END);
+					size = ftell(fp);
+					fseek(fp, 0, SEEK_SET);
+					pContentData = new char[size + 1];
+					memset(pContentData, 0, size + 1);
+					fread_s(pContentData, size, 1, size, fp);
+					fclose(fp);
+					string strout;
+					UTF_8ToGB2312(strout, pContentData, size);
+					if (pContentData != NULL && size > 0)
+						m_pEMRs->AppendChunk(_T("FileText"), const_cast<char*>(strout.c_str()), (UINT)strout.length());
+				}
+				if (pContentData != NULL&& size > 0)
+				{
+					delete  pContentData;
+					pContentData = NULL;
+				}
+			}
+			m_pEMRs->Update();
+		}//end of if
 //////////////////////////////////////////////////////////////////////////////////////////////////
 	}// end of try
 	catch (const _com_error&e)

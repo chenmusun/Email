@@ -31,6 +31,6 @@ public:
 	string m_strDestFolder ;
 };
 
-int GetPDFText(string inputFilePath, string outputFilePath, string& outputname,int& nPageNum, int& time);
+int PDF2Text(string inputFilePath, string outputFilePath, string& outputname, int& nPageNum, int& time);
 
 #endif
