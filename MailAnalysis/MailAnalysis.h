@@ -41,11 +41,12 @@ public:
 	long AnalysisBoundaryHead(list<CString>& lsHead, const CString& csBoundary, BOUNDARY_HEAD& info);
 	inline vector<ATTACH>& GetAttach(){ return m_stAttachMent; }
 	vector<ATTACH> AnalysisBody(const CString& csBody, const CString& csBoundry);//解析邮件体
-	void Clear(long lType=1);//lType----1:删除本地文件；0：保留本地文件
+	void Clear();
 	void SetLogPath(const char*pPath);
 	inline void SetAbbreviation(LPCTSTR lpAbb){ m_csAbbreviation.Format(_T("%s"), lpAbb); }
 	inline EMAIL_ITEM& GetEmailItem(){ return m_stEmail; }
 	friend void SaveAttachMent(CMailAnalysis* pana, ATTACH_FILE& attachfile, BOUNDARY_HEAD& stBouHead, vector<ATTACH>::iterator& ite);
+	inline void SetClearType(long lType){ m_lClearType = lType; }
 private:
 	long GetContentInfo(const CString& csSrc, CString& csContent, CString& csExtra, long& lConttype);
 	void GetDispositionInfo(const CString& csSrc, CString& csDis, CString& csExtra);
@@ -74,6 +75,7 @@ private:
 	CLog m_log;
 	EMAIL_ITEM m_stEmail;
 	CString m_csAbbreviation;
+	long m_lClearType;//1:删除本地文件；0：保留本地文件
 };
 
 

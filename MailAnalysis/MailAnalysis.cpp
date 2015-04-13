@@ -89,7 +89,7 @@ int _tmain(int argc, TCHAR* argv[], TCHAR* envp[])
 }
 
 
-CMailAnalysis::CMailAnalysis() :m_lHeadRowCount(0), m_lCurrRow(0), m_lAttachmentCount(0)
+CMailAnalysis::CMailAnalysis() :m_lHeadRowCount(0), m_lCurrRow(0), m_lAttachmentCount(0), m_lClearType(0)
 {
 	memset(m_szMainPath, 0, MAX_PATH);
 	m_stAttachMent.clear();
@@ -1411,7 +1411,7 @@ long CMailAnalysis::SaveToFile(CString& csCode, LPCTSTR lpFileName, int nCodeTyp
 }
 
 
-void CMailAnalysis::Clear(long lType)
+void CMailAnalysis::Clear()
 {
 	//m_csText.RemoveAll();
 	m_lHeadRowCount = 0;
@@ -1427,7 +1427,7 @@ void CMailAnalysis::Clear(long lType)
 	//删除本地解析结果
 	if (m_stEmail.vecAttachFiles.size() > 0)
 	{
-		if (lType == 1)
+		if (m_lClearType == 1)
 		{
 			vector<ATTACH_FILE>::iterator ite = m_stEmail.vecAttachFiles.begin();
 			while (ite != m_stEmail.vecAttachFiles.end())
@@ -1441,13 +1441,13 @@ void CMailAnalysis::Clear(long lType)
 	}
 	if (!m_csSavePath.IsEmpty())
 	{
-		if (lType ==1)
+		if (m_lClearType == 1)
 			RemoveDirectory(m_csSavePath);
 		m_csSavePath.Empty();
 	}
 	if (!m_csFilePath.IsEmpty())
 	{
-		if (lType ==1)
+		if (m_lClearType == 1)
 			DeleteFile(m_csFilePath);
 	}
 	m_csFilePath.Empty();
@@ -1835,6 +1835,7 @@ void SaveAttachMent(CMailAnalysis* pana, ATTACH_FILE& attachfile, BOUNDARY_HEAD&
 				OutputDebugString(csDebug);
 #endif
 			}
+			else pana->SetClearType(0);
 		}
 		pana->m_stEmail.vecAttachFiles.push_back(attachfile);
 	}

@@ -123,7 +123,7 @@ CReceiveEmailDlg::CReceiveEmailDlg(CWnd* pParent /*=NULL*/)
 : CDialogEx(CReceiveEmailDlg::IDD, pParent), m_lLastPos(0)
 , m_nHighJobPriority(0), m_nJobParamIntValue(0), m_nCurJobIndex(0)
 , m_hMain(NULL), m_hMainTest(NULL), m_hMainTest2(NULL)
-, m_csRunTime(_T(""))
+, m_csRunTime(_T("")), m_dwStartTime(0)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 	m_mailList.clear();
@@ -141,6 +141,8 @@ CReceiveEmailDlg::CReceiveEmailDlg(CWnd* pParent /*=NULL*/)
 
 CReceiveEmailDlg::~CReceiveEmailDlg()
 {
+	Stop();
+	StopMain();
 	DeleteCriticalSection(&_cs_);
 	if (__HEVENT_EXIT__)
 	{
@@ -386,7 +388,7 @@ void CReceiveEmailDlg::OnBnClickedMfcbuttonSet()
 //#endif
 			}
 		}
-		
+		m_dwStartTime = m_dwStartTime==0?GetTickCount():m_dwStartTime;
 		if (__HEVENT_EXIT__ == NULL)
 			__HEVENT_EXIT__ = CreateEvent(NULL, TRUE, FALSE, NULL);
 		m_hMain = CreateThread(NULL, 0, _AfxMain, (LPVOID)this, 0, &id);
@@ -843,13 +845,19 @@ BOOL CReceiveEmailDlg::PreTranslateMessage(MSG* pMsg)
 	// TODO:  在此添加专用代码和/或调用基类
 	if (pMsg->message == __umymessage__fres_hprogress__)
 	{
-		COleDateTime date;
-		date = COleDateTime::GetCurrentTime(); 
-		date = date - m_startdate;
+		DWORD dwTime(0),dwDay(0),dwHour(0),dwMin(0),dwSec(0);
+		dwTime = GetTickCount() - m_dwStartTime;
+		dwDay = dwTime / 86400000;
+		dwTime = dwTime - dwDay * 86400000;
+		dwHour = dwTime/3600000;
+		dwTime = dwTime- dwHour * 36000000;
+		dwMin = dwTime/60000;
+		dwTime = dwTime- dwMin * 60000;
+		dwSec = dwTime / 1000;
 		CString csDate;
 		csDate.Format(_T("%s| RT:%d天%d时%d分%d秒")
 			, m_csRunTime
-			,date.GetDay()-30,date.GetHour(),date.GetMinute(),date.GetSecond());
+			,dwDay,dwHour,dwMin,dwSec);
 		m_time.SetWindowText(csDate);
 	}
 	if (pMsg->message == __umymessage__kill_hprogress__)
@@ -1075,6 +1083,7 @@ DWORD WINAPI  CReceiveEmailDlg::_AfxMainTestAna(LPVOID lpParam)
 		pDlg->PostMessage(__umymessage__anauncomplete__);
 		return -1;
 	}
+	ana.SetClearType(1);
 	if (WaitForSingleObject(__HEVENT_TEST_EXIT__, 0L) == WAIT_OBJECT_0)
 	{
 		return 0;
@@ -1087,7 +1096,7 @@ DWORD WINAPI  CReceiveEmailDlg::_AfxMainTestAna(LPVOID lpParam)
 	{
 		if (ana.AnalysisHead() < 0)
 		{
-			ana.Clear(1);
+			ana.SetClearType(0);
 			bRet = FALSE;
 			csLog.Format(_T("AnalysisHead错误！"));
 			pDlg->m_log.Log(csLog, csLog.GetLength());
@@ -1095,7 +1104,7 @@ DWORD WINAPI  CReceiveEmailDlg::_AfxMainTestAna(LPVOID lpParam)
 		}
 		if (ana.AnalysisBody(ana.GetBoundry(), ana.GetHeadRowCount()) < 0)
 		{
-			ana.Clear(1);
+			ana.SetClearType(0);
 			bRet = FALSE;
 			csLog.Format(_T("AnalysisBody错误！"));
 			pDlg->m_log.Log(csLog, csLog.GetLength());
@@ -1103,14 +1112,14 @@ DWORD WINAPI  CReceiveEmailDlg::_AfxMainTestAna(LPVOID lpParam)
 		}
 		if (ana.AnalysisBoundary(ana.GetBoundry(), ana.GetAttach()) < 0)
 		{
-			ana.Clear(1);
+			ana.SetClearType(0);
 			bRet = FALSE;
 			csLog.Format(_T("AnalysisBoundary错误！"));
 			pDlg->m_log.Log(csLog, csLog.GetLength());
 			break;
 		}
 		sql.SaveToDB(ana.GetEmailItem());
-		ana.Clear(0);
+		ana.Clear();
 		sql.CloseDB();
 //#ifdef _DEBUG
 		dwTime = GetTickCount() - dwTime;
@@ -1408,7 +1417,7 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 									{
 										if (pop3.GetEMLFile(i, strUDIL) == 0)
 										{
-											if (pDlg->MailAnalysis(pop3, sql, strUDIL, info.szAbbreviation, 0)<0)
+											if (pDlg->MailAnalysis(pop3, sql, strUDIL, info.szAbbreviation, 1)<0)
 											{
 												sprintf_s(chDebug, 512, "Analysis [%s] Error!", strUDIL.c_str());
 //#ifdef _DEBUG
@@ -1510,6 +1519,7 @@ long CReceiveEmailDlg::MailAnalysis(POP3& pop3, CSQLServer& sql, const string& s
 	CMailAnalysis ana;
 	ana.SetAbbreviation(lpAbb);
 	ana.LoadFile(csPath, csUIDL);
+	ana.SetClearType(lType);
 //#ifdef _DEBUG
 	DWORD dwTime(0);
 	dwTime = GetTickCount();
@@ -1518,34 +1528,35 @@ long CReceiveEmailDlg::MailAnalysis(POP3& pop3, CSQLServer& sql, const string& s
 	{
 		if (ana.AnalysisHead() < 0)
 		{
-			ana.Clear(1);
+			ana.SetClearType(0);
 			bRet = FALSE;
 			break;
 		}
 		if (ana.AnalysisBody(ana.GetBoundry(), ana.GetHeadRowCount()) < 0)
 		{
-			ana.Clear(1);
+			ana.SetClearType(0);
 			bRet = FALSE;
 			break;
 		}
 		if (ana.AnalysisBoundary(ana.GetBoundry(), ana.GetAttach()) < 0)
 		{
-			ana.Clear(1);
+			ana.SetClearType(0);
 			bRet = FALSE;
 			break;
 		}
 		if (sql.SaveToDB(ana.GetEmailItem()) == 0)
 		{
 			pop3.SaveFileToDB(ana.GetEmailItem());
-			ana.Clear(lType);
+			ana.SetClearType(lType);
 		}
 		else
 		{
 			pop3.DeleteFromDB(ana.GetEmailItem());
 			sql.DeleteFromSQL(ana.GetEmailItem());
-			ana.Clear(0);
+			ana.SetClearType(0);	
 		}
 	} while (0);
+	ana.Clear();
 //#ifdef _DEBUG
 	dwTime = GetTickCount() - dwTime;
 	CString csDebug;

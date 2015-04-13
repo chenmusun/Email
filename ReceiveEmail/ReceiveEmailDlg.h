@@ -68,6 +68,7 @@ private:
 	HANDLE m_hProcess[5];
 	long m_lLastPos;
 	map<DWORD, ShowInfo> m_showinfo;
+	DWORD m_dwStartTime;
 public:
 	CMFCButton m_btnSet;//设置按钮
 	CListCtrl m_listMailBox;//表格控件

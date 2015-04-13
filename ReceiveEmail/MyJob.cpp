@@ -245,22 +245,22 @@ long CMyJob::MailAnalysis(POP3& pop3, CSQLServer& sql,const string& strUIDL, LPC
 #endif
 	if (ana.AnalysisHead() < 0)
 	{
-		ana.Clear(1);
+		ana.Clear();
 		return -1;
 	}
 	if (ana.AnalysisBody(ana.GetBoundry(), ana.GetHeadRowCount()) < 0)
 	{
-		ana.Clear(1);
+		ana.Clear();
 		return -1;
 	}
 	if (ana.AnalysisBoundary(ana.GetBoundry(), ana.GetAttach()) < 0)
 	{
-		ana.Clear(1);
+		ana.Clear();
 		return -1;
 	}
 	sql.SaveToDB(ana.GetEmailItem());
 	pop3.SaveFileToDB(ana.GetEmailItem());
-	ana.Clear(lType);
+	ana.Clear();
 #ifdef _DEBUG
 	dwTime = GetTickCount() - dwTime;
 	CString csDebug;
