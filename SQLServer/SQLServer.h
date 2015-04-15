@@ -714,7 +714,7 @@ public:
 	CSQLServer(void);
 	~CSQLServer();
 	// TODO:  在此添加您的方法。
-	long SaveToDB(EMAIL_ITEM& email);
+	long SaveToDB(EMAIL_ITEM& email,BOOL bCheck=TRUE);
 	BOOL Connect(SQLDBInfo& sqlinfo, int nType = 0);//0:混合验证；1:Windows验证
 	BOOL CloseDB();
 	void SetLogPath(const char*pPath);

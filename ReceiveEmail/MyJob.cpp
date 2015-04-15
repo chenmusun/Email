@@ -241,7 +241,7 @@ long CMyJob::MailAnalysis(POP3& pop3, CSQLServer& sql,const string& strUIDL, LPC
 	ana.LoadFile(csPath,csUIDL);
 #ifdef _DEBUG
 	DWORD dwTime(0);
-	dwTime = GetTickCount();
+	dwTime = GetTickCount64();
 #endif
 	if (ana.AnalysisHead() < 0)
 	{
@@ -262,7 +262,7 @@ long CMyJob::MailAnalysis(POP3& pop3, CSQLServer& sql,const string& strUIDL, LPC
 	pop3.SaveFileToDB(ana.GetEmailItem());
 	ana.Clear();
 #ifdef _DEBUG
-	dwTime = GetTickCount() - dwTime;
+	dwTime = GetTickCount64() - dwTime;
 	CString csDebug;
 	csDebug.Format(_T("Process Time = %d\tAnalysis [%s] Complete!"), dwTime / 1000, csUIDL);
 	OutputDebugString(csDebug);

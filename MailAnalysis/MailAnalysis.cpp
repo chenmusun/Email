@@ -143,7 +143,7 @@ long CMailAnalysis::LoadFile(LPCTSTR lpPath, LPCTSTR lpUIDL, long lType)
 	char cTmp[MAX_BUFFER];
 	int j = 0;
 #ifdef _DEBUG
-	DWORD dwTime = GetTickCount();
+	ULONGLONG dwTime = GetTickCount64();
 #endif
 	//TODO：需要优化，目前处理方式加载时间过长
 	for (int i = 0; i < dwSize; i++)//去除\r每行保存到一个CstringArray中
@@ -168,7 +168,7 @@ long CMailAnalysis::LoadFile(LPCTSTR lpPath, LPCTSTR lpUIDL, long lType)
 	}
 	MSAFE_DELETE(pFile);
 #ifdef _DEBUG
-	dwTime = GetTickCount() - dwTime;
+	dwTime = GetTickCount64() - dwTime;
 	csDebug.Format(_T("LoadFile Time = %d sec\r\n"), dwTime / 1000);
 	OutputDebugString(csDebug);
 #endif

@@ -2814,10 +2814,10 @@ CSQLServer::~CSQLServer()
 }
 
 
-long CSQLServer::SaveToDB(EMAIL_ITEM& email)
+long CSQLServer::SaveToDB(EMAIL_ITEM& email,BOOL bCheck)
 {
 	BOOL bFailed = FALSE;
-	if (IsExist(email))
+	if (bCheck && IsExist(email))
 		return 0;
 	DWORD size = 0;
 	COleDateTime oledt = COleDateTime::GetCurrentTime();
