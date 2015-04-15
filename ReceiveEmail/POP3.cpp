@@ -53,7 +53,10 @@ long POP3::Login(LPCTSTR lpServer, long lPort, LPCTSTR lpUser, LPCTSTR lpPasswd)
 	m_Socket.ReceiveData(chResult, 256);
 	if (!StringProcess(chResult))
 	{
-		m_log.Log(chResult, strlen(chResult));
+		char *pDest = NULL;
+		pDest = strstr(chResult, "ERR maildrop already locked");
+		if (pDest==NULL)
+			m_log.Log(chResult, strlen(chResult));
 		return LOGIN_ERROR;
 	}
 	return SUCCESS;

@@ -388,7 +388,7 @@ void CReceiveEmailDlg::OnBnClickedMfcbuttonSet()
 //#endif
 			}
 		}
-		m_dwStartTime = m_dwStartTime==0?GetTickCount():m_dwStartTime;
+		m_dwStartTime = m_dwStartTime == 0 ? GetTickCount64() : m_dwStartTime;
 		if (__HEVENT_EXIT__ == NULL)
 			__HEVENT_EXIT__ = CreateEvent(NULL, TRUE, FALSE, NULL);
 		m_hMain = CreateThread(NULL, 0, _AfxMain, (LPVOID)this, 0, &id);
@@ -846,13 +846,13 @@ BOOL CReceiveEmailDlg::PreTranslateMessage(MSG* pMsg)
 	if (pMsg->message == __umymessage__fres_hprogress__)
 	{
 		DWORD dwTime(0),dwDay(0),dwHour(0),dwMin(0),dwSec(0);
-		dwTime = GetTickCount() - m_dwStartTime;
+		dwTime = GetTickCount64() - m_dwStartTime;
 		dwDay = dwTime / 86400000;
 		dwTime = dwTime - dwDay * 86400000;
 		dwHour = dwTime/3600000;
-		dwTime = dwTime- dwHour * 36000000;
+		dwTime = dwTime - dwHour * 3600000;
 		dwMin = dwTime/60000;
-		dwTime = dwTime- dwMin * 60000;
+		dwTime = dwTime - dwMin * 60000;
 		dwSec = dwTime / 1000;
 		CString csDate;
 		csDate.Format(_T("%s| RT:%dÃÏ%d ±%d∑÷%d√Î")
@@ -1090,7 +1090,7 @@ DWORD WINAPI  CReceiveEmailDlg::_AfxMainTestAna(LPVOID lpParam)
 	}
 //#ifdef _DEBUG
 	DWORD dwTime(0);
-	dwTime = GetTickCount();
+	dwTime = GetTickCount64();
 //#endif
 	do 
 	{
@@ -1122,7 +1122,7 @@ DWORD WINAPI  CReceiveEmailDlg::_AfxMainTestAna(LPVOID lpParam)
 		ana.Clear();
 		sql.CloseDB();
 //#ifdef _DEBUG
-		dwTime = GetTickCount() - dwTime;
+		dwTime = GetTickCount64() - dwTime;
 		CString csDebug;
 		csDebug.Format(_T("Analysis Time = %d\tAnalysis [%s] Complete!\r\n"), dwTime / 1000, csUIDL);
 		OutputDebugString(csDebug);
@@ -1404,7 +1404,7 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 //#ifdef _DEBUG
 								csDebug.Format(_T("%s Count = %d\tTotal = %d\r\n"), info.szName, i,lResult);
 								OutputDebugString(csDebug);
-								dwTime = GetTickCount();
+								dwTime = GetTickCount64();
 //#endif
 								if (pop3.GetStatus())
 									break;
@@ -1441,7 +1441,7 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 									}
 								}
 //#ifdef _DEBUG
-								dwTime = GetTickCount() - dwTime;
+								dwTime = GetTickCount64() - dwTime;
 								csDebug.Format(_T("Process Time = %d\r\n"), dwTime / 1000);
 								OutputDebugString(csDebug);
 //#endif
@@ -1522,7 +1522,7 @@ long CReceiveEmailDlg::MailAnalysis(POP3& pop3, CSQLServer& sql, const string& s
 	ana.SetClearType(lType);
 //#ifdef _DEBUG
 	DWORD dwTime(0);
-	dwTime = GetTickCount();
+	dwTime = GetTickCount64();
 //#endif
 	do
 	{
@@ -1558,7 +1558,7 @@ long CReceiveEmailDlg::MailAnalysis(POP3& pop3, CSQLServer& sql, const string& s
 	} while (0);
 	ana.Clear();
 //#ifdef _DEBUG
-	dwTime = GetTickCount() - dwTime;
+	dwTime = GetTickCount64() - dwTime;
 	CString csDebug;
 	csDebug.Format(_T("Analysis Time = %d\tAnalysis [%s] Complete!"), dwTime / 1000, csUIDL);
 	OutputDebugString(csDebug);

@@ -1831,7 +1831,7 @@ void SaveAttachMent(CMailAnalysis* pana, ATTACH_FILE& attachfile, BOUNDARY_HEAD&
 				attachfile.csFileText = strOutPutName.c_str();
 #ifdef _DEBUG
 				CString csDebug;
-				csDebug.Format(_T("ElapsedTime = %d\tPageNum = %d\r\n"), attachfile.nTime, attachfile.nPageNum);
+				csDebug.Format(_T("ElapsedTime = %dms\tPageNum = %d\r\n"), attachfile.nTime, attachfile.nPageNum);
 				OutputDebugString(csDebug);
 #endif
 			}
