@@ -848,11 +848,11 @@ BOOL CReceiveEmailDlg::PreTranslateMessage(MSG* pMsg)
 		DWORD dwTime(0),dwDay(0),dwHour(0),dwMin(0),dwSec(0);
 		dwTime = GetTickCount64() - m_dwStartTime;
 		dwDay = dwTime / 86400000;
-		dwTime = dwTime - dwDay * 86400000;
+		dwTime -=dwDay * 86400000;
 		dwHour = dwTime/3600000;
-		dwTime = dwTime - dwHour * 3600000;
+		dwTime -=dwHour * 3600000;
 		dwMin = dwTime/60000;
-		dwTime = dwTime - dwMin * 60000;
+		dwTime -=dwMin * 60000;
 		dwSec = dwTime / 1000;
 		CString csDate;
 		csDate.Format(_T("%s| RT:%dÃÏ%d ±%d∑÷%d√Î")
