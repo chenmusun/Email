@@ -216,6 +216,7 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="DialogInfo.h" />
     <ClInclude Include="ftlFake.h" />
     <ClInclude Include="ftlThread.h" />
     <ClInclude Include="ftlThreadPool.h" />
@@ -234,6 +235,7 @@
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="DialogInfo.cpp" />
     <ClCompile Include="ftlThread.cpp" />
     <ClCompile Include="GGJsonAdapter.cpp" />
     <ClCompile Include="MyJob.cpp" />

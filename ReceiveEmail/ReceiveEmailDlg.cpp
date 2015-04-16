@@ -11,6 +11,7 @@
 #include <threadpoollegacyapiset.h>
 #include "GGJsonAdapter.h"
 #include "SettingDlg.h"
+#include "DialogInfo.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -208,6 +209,11 @@ BEGIN_MESSAGE_MAP(CReceiveEmailDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON1, &CReceiveEmailDlg::OnBnClickedButton1)
 	ON_BN_CLICKED(IDC_BUTTON_SET, &CReceiveEmailDlg::OnBnClickedButtonSet)
 	ON_BN_CLICKED(IDC_BUTTON2, &CReceiveEmailDlg::OnBnClickedButton2)
+	ON_NOTIFY(LVN_ITEMCHANGED, IDC_LIST_MAILBOX, &CReceiveEmailDlg::OnLvnItemchangedListMailbox)
+	ON_NOTIFY(NM_DBLCLK, IDC_LIST_MAILBOX, &CReceiveEmailDlg::OnNMDblclkListMailbox)
+	ON_NOTIFY(NM_RCLICK, IDC_LIST_MAILBOX, &CReceiveEmailDlg::OnNMRClickListMailbox)
+	ON_COMMAND(ID_ADDITEM, &CReceiveEmailDlg::OnAdditem)
+	ON_COMMAND(ID_DELITEM, &CReceiveEmailDlg::OnDelitem)
 END_MESSAGE_MAP()
 
 
@@ -417,6 +423,7 @@ BOOL CReceiveEmailDlg::InitMailList()
 	{
 		if (m_listMailBox.m_hWnd)
 		{
+			m_listMailBox.DeleteAllItems();
 			MAILLIST_ITE ite = m_mailList.begin();
 			for (i = 0;ite!=m_mailList.end() && i < m_mailList.size();ite++, i++)
 			{
@@ -547,7 +554,7 @@ BOOL CReceiveEmailDlg::GetMailBoxInfo(CString&csUserName, MailBoxInfo& info, lon
 		m_lLastPos = 0;
 	long lCurrPos(0),lCount(0);
 	memset(&info, 0, sizeof(MailBoxInfo));
-	map<CString, MailBoxInfo>::iterator ite = m_mailList.begin();
+	MAILLIST_ITE ite = m_mailList.begin();
 	switch (lStatus)
 	{
 	case 1:
@@ -622,6 +629,7 @@ void CReceiveEmailDlg::OnBnClickedButtonStop()
 	// TODO:  在此添加控件通知处理程序代码
 	Stop();
 	StopMain();
+	m_showinfo.clear();
 	m_btnStop.EnableWindow(FALSE);
 	m_btnSet.EnableWindow(TRUE);
 }
@@ -1314,7 +1322,7 @@ void CReceiveEmailDlg::StopMain()
 		CloseHandle(__HEVENT_MAIN_EXIT__);
 		__HEVENT_MAIN_EXIT__ = NULL;
 	}
-	map<CString, MailBoxInfo>::iterator ite = m_mailList.begin();
+	MAILLIST_ITE ite = m_mailList.begin();
 	while (ite != m_mailList.end())
 	{
 		ite->second.lStatus = 0;
@@ -1446,7 +1454,6 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 								OutputDebugString(csDebug);
 //#endif
 								pDlg->m_showinfo[dwID].lCurr = i;
-								
 							}
 							sql.CloseDB();
 							lCount = UidlData.size();
@@ -1568,4 +1575,103 @@ long CReceiveEmailDlg::MailAnalysis(POP3& pop3, CSQLServer& sql, const string& s
 		return 0;
 	else
 		return -1;
+}
+
+void CReceiveEmailDlg::OnLvnItemchangedListMailbox(NMHDR *pNMHDR, LRESULT *pResult)
+{
+	LPNMLISTVIEW pNMLV = reinterpret_cast<LPNMLISTVIEW>(pNMHDR);
+	// TODO:  在此添加控件通知处理程序代码
+	
+	*pResult = 0;
+}
+
+
+void CReceiveEmailDlg::OnNMDblclkListMailbox(NMHDR *pNMHDR, LRESULT *pResult)
+{
+	LPNMITEMACTIVATE pNMItemActivate = reinterpret_cast<LPNMITEMACTIVATE>(pNMHDR);
+	// TODO:  在此添加控件通知处理程序代码
+	CDialogInfo dlg;
+	CString csName;
+	NM_LISTVIEW *pNMListView = (NM_LISTVIEW *)pNMHDR;
+	int nItem = pNMListView->iItem;
+	if (nItem >= 0 && nItem < m_listMailBox.GetItemCount())//判断双击位置是否在有数据的列表项上面
+	{
+		csName = m_listMailBox.GetItemText(nItem, 1);
+		MAILLIST_ITE ite = m_mailList.begin();
+		ite = m_mailList.find(csName);
+		if (ite != m_mailList.end())
+		{
+			dlg.SetMailBoxInfo(csName, (*ite).second);
+			if (dlg.DoModal() == IDOK)
+			{
+				if (dlg.m_csMailAdd != csName)
+				{
+					MailBoxInfo info;
+					memset(&info, 0, sizeof(MailBoxInfo));
+					memcpy_s(&info, sizeof(MailBoxInfo), &dlg.m_info, sizeof(MailBoxInfo));
+					m_mailList.erase(ite);
+					m_mailList.insert(make_pair(dlg.m_csMailAdd, info));
+					InitMailList();
+				}
+				else
+				{
+					memset(&(*ite).second, 0, sizeof(MailBoxInfo));
+					memcpy_s(&(*ite).second, sizeof(MailBoxInfo), &dlg.m_info, sizeof(MailBoxInfo));
+				}
+			}
+		}
+	}
+	*pResult = 0;
+}
+
+
+void CReceiveEmailDlg::OnNMRClickListMailbox(NMHDR *pNMHDR, LRESULT *pResult)
+{
+	LPNMITEMACTIVATE pNMItemActivate = reinterpret_cast<LPNMITEMACTIVATE>(pNMHDR);
+	// TODO:  在此添加控件通知处理程序代码
+	NM_LISTVIEW* pNMListView = (NM_LISTVIEW*)pNMHDR;
+	DWORD dwPos = GetMessagePos();
+	CPoint point(LOWORD(dwPos), HIWORD(dwPos));
+
+	CMenu menu;
+	VERIFY(menu.LoadMenu(IDR_MENU1));
+	CMenu* popup = menu.GetSubMenu(0);
+	ASSERT(popup != NULL);
+	popup->TrackPopupMenu(TPM_LEFTALIGN | TPM_RIGHTBUTTON, point.x, point.y, this);
+	*pResult = 0;
+}
+
+
+void CReceiveEmailDlg::OnAdditem()
+{
+	// TODO:  在此添加命令处理程序代码
+	CDialogInfo dlg;
+	if (dlg.DoModal() == IDOK)
+	{
+		MailBoxInfo info;
+		memset(&info, 0, sizeof(MailBoxInfo));
+		memcpy_s(&info, sizeof(MailBoxInfo), &dlg.m_info, sizeof(MailBoxInfo));
+		m_mailList.insert(make_pair(dlg.m_csMailAdd, info));
+		InitMailList();
+	}
+}
+
+
+void CReceiveEmailDlg::OnDelitem()
+{
+	// TODO:  在此添加命令处理程序代码
+	POSITION pos = m_listMailBox.GetFirstSelectedItemPosition();
+	if (pos)
+	{
+		int nItem = m_listMailBox.GetNextSelectedItem(pos);
+		CString csName = m_listMailBox.GetItemText(nItem, 1);
+		MAILLIST_ITE ite = m_mailList.begin();
+		ite = m_mailList.find(csName);
+		if (ite != m_mailList.end())
+		{
+			m_mailList.erase(ite);
+			InitMailList();
+		}
+	}
+	
 }

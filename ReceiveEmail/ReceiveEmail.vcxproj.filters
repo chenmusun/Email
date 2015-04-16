@@ -66,6 +66,9 @@
     <ClInclude Include="Socket.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="DialogInfo.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ReceiveEmail.cpp">
@@ -96,6 +99,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="Socket.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="DialogInfo.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
