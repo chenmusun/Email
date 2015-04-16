@@ -1057,7 +1057,7 @@ void CReceiveEmailDlg::OnBnClickedCheckDb()
 
 void CReceiveEmailDlg::WriteToConfig()
 {
-	TCHAR szConfigPath[MAX_PATH] = { 0 }, szName[64] = { 0 };
+	TCHAR szConfigPath[MAX_PATH] = { 0 }, szTemp[64] = { 0 };
 	wsprintf(szConfigPath, _T("%s\\config.ini"), __Main_Path__);
 	CString csTemp;
 	if (m_dbinfo.nUseDB == 1)
@@ -1065,6 +1065,35 @@ void CReceiveEmailDlg::WriteToConfig()
 	else
 		csTemp.Format(_T("no"));
 	WritePrivateProfileString(_T("DataBase"), _T("usedb"), csTemp, szConfigPath);
+	long lCount = m_mailList.size(),i(0);
+	csTemp.Format(_T("%d"),lCount);
+	WritePrivateProfileString(_T("E-mail"), _T("count"), csTemp, szConfigPath);
+	MAILLIST_ITE ite = m_mailList.begin();
+	while (ite != m_mailList.end())
+	{
+		csTemp.Format(_T("mail_%d_username"), i);
+		WritePrivateProfileString(_T("E-mail"), csTemp,(*ite).first, szConfigPath);
+		csTemp.Format(_T("mail_%d_name"), i);
+		WritePrivateProfileString(_T("E-mail"), csTemp, (*ite).second.szName, szConfigPath);
+		csTemp.Format(_T("mail_%d_add"), i);
+		WritePrivateProfileString(_T("E-mail"), csTemp, (*ite).second.szServerAdd, szConfigPath);
+		csTemp.Format(_T("mail_%d_port"), i);
+		wsprintf(szTemp, _T("%d"), (*ite).second.lPort);
+		WritePrivateProfileString(_T("E-mail"), csTemp, szTemp, szConfigPath);
+		csTemp.Format(_T("mail_%d_passwd"), i);
+		WritePrivateProfileString(_T("E-mail"), csTemp, (*ite).second.szPasswd, szConfigPath);
+		csTemp.Format(_T("mail_%d_abbreviation"), i);
+		WritePrivateProfileString(_T("E-mail"), csTemp, (*ite).second.szAbbreviation, szConfigPath);
+		if ((*ite).second.bSendMail)
+		{
+			csTemp.Format(_T("mail_%d_bsend"), i);
+			WritePrivateProfileString(_T("E-mail"), csTemp, _T("1"), szConfigPath);
+			csTemp.Format(_T("mail_%d_mailadd"), i);
+			WritePrivateProfileString(_T("E-mail"), csTemp, (*ite).second.szMailAdd, szConfigPath);
+		}
+		i++;
+		ite++;
+	}
 }
 
 DWORD WINAPI  CReceiveEmailDlg::_AfxMainTestAna(LPVOID lpParam)
@@ -1591,7 +1620,7 @@ void CReceiveEmailDlg::OnNMDblclkListMailbox(NMHDR *pNMHDR, LRESULT *pResult)
 	LPNMITEMACTIVATE pNMItemActivate = reinterpret_cast<LPNMITEMACTIVATE>(pNMHDR);
 	// TODO:  在此添加控件通知处理程序代码
 	CDialogInfo dlg;
-	CString csName;
+	CString csName,csTemp;
 	NM_LISTVIEW *pNMListView = (NM_LISTVIEW *)pNMHDR;
 	int nItem = pNMListView->iItem;
 	if (nItem >= 0 && nItem < m_listMailBox.GetItemCount())//判断双击位置是否在有数据的列表项上面
@@ -1606,12 +1635,22 @@ void CReceiveEmailDlg::OnNMDblclkListMailbox(NMHDR *pNMHDR, LRESULT *pResult)
 			{
 				if (dlg.m_csMailAdd != csName)
 				{
-					MailBoxInfo info;
-					memset(&info, 0, sizeof(MailBoxInfo));
-					memcpy_s(&info, sizeof(MailBoxInfo), &dlg.m_info, sizeof(MailBoxInfo));
-					m_mailList.erase(ite);
-					m_mailList.insert(make_pair(dlg.m_csMailAdd, info));
-					InitMailList();
+					MAILLIST_ITE itecheck = m_mailList.begin();
+					itecheck = m_mailList.find(dlg.m_csMailAdd);
+					if (itecheck != m_mailList.end())
+					{
+						csTemp.Format(_T("已存在[%s]!"), dlg.m_csMailAdd);
+						AfxMessageBox(csTemp);
+					}
+					else
+					{
+						MailBoxInfo info;
+						memset(&info, 0, sizeof(MailBoxInfo));
+						memcpy_s(&info, sizeof(MailBoxInfo), &dlg.m_info, sizeof(MailBoxInfo));
+						m_mailList.erase(ite);
+						m_mailList.insert(make_pair(dlg.m_csMailAdd, info));
+						InitMailList();
+					}
 				}
 				else
 				{
@@ -1648,11 +1687,22 @@ void CReceiveEmailDlg::OnAdditem()
 	CDialogInfo dlg;
 	if (dlg.DoModal() == IDOK)
 	{
-		MailBoxInfo info;
-		memset(&info, 0, sizeof(MailBoxInfo));
-		memcpy_s(&info, sizeof(MailBoxInfo), &dlg.m_info, sizeof(MailBoxInfo));
-		m_mailList.insert(make_pair(dlg.m_csMailAdd, info));
-		InitMailList();
+		MAILLIST_ITE ite = m_mailList.begin();
+		ite = m_mailList.find(dlg.m_csMailAdd);
+		if (ite!=m_mailList.end())
+		{
+			CString csText;
+			csText.Format(_T("已存在[%s]!"), dlg.m_csMailAdd);
+			AfxMessageBox(csText);
+		}
+		else
+		{
+			MailBoxInfo info;
+			memset(&info, 0, sizeof(MailBoxInfo));
+			memcpy_s(&info, sizeof(MailBoxInfo), &dlg.m_info, sizeof(MailBoxInfo));
+			m_mailList.insert(make_pair(dlg.m_csMailAdd, info));
+			InitMailList();
+		}
 	}
 }
 

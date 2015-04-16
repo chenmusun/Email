@@ -67,32 +67,92 @@ void CDialogInfo::OnOK()
 {
 	// TODO:  在此添加专用代码和/或调用基类
 	UpdateData(TRUE);
+	CString csText;
+	long lErr(0);
 	do 
 	{
 		if (m_csMailAdd.IsEmpty())
+		{
+			lErr = 1;
 			break;
+		}
+		if (m_csMailAdd.Find(_T("@")) < 0)
+		{
+			lErr = 2;
+			break;
+		}
 		if (m_csName.IsEmpty())
+		{
+			lErr = 3;
 			break;
+		}
 		wsprintf(m_info.szName, _T("%s"),m_csName.Left(63));
 		if (m_csAbb.IsEmpty())
+		{
+			lErr = 4;
 			break;
+		}
 		wsprintf(m_info.szAbbreviation, _T("%s"), m_csAbb.Left(63));
 		if (m_csSrvAdd.IsEmpty())
+		{
+			lErr = 5; 
 			break;
+		}
 		wsprintf(m_info.szServerAdd, _T("%s"), m_csSrvAdd.Left(63));
 		if (m_csPasswd.IsEmpty())
+		{
+			lErr = 6; 
 			break;
+		}
 		wsprintf(m_info.szPasswd, _T("%s"), m_csPasswd.Left(127));
 		if (m_lPort<=0)
+		{
+			lErr = 7; 
 			break;
+		}
 		m_info.lPort = m_lPort;
 		m_info.bSendMail = m_bSend;
 		if (m_bSend)
 		{
 			if (m_csRecAdd.IsEmpty())
+			{
+				lErr = 8; 
 				break;
+			}
 			wsprintf(m_info.szMailAdd, _T("%s"), m_csRecAdd.Left(63));
 		}
-		CDialogEx::OnOK();
 	} while (0);
+	switch (lErr)
+	{
+	case 1:
+		csText.Format(_T("邮箱地址为空！"));
+		break;
+	case 2:
+		csText.Format(_T("邮箱地址非法！"));
+		break;
+	case 3:
+		csText.Format(_T("邮箱名称为空！"));
+		break;
+	case 4:
+		csText.Format(_T("邮箱简称为空！"));
+		break;
+	case 5:
+		csText.Format(_T("POP3服务器地址为空！"));
+		break;
+	case 6:
+		csText.Format(_T("密码为空！"));
+		break;
+	case 7:
+		csText.Format(_T("端口为空！"));
+		break;
+	case 8:
+		csText.Format(_T("接收邮箱地址为空！"));
+		break;
+	case 0:
+	default:
+		CDialogEx::OnOK();
+		break;
+	}
+	if (csText.GetLength() > 0)
+		AfxMessageBox(csText);
 }
