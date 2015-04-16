@@ -25,6 +25,8 @@
 #define GAP 20
 #define HORIZON_GAP 15
 
+static BOOL bRun = FALSE;
+
 TCHAR __Main_Path__[MAX_PATH];
 HANDLE __HEVENT_EXIT__ = NULL;
 HANDLE __HEVENT_TEST_EXIT__ = NULL;
@@ -400,6 +402,7 @@ void CReceiveEmailDlg::OnBnClickedMfcbuttonSet()
 		m_hMain = CreateThread(NULL, 0, _AfxMain, (LPVOID)this, 0, &id);
 		m_btnStop.EnableWindow(TRUE);
 		m_btnSet.EnableWindow(FALSE);
+		bRun = TRUE;
 	}
 	else
 		AfxMessageBox(_T("请检查配置文件！"));
@@ -632,6 +635,7 @@ void CReceiveEmailDlg::OnBnClickedButtonStop()
 	m_showinfo.clear();
 	m_btnStop.EnableWindow(FALSE);
 	m_btnSet.EnableWindow(TRUE);
+	bRun = FALSE;
 }
 
 void CReceiveEmailDlg::LayoutDialog(long cx, long cy)
@@ -1583,7 +1587,6 @@ long CReceiveEmailDlg::MailAnalysis(POP3& pop3, CSQLServer& sql, const string& s
 		if (sql.SaveToDB(ana.GetEmailItem()) == 0)
 		{
 			pop3.SaveFileToDB(ana.GetEmailItem());
-			ana.SetClearType(lType);
 		}
 		else
 		{
@@ -1633,29 +1636,32 @@ void CReceiveEmailDlg::OnNMDblclkListMailbox(NMHDR *pNMHDR, LRESULT *pResult)
 			dlg.SetMailBoxInfo(csName, (*ite).second);
 			if (dlg.DoModal() == IDOK)
 			{
-				if (dlg.m_csMailAdd != csName)
+				if (!bRun)
 				{
-					MAILLIST_ITE itecheck = m_mailList.begin();
-					itecheck = m_mailList.find(dlg.m_csMailAdd);
-					if (itecheck != m_mailList.end())
+					if (dlg.m_csMailAdd != csName)
 					{
-						csTemp.Format(_T("已存在[%s]!"), dlg.m_csMailAdd);
-						AfxMessageBox(csTemp);
+						MAILLIST_ITE itecheck = m_mailList.begin();
+						itecheck = m_mailList.find(dlg.m_csMailAdd);
+						if (itecheck != m_mailList.end())
+						{
+							csTemp.Format(_T("已存在[%s]!"), dlg.m_csMailAdd);
+							AfxMessageBox(csTemp);
+						}
+						else
+						{
+							MailBoxInfo info;
+							memset(&info, 0, sizeof(MailBoxInfo));
+							memcpy_s(&info, sizeof(MailBoxInfo), &dlg.m_info, sizeof(MailBoxInfo));
+							m_mailList.erase(ite);
+							m_mailList.insert(make_pair(dlg.m_csMailAdd, info));
+							InitMailList();
+						}
 					}
 					else
 					{
-						MailBoxInfo info;
-						memset(&info, 0, sizeof(MailBoxInfo));
-						memcpy_s(&info, sizeof(MailBoxInfo), &dlg.m_info, sizeof(MailBoxInfo));
-						m_mailList.erase(ite);
-						m_mailList.insert(make_pair(dlg.m_csMailAdd, info));
-						InitMailList();
+						memset(&(*ite).second, 0, sizeof(MailBoxInfo));
+						memcpy_s(&(*ite).second, sizeof(MailBoxInfo), &dlg.m_info, sizeof(MailBoxInfo));
 					}
-				}
-				else
-				{
-					memset(&(*ite).second, 0, sizeof(MailBoxInfo));
-					memcpy_s(&(*ite).second, sizeof(MailBoxInfo), &dlg.m_info, sizeof(MailBoxInfo));
 				}
 			}
 		}
@@ -1668,15 +1674,18 @@ void CReceiveEmailDlg::OnNMRClickListMailbox(NMHDR *pNMHDR, LRESULT *pResult)
 {
 	LPNMITEMACTIVATE pNMItemActivate = reinterpret_cast<LPNMITEMACTIVATE>(pNMHDR);
 	// TODO:  在此添加控件通知处理程序代码
-	NM_LISTVIEW* pNMListView = (NM_LISTVIEW*)pNMHDR;
-	DWORD dwPos = GetMessagePos();
-	CPoint point(LOWORD(dwPos), HIWORD(dwPos));
+	if (!bRun)
+	{
+		NM_LISTVIEW* pNMListView = (NM_LISTVIEW*)pNMHDR;
+		DWORD dwPos = GetMessagePos();
+		CPoint point(LOWORD(dwPos), HIWORD(dwPos));
 
-	CMenu menu;
-	VERIFY(menu.LoadMenu(IDR_MENU1));
-	CMenu* popup = menu.GetSubMenu(0);
-	ASSERT(popup != NULL);
-	popup->TrackPopupMenu(TPM_LEFTALIGN | TPM_RIGHTBUTTON, point.x, point.y, this);
+		CMenu menu;
+		VERIFY(menu.LoadMenu(IDR_MENU1));
+		CMenu* popup = menu.GetSubMenu(0);
+		ASSERT(popup != NULL);
+		popup->TrackPopupMenu(TPM_LEFTALIGN | TPM_RIGHTBUTTON, point.x, point.y, this);
+	}
 	*pResult = 0;
 }
 
