@@ -186,12 +186,6 @@ void CReceiveEmailDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_PROGRESS3, m_progress3);
 	DDX_Control(pDX, IDC_PROGRESS4, m_progress4);
 	DDX_Control(pDX, IDC_PROGRESS5, m_progress5);
-	DDX_Control(pDX, IDC_STATIC_DBNAME, m_dbname);
-	DDX_Control(pDX, IDC_STATIC_DBNAM, m_dbnam);
-	DDX_Control(pDX, IDC_STATIC_DBADD, m_dbadd);
-	DDX_Control(pDX, IDC_STATIC_TAB, m_tab);
-	DDX_Control(pDX, IDC_STATIC_TABLENAM, m_tablename);
-	DDX_Control(pDX, IDC_CHECK_DB, m_checkdb);
 	DDX_Control(pDX, IDC_BUTTON1, m_btnTest);
 	DDX_Control(pDX, IDC_BUTTON_SET, m_btnSetting);
 	DDX_Control(pDX, IDC_BUTTON2, m_btnTest2);
@@ -207,7 +201,6 @@ BEGIN_MESSAGE_MAP(CReceiveEmailDlg, CDialogEx)
 	ON_WM_SIZE()
 	ON_WM_DESTROY()
 	ON_BN_CLICKED(IDC_BUTTON_STOP, &CReceiveEmailDlg::OnBnClickedButtonStop)
-	ON_BN_CLICKED(IDC_CHECK_DB, &CReceiveEmailDlg::OnBnClickedCheckDb)
 	ON_BN_CLICKED(IDC_BUTTON1, &CReceiveEmailDlg::OnBnClickedButton1)
 	ON_BN_CLICKED(IDC_BUTTON_SET, &CReceiveEmailDlg::OnBnClickedButtonSet)
 	ON_BN_CLICKED(IDC_BUTTON2, &CReceiveEmailDlg::OnBnClickedButton2)
@@ -262,13 +255,6 @@ BOOL CReceiveEmailDlg::OnInitDialog()
 	if (LoadFromConfig())
 	{
 		InitMailList();
-		TCHAR szTemp[64] = { 0 };
-		MultiByteToWideChar(CP_ACP, 0, m_dbinfo.chDBName, 32, szTemp, 64);
-		m_dbname.SetWindowText(szTemp);
-		MultiByteToWideChar(CP_ACP, 0, m_dbinfo.chDBAdd, 32, szTemp, 64);
-		m_dbadd.SetWindowText(szTemp);
-		MultiByteToWideChar(CP_ACP, 0, m_dbinfo.chTable, 32, szTemp, 64);
-		m_tablename.SetWindowText(szTemp);
 	}
 	else
 	{
@@ -295,13 +281,6 @@ BOOL CReceiveEmailDlg::OnInitDialog()
 	InitTextWnd();
 	for (int n = 0; n < 5; n++)
 		m_TextWnd[n] = -1;
-	m_checkdb.SetCheck(m_dbinfo.nUseDB);
-	if (m_dbinfo.nUseDB != 1)
-	{
-		m_dbadd.EnableWindow(FALSE);
-		m_dbname.EnableWindow(FALSE);
-		m_tablename.EnableWindow(FALSE);
-	}
 	wsprintf(szPath, _T("%s\\Log\\main.txt"),__Main_Path__);
 	m_csLogPath.Format(_T("%s"),szPath);
 	m_log.SetPath(m_csLogPath,m_csLogPath.GetLength());
@@ -632,7 +611,8 @@ void CReceiveEmailDlg::OnBnClickedButtonStop()
 	// TODO:  在此添加控件通知处理程序代码
 	Stop();
 	StopMain();
-	m_showinfo.clear();
+	if (m_showinfo.size()>0)
+		m_showinfo.clear();
 	m_btnStop.EnableWindow(FALSE);
 	m_btnSet.EnableWindow(TRUE);
 	bRun = FALSE;
@@ -652,89 +632,60 @@ void CReceiveEmailDlg::LayoutDialog(long cx, long cy)
 	}
 	if (m_Group.m_hWnd)
 	{
-		SetRect(&rtTmp, 243, 5, cx-HORIZON_GAP, cy/3*2);
+		SetRect(&rtTmp, 243, 5, cx - HORIZON_GAP, cy - BTN_HEIGHT*2 - GAP * 3);
 		m_Group.MoveWindow(&rtTmp);
 		lGap = (rtTmp.Height() - 5 * BTN_HEIGHT*2) / 6;
-	}
-	if (m_checkdb.m_hWnd)
-	{
-		SetRect(&rtTmp, 243, cy / 3 * 2 + HORIZON_GAP, 243 + 120, cy / 3 * 2 + HORIZON_GAP + BTN_HEIGHT);
-		m_checkdb.MoveWindow(&rtTmp);
-	}
-	if (m_dbadd.m_hWnd)
-	{
-		SetRect(&rtTmp, 373, cy / 3 * 2 + HORIZON_GAP, 373 + 150, cy / 3 * 2 + HORIZON_GAP + BTN_HEIGHT);
-		m_dbadd.MoveWindow(&rtTmp);
-	}
-	if (m_dbnam.m_hWnd)
-	{
-		SetRect(&rtTmp, 523+GAP, cy / 3 * 2 + HORIZON_GAP, 523+GAP + 70, cy / 3 * 2 + HORIZON_GAP + BTN_HEIGHT);
-		m_dbnam.MoveWindow(&rtTmp);
-	}
-	if (m_dbname.m_hWnd)
-	{
-		SetRect(&rtTmp, 593 + GAP, cy / 3 * 2 + HORIZON_GAP, 593 + GAP + 100, cy / 3 * 2 + HORIZON_GAP + BTN_HEIGHT);
-		m_dbname.MoveWindow(&rtTmp);
-	}
-	if (m_tab.m_hWnd)
-	{
-		SetRect(&rtTmp, 693 + GAP*2, cy / 3 * 2 + HORIZON_GAP, 693 + GAP*2 + 40, cy / 3 * 2 + HORIZON_GAP + BTN_HEIGHT);
-		m_tab.MoveWindow(&rtTmp);
-	}
-	if (m_tablename.m_hWnd)
-	{
-		SetRect(&rtTmp, 733 + GAP*2, cy / 3 * 2 + HORIZON_GAP, 733 + GAP*2 + 100, cy / 3 * 2 + HORIZON_GAP + BTN_HEIGHT);
-		m_tablename.MoveWindow(&rtTmp);
-	}
-	if (m_Name1.m_hWnd)
-	{
-		SetRect(&rtTmp, 253, 10 + lGap, cx - 25, lGap + BTN_HEIGHT + 10);
-		m_Name1.MoveWindow(&rtTmp);
-	}
-	if (m_progress1.m_hWnd)
-	{
-		SetRect(&rtTmp, 253, lGap + 10 + BTN_HEIGHT, cx - 25, BTN_HEIGHT * 2 + lGap + 10);
-		m_progress1.MoveWindow(&rtTmp);
-	}
-	if (m_Name2.m_hWnd)
-	{
-		SetRect(&rtTmp, 253, lTop + BTN_HEIGHT * 2 + lGap, cx - 25, lTop + BTN_HEIGHT * 3 + lGap);
-		m_Name2.MoveWindow(&rtTmp);
-	}
-	if (m_progress2.m_hWnd)
-	{
-		SetRect(&rtTmp, 253, lTop + BTN_HEIGHT * 3 + lGap, cx - 25, lTop + BTN_HEIGHT * 4 + lGap);
-		m_progress2.MoveWindow(&rtTmp);
-	}
-	if (m_Name3.m_hWnd)
-	{
-		SetRect(&rtTmp, 253, lTop + BTN_HEIGHT * 4 + lGap * 2, cx - 25, lTop + BTN_HEIGHT * 5 + lGap * 2);
-		m_Name3.MoveWindow(&rtTmp);
-	}
-	if (m_progress3.m_hWnd)
-	{
-		SetRect(&rtTmp, 253, lTop + BTN_HEIGHT * 5 + lGap * 2, cx - 25, lTop + BTN_HEIGHT * 6 + lGap * 2);
-		m_progress3.MoveWindow(&rtTmp);
-	}
-	if (m_Name4.m_hWnd)
-	{
-		SetRect(&rtTmp, 253, lTop + BTN_HEIGHT * 6 + lGap * 3, cx - 25, lTop + BTN_HEIGHT * 7 + lGap * 3);
-		m_Name4.MoveWindow(&rtTmp);
-	}
-	if (m_progress4.m_hWnd)
-	{
-		SetRect(&rtTmp, 253, lTop + BTN_HEIGHT * 7 + lGap * 3, cx - 25, lTop + BTN_HEIGHT * 8 + lGap * 3);
-		m_progress4.MoveWindow(&rtTmp);
-	}
-	if (m_Name5.m_hWnd)
-	{
-		SetRect(&rtTmp, 253, lTop + BTN_HEIGHT * 8 + lGap * 4, cx - 25, lTop + BTN_HEIGHT * 9 + lGap * 4);
-		m_Name5.MoveWindow(&rtTmp);
-	}
-	if (m_progress5.m_hWnd)
-	{
-		SetRect(&rtTmp, 253, lTop + BTN_HEIGHT * 9 + lGap * 4, cx - 25, lTop + BTN_HEIGHT * 10 + lGap * 4);
-		m_progress5.MoveWindow(&rtTmp);
+		lTop = rtTmp.top;
+		if (m_Name1.m_hWnd)
+		{
+			SetRect(&rtTmp, 253, lTop + lGap, cx - 25, lGap + BTN_HEIGHT + 10);
+			m_Name1.MoveWindow(&rtTmp);
+		}
+		if (m_progress1.m_hWnd)
+		{
+			SetRect(&rtTmp, 253, lGap + lTop + BTN_HEIGHT, cx - 25, BTN_HEIGHT * 2 + lGap + 10);
+			m_progress1.MoveWindow(&rtTmp);
+		}
+		if (m_Name2.m_hWnd)
+		{
+			SetRect(&rtTmp, 253, lTop + BTN_HEIGHT * 2 + lGap * 2, cx - 25, lTop + BTN_HEIGHT * 3 + lGap * 2);
+			m_Name2.MoveWindow(&rtTmp);
+		}
+		if (m_progress2.m_hWnd)
+		{
+			SetRect(&rtTmp, 253, lTop + BTN_HEIGHT * 3 + lGap * 2, cx - 25, lTop + BTN_HEIGHT * 4 + lGap * 2);
+			m_progress2.MoveWindow(&rtTmp);
+		}
+		if (m_Name3.m_hWnd)
+		{
+			SetRect(&rtTmp, 253, lTop + BTN_HEIGHT * 4 + lGap * 3, cx - 25, lTop + BTN_HEIGHT * 5 + lGap * 3);
+			m_Name3.MoveWindow(&rtTmp);
+		}
+		if (m_progress3.m_hWnd)
+		{
+			SetRect(&rtTmp, 253, lTop + BTN_HEIGHT * 5 + lGap * 3, cx - 25, lTop + BTN_HEIGHT * 6 + lGap * 3);
+			m_progress3.MoveWindow(&rtTmp);
+		}
+		if (m_Name4.m_hWnd)
+		{
+			SetRect(&rtTmp, 253, lTop + BTN_HEIGHT * 6 + lGap * 4, cx - 25, lTop + BTN_HEIGHT * 7 + lGap * 4);
+			m_Name4.MoveWindow(&rtTmp);
+		}
+		if (m_progress4.m_hWnd)
+		{
+			SetRect(&rtTmp, 253, lTop + BTN_HEIGHT * 7 + lGap * 4, cx - 25, lTop + BTN_HEIGHT * 8 + lGap * 4);
+			m_progress4.MoveWindow(&rtTmp);
+		}
+		if (m_Name5.m_hWnd)
+		{
+			SetRect(&rtTmp, 253, lTop + BTN_HEIGHT * 8 + lGap * 5, cx - 25, lTop + BTN_HEIGHT * 9 + lGap * 5);
+			m_Name5.MoveWindow(&rtTmp);
+		}
+		if (m_progress5.m_hWnd)
+		{
+			SetRect(&rtTmp, 253, lTop + BTN_HEIGHT * 9 + lGap * 5, cx - 25, lTop + BTN_HEIGHT * 10 + lGap * 5);
+			m_progress5.MoveWindow(&rtTmp);
+		}
 	}
 	if (m_btnSetting.m_hWnd)
 	{
@@ -1039,25 +990,6 @@ void CReceiveEmailDlg::InitTextWnd()
 }
 
 
-void CReceiveEmailDlg::OnBnClickedCheckDb()
-{
-	// TODO:  在此添加控件通知处理程序代码
-	int nChenck = m_checkdb.GetCheck();
-	m_dbinfo.nUseDB = nChenck;
-	if (m_dbinfo.nUseDB != 1)
-	{
-		m_dbadd.EnableWindow(FALSE);
-		m_dbname.EnableWindow(FALSE);
-		m_tablename.EnableWindow(FALSE);
-	}
-	else
-	{
-		m_dbadd.EnableWindow(TRUE);
-		m_dbname.EnableWindow(TRUE);
-		m_tablename.EnableWindow(TRUE);
-	}
-}
-
 
 void CReceiveEmailDlg::WriteToConfig()
 {
@@ -1069,6 +1001,25 @@ void CReceiveEmailDlg::WriteToConfig()
 	else
 		csTemp.Format(_T("no"));
 	WritePrivateProfileString(_T("DataBase"), _T("usedb"), csTemp, szConfigPath);
+	csTemp = m_dbinfo.chDBAdd;
+	WritePrivateProfileString(_T("DataBase"), _T("dbadd"), csTemp, szConfigPath);
+	csTemp = m_dbinfo.chDBName;
+	WritePrivateProfileString(_T("DataBase"), _T("data_base"), csTemp, szConfigPath);
+	csTemp = m_dbinfo.chTable;
+	WritePrivateProfileString(_T("DataBase"), _T("table"), csTemp, szConfigPath);
+	csTemp = m_dbinfo.chUserName;
+	WritePrivateProfileString(_T("DataBase"), _T("username"), csTemp, szConfigPath);
+	csTemp = m_dbinfo.chPasswd;
+	WritePrivateProfileString(_T("DataBase"), _T("passwd"), csTemp, szConfigPath);
+
+	csTemp = m_sqldbinfo.szDBAdd;
+	WritePrivateProfileString(_T("DataBase"), _T("sql_dbadd"), csTemp, szConfigPath);
+	csTemp = m_sqldbinfo.szDBName;
+	WritePrivateProfileString(_T("DataBase"), _T("sql_db"), csTemp, szConfigPath);
+	csTemp = m_sqldbinfo.szUserName;
+	WritePrivateProfileString(_T("DataBase"), _T("sql_username"), csTemp, szConfigPath);
+	csTemp = m_sqldbinfo.szPasswd;
+	WritePrivateProfileString(_T("DataBase"), _T("sql_passwd"), csTemp, szConfigPath);
 	long lCount = m_mailList.size(),i(0);
 	csTemp.Format(_T("%d"),lCount);
 	WritePrivateProfileString(_T("E-mail"), _T("count"), csTemp, szConfigPath);
@@ -1098,6 +1049,17 @@ void CReceiveEmailDlg::WriteToConfig()
 		i++;
 		ite++;
 	}
+
+	csTemp = m_fsinfo.srvadd;
+	WritePrivateProfileString(_T("ForwardSet"), _T("srvadd"), csTemp, szConfigPath);
+	csTemp = m_fsinfo.username;
+	WritePrivateProfileString(_T("ForwardSet"), _T("username"), csTemp, szConfigPath);
+	csTemp = m_fsinfo.pass;
+	WritePrivateProfileString(_T("ForwardSet"), _T("pass"), csTemp, szConfigPath);
+	csTemp = m_fsinfo.to;
+	WritePrivateProfileString(_T("ForwardSet"), _T("to"), csTemp, szConfigPath);
+	csTemp = m_fsinfo.from;
+	WritePrivateProfileString(_T("ForwardSet"), _T("from"), csTemp, szConfigPath);
 }
 
 DWORD WINAPI  CReceiveEmailDlg::_AfxMainTestAna(LPVOID lpParam)
@@ -1180,11 +1142,17 @@ DWORD WINAPI  CReceiveEmailDlg::_AfxMainTestAna(LPVOID lpParam)
 void CReceiveEmailDlg::OnBnClickedButtonSet()
 {
 	// TODO:  在此添加控件通知处理程序代码
-	/*CSettingDlg setting;
+	CSettingDlg setting;
+	setting.SetInfo(m_dbinfo, m_sqldbinfo, m_fsinfo);
 	if (setting.DoModal() == IDOK)
 	{
-		AfxMessageBox(_T("Test"));
-	}*/
+		if (!bRun)
+		{
+			memcpy_s(&m_dbinfo, sizeof(MongoDBInfo), &setting.m_moinfo, sizeof(MongoDBInfo));
+			memcpy_s(&m_sqldbinfo, sizeof(SQLDBInfo), &setting.m_sqlinfo, sizeof(SQLDBInfo));
+			memcpy_s(&m_fsinfo, sizeof(ForwardSet), &setting.m_fsinfo, sizeof(ForwardSet));
+		}
+	}
 }
 
 void CReceiveEmailDlg::GetForwardInfo(ForwardSet& fdsinfo)
@@ -1374,6 +1342,7 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 	MailBoxInfo info;
 	MongoDBInfo dbinfo;
 	SQLDBInfo sqlinfo;
+	ForwardSet fdsinfo;
 	TCHAR szLogPath[MAX_PATH] = { 0 };
 	char chTemp[MAX_PATH] = { 0 }, chLogPath[MAX_PATH] = { 0 };
 	long lResult(0), lReturnvalue(0), lCount(0),i(1),lFailedCount(0);
@@ -1387,6 +1356,7 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 	{
 		POP3 pop3;
 		CSQLServer sql;
+		SMTP smtp;
 		DWORD dwID = GetCurrentThreadId();
 //#ifdef _DEBUG
 		DWORD dwTime(0);
@@ -1420,6 +1390,15 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 				sql.SetLogPath(chLogPath);
 				WideCharToMultiByte(CP_ACP, 0, info.szAbbreviation, 64, chTemp, MAX_PATH, NULL, NULL);
 				strName = chTemp;
+				if (info.bSendMail)
+				{
+					memset(&fdsinfo, 0, sizeof(ForwardSet));
+					pDlg->GetForwardInfo(fdsinfo);
+					smtp.SetForwardInfo(fdsinfo);
+					WideCharToMultiByte(CP_ACP, 0, info.szMailAdd, 128, chTemp, MAX_PATH, NULL, NULL);
+					smtp.SetReceiver(chTemp);
+					smtp.SetLogPath(chLogPath);
+				}
 				lResult = pop3.Login(info.szServerAdd, info.lPort, csUserName, info.szPasswd);
 				if (lResult >= 0)
 				{
@@ -1458,7 +1437,7 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 									{
 										if (pop3.GetEMLFile(i, strUDIL) == 0)
 										{
-											if (pDlg->MailAnalysis(pop3, sql, strUDIL, info.szAbbreviation, 1)<0)
+											if (pDlg->MailAnalysis(pop3, sql, smtp, strUDIL, info.szAbbreviation, 1, info.bSendMail)<0)
 											{
 												sprintf_s(chDebug, 512, "Analysis [%s] Error!", strUDIL.c_str());
 //#ifdef _DEBUG
@@ -1552,7 +1531,7 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 	return 0;
 }
 
-long CReceiveEmailDlg::MailAnalysis(POP3& pop3, CSQLServer& sql, const string& strUIDL, LPCTSTR lpAbb, long lType)
+long CReceiveEmailDlg::MailAnalysis(POP3& pop3, CSQLServer& sql, SMTP& smtp, const string& strUIDL, LPCTSTR lpAbb, long lType,BOOL bSend)
 {
 	BOOL bRet = TRUE;
 	CString csUIDL(strUIDL.c_str()), csPath(pop3.GetCurrPath());
@@ -1595,6 +1574,12 @@ long CReceiveEmailDlg::MailAnalysis(POP3& pop3, CSQLServer& sql, const string& s
 			ana.SetClearType(0);	
 		}
 	} while (0);
+	if (bSend)
+	{
+		smtp.SetCurrPath(pop3.GetCurrPath());
+		smtp.AddAttachFileName(strUIDL);
+		SendEmail(smtp);
+	}
 	ana.Clear();
 //#ifdef _DEBUG
 	dwTime = GetTickCount64() - dwTime;
@@ -1733,4 +1718,19 @@ void CReceiveEmailDlg::OnDelitem()
 		}
 	}
 	
+}
+
+long CReceiveEmailDlg::SendEmail(SMTP& smtp)
+{
+	if (smtp.Logon() != 0)
+		return -1;
+	if (smtp.SendHead() != 0)
+		return -1;
+	/*if (smtp.SendTextBody() != 0)
+	return -1;*/
+	if (smtp.SendFileBody() != 0)
+		return -1;
+	if (smtp.Quit())
+		return 0;
+	return 0;
 }

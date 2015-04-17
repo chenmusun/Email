@@ -84,12 +84,6 @@ public:
 	CProgressCtrl m_progress3;
 	CProgressCtrl m_progress4;
 	CProgressCtrl m_progress5;
-	CStatic m_dbname;
-	CStatic m_dbnam;
-	CStatic m_dbadd;
-	CStatic m_tab;
-	CStatic m_tablename;
-	CButton m_checkdb;
 	CButton m_btnTest;
 	CButton m_btnSetting;
 	CLog m_log;
@@ -118,7 +112,6 @@ public:
 	virtual void OnJobEnd(LONG nJobIndex, CFJobBase<MyJobParam*>* pJob);
 	long SetTextWnd(long lType,long lCurrPos,long lStatus=0);
 	void InitTextWnd();
-	afx_msg void OnBnClickedCheckDb();
 	void WriteToConfig();
 	afx_msg void OnBnClickedButton1();
 	static DWORD WINAPI _AfxMainTestAna(LPVOID lpParam);
@@ -131,10 +124,11 @@ public:
 	void StopTest2();
 	void StopMain();
 	static DWORD WINAPI _AfxMainProcess(LPVOID lpParam);
-	long MailAnalysis(POP3& pop3, CSQLServer& sql, const string& strUIDL, LPCTSTR lpAbb, long lType);
+	long MailAnalysis(POP3& pop3, CSQLServer& sql, SMTP& smtp,const string& strUIDL, LPCTSTR lpAbb, long lType,BOOL bSend=FALSE);
 	afx_msg void OnLvnItemchangedListMailbox(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnNMDblclkListMailbox(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnNMRClickListMailbox(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnAdditem();
 	afx_msg void OnDelitem();
+	long SendEmail(SMTP& smtp);
 };
