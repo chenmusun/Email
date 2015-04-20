@@ -623,7 +623,7 @@ public:
 	{
 		return m_pCommand;
 	};
-
+	inline CString GetLastError(){ return m_strLastError; }
 protected:
 	void dump_com_error(_com_error &e);
 

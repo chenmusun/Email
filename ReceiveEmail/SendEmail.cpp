@@ -496,3 +496,13 @@ BOOL SMTP::DeleteEMLFile()
 		return TRUE;
 	else return FALSE;
 }
+
+void SMTP::InitSMTPPro()
+{
+	m_lsReceiver.clear();
+	m_lsAttPath.clear();
+	memset(m_chBoundary, 0, 256);
+	memset(m_chSubBoundary, 0, 256);
+	memset(m_chCurrPath, 0, MAX_PATH); 
+	memset(m_chPcName, 0, 128);
+}

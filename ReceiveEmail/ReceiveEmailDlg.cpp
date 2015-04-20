@@ -1315,7 +1315,7 @@ void CReceiveEmailDlg::StopMain()
 	{
 		if (m_hProcess[i])
 		{
-			if (WaitForSingleObject(m_hProcess[i], 10000L) != WAIT_OBJECT_0)
+			if (WaitForSingleObject(m_hProcess[i], INFINITE) != WAIT_OBJECT_0)
 			{
 				TerminateThread(m_hProcess[i], 0);
 			}
@@ -1350,7 +1350,7 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 	ForwardSet fdsinfo;
 	TCHAR szLogPath[MAX_PATH] = { 0 };
 	char chTemp[MAX_PATH] = { 0 }, chLogPath[MAX_PATH] = { 0 };
-	long lResult(0), lReturnvalue(0), lCount(0),i(1),lFailedCount(0);
+	long lResult(0), lReturnvalue(0), lCount(0),i(1),lFailedCount(0),lType(1);
 	string strUDIL, strName;
 	vector<string> UidlData;
 	std::vector<string>::iterator ite = UidlData.begin();
@@ -1363,9 +1363,7 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 		CSQLServer sql;
 		SMTP smtp;
 		DWORD dwID = GetCurrentThreadId();
-//#ifdef _DEBUG
 		DWORD dwTime(0);
-//#endif
 		while (true)
 		{
 			pop3.Close();
@@ -1400,8 +1398,7 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 					memset(&fdsinfo, 0, sizeof(ForwardSet));
 					pDlg->GetForwardInfo(fdsinfo);
 					smtp.SetForwardInfo(fdsinfo);
-					WideCharToMultiByte(CP_ACP, 0, info.szMailAdd, 128, chTemp, MAX_PATH, NULL, NULL);
-					smtp.SetReceiver(chTemp);
+					smtp.InitSMTPPro();
 					smtp.SetLogPath(chLogPath);
 				}
 				lResult = pop3.Login(info.szServerAdd, info.lPort, csUserName, info.szPasswd);
@@ -1442,7 +1439,10 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 									{
 										if (pop3.GetEMLFile(i, strUDIL) == 0)
 										{
-											if (pDlg->MailAnalysis(pop3, sql, smtp, strUDIL, info.szAbbreviation, 1, info.bSendMail)<0)
+#ifdef _DEBUG
+											lType = 0;
+#endif
+											if (pDlg->MailAnalysis(pop3, sql, smtp, strUDIL, info, lType)<0)
 											{
 												sprintf_s(chDebug, 512, "Analysis [%s] Error!", strUDIL.c_str());
 //#ifdef _DEBUG
@@ -1536,12 +1536,12 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 	return 0;
 }
 
-long CReceiveEmailDlg::MailAnalysis(POP3& pop3, CSQLServer& sql, SMTP& smtp, const string& strUIDL, LPCTSTR lpAbb, long lType,BOOL bSend)
+long CReceiveEmailDlg::MailAnalysis(POP3& pop3, CSQLServer& sql, SMTP& smtp, const string& strUIDL, const MailBoxInfo& info, long lType)
 {
 	BOOL bRet = TRUE;
 	CString csUIDL(strUIDL.c_str()), csPath(pop3.GetCurrPath());
 	CMailAnalysis ana;
-	ana.SetAbbreviation(lpAbb);
+	ana.SetAbbreviation(info.szAbbreviation);
 	ana.LoadFile(csPath, csUIDL);
 	ana.SetClearType(lType);
 //#ifdef _DEBUG
@@ -1579,8 +1579,12 @@ long CReceiveEmailDlg::MailAnalysis(POP3& pop3, CSQLServer& sql, SMTP& smtp, con
 			ana.SetClearType(0);	
 		}
 	} while (0);
-	if (bSend)
+	if (info.bSendMail)
 	{
+		char chTemp[MAX_PATH] = { 0 };
+		WideCharToMultiByte(CP_ACP, 0, info.szMailAdd, 128, chTemp, MAX_PATH, NULL, NULL);
+		smtp.InitSMTPPro();
+		smtp.SetReceiver(chTemp);
 		smtp.SetCurrPath(pop3.GetCurrPath());
 		smtp.AddAttachFileName(strUIDL);
 		SendEmail(smtp);

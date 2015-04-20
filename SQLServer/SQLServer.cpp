@@ -2865,7 +2865,7 @@ long CSQLServer::SaveToDB(EMAIL_ITEM& email,BOOL bCheck)
 			}
 			else
 			{
-				csLog.Format(_T("[%s]Insert to SQL Failed!"),email.csUIDL);
+				csLog.Format(_T("[%s]Insert to SQL Failed!\r\n%s"),email.csUIDL,pEMCmd->GetLastError());
 				Log(csLog,csLog.GetLength());
 				csLog.Append(_T("\r\n"));
 				OutputDebugString(csLog);
@@ -3254,7 +3254,7 @@ long CSQLServer::SaveAttachment(ATTACH_FILE& attach, long lEmailID)
 		pEMAttachCmd->SetText(szAttachCmdText);
 		if (!pEMAttachCmd->Execute(adCmdText))
 		{
-			csLog.Format(_T("Insert to [T_REPORT_FILES] Error![%s]"),attach.csFilePath);
+			csLog.Format(_T("Insert to [T_REPORT_FILES] Error![%s]\r\n%s"),attach.csFilePath,pEMAttachCmd->GetLastError());
 			Log(csLog, csLog.GetLength());
 			csLog.Append(_T("\r\n"));
 			OutputDebugString(csLog);
@@ -3306,7 +3306,7 @@ long CSQLServer::SaveAttachment(ATTACH_FILE& attach, long lEmailID)
 		pMapCmd->SetText(szMapCmdText);
 		if (!pMapCmd->Execute(adCmdText))
 		{
-			csLog.Format(_T("Insert to [T_FILE_AND_REPORT] Error![%s]"), attach.csFilePath);
+			csLog.Format(_T("Insert to [T_FILE_AND_REPORT] Error![%s]\r\n%s"), attach.csFilePath,pMapCmd->GetLastError());
 			Log(csLog, csLog.GetLength());
 			csLog.Append(_T("\r\n"));
 			OutputDebugString(csLog);

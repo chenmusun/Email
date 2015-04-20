@@ -23,6 +23,7 @@ public:
 	inline void SetCurrPath(const char*pPath){if(pPath) sprintf_s(m_chCurrPath, MAX_PATH, "%s", pPath); }//设置当前读取路径
 	void SetLogPath(const char*pPath);//设置Log日志路径
 	BOOL DeleteEMLFile();
+	void InitSMTPPro();
 private:
 	char m_chBoundary[256];//boundary字段
 	char m_chSubBoundary[256];

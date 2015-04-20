@@ -124,7 +124,7 @@ public:
 	void StopTest2();
 	void StopMain();
 	static DWORD WINAPI _AfxMainProcess(LPVOID lpParam);
-	long MailAnalysis(POP3& pop3, CSQLServer& sql, SMTP& smtp,const string& strUIDL, LPCTSTR lpAbb, long lType,BOOL bSend=FALSE);
+	long MailAnalysis(POP3& pop3, CSQLServer& sql, SMTP& smtp,const string& strUIDL, const MailBoxInfo& info, long lType=0);
 	afx_msg void OnLvnItemchangedListMailbox(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnNMDblclkListMailbox(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnNMRClickListMailbox(NMHDR *pNMHDR, LRESULT *pResult);
