@@ -3168,7 +3168,8 @@ long CSQLServer::SaveAttachment(ATTACH_FILE& attach, long lEmailID)
 	BOOL bRet = FALSE;
 	DWORD size = 0;
 	CFile file;
-	CString csGuid,csLog;
+	CString csGuid, csLog,csTemp, csKey;
+	string strout;
 	GetGUID(csGuid);
 	if (csGuid.IsEmpty() || attach.csLocalFileName.IsEmpty())
 		return -1;
@@ -3203,7 +3204,7 @@ long CSQLServer::SaveAttachment(ATTACH_FILE& attach, long lEmailID)
 		}
 		CADOCommand * pEMAttachCmd = new CADOCommand(&m_db);
 		if (pEMAttachCmd == NULL) throw;
-		TCHAR szAttachCmdText[512] = _T("INSERT INTO [ReportEmailDB].[dbo].[T_REPORT_FILES](GUID, FileName, FileSize,FilePages,AffixType,EmailID,ElapsedTime) VALUES(CONVERT(UNIQUEIDENTIFIER, ?), ?, ?,?,?,?,?)");
+		TCHAR szAttachCmdText[512] = _T("INSERT INTO [ReportEmailDB].[dbo].[T_REPORT_FILES](GUID, FileName, FileSize,FilePages,AffixType,EmailID,ElapsedTime,KeyValue) VALUES(CONVERT(UNIQUEIDENTIFIER, ?), ?, ?,?,?,?,?,?)");
 		pEMAttachCmd->AddParameter(_T("GUID"), adGUID, CADOParameter::paramInput, csGuid.GetLength()*sizeof(TCHAR), _bstr_t(csGuid.GetBuffer(0)));
 		if (attach.csFileName.IsEmpty())
 			attach.csFileName.Format(_T("NULL"));
@@ -3215,6 +3216,39 @@ long CSQLServer::SaveAttachment(ATTACH_FILE& attach, long lEmailID)
 		pEMAttachCmd->AddParameter(_T("AffixType"), adVarChar, CADOParameter::paramInput, attach.csAffixType.GetLength()*sizeof(TCHAR), _bstr_t(attach.csAffixType.GetBuffer(0)));
 		pEMAttachCmd->AddParameter(_T("EMailID"), adInteger, CADOParameter::paramInput, sizeof(long), lEmailID);
 		pEMAttachCmd->AddParameter(_T("ElapsedTime"), adInteger, CADOParameter::paramInput, sizeof(long), attach.nTime);
+		if (!attach.csFileText.IsEmpty())
+		{
+			FILE* fp = NULL;
+			char chPath[512] = { 0 };
+			memset(&chPath, 0, 512);
+			WideCharToMultiByte(CP_ACP, 0, attach.csFileText, attach.csFileText.GetLength(), chPath, 512, NULL, NULL);
+			if (fopen_s(&fp, chPath, "r") == 0)
+			{
+				char * pContentData = NULL;
+				fseek(fp, 0, SEEK_END);
+				size = ftell(fp);
+				fseek(fp, 0, SEEK_SET);
+				pContentData = new char[size + 1];
+				memset(pContentData, 0, size + 1);
+				fread_s(pContentData, size, 1, size, fp);
+				fclose(fp);
+				UTF_8ToGB2312(strout, pContentData, size);
+				if (pContentData != NULL && size > 0)
+				{
+					csTemp = strout.c_str();
+					csKey.Empty();
+					csKey.Append(csTemp.Mid(9, 3));
+					csKey.Append(csTemp.Mid(99, 3));
+					csKey.Append(csTemp.Mid(399, 3));
+					pEMAttachCmd->AddParameter(_T("AffixType"), adVarChar, CADOParameter::paramInput, csKey.GetLength()*sizeof(TCHAR), _bstr_t(csKey.GetBuffer(0)));
+				}
+				if (pContentData != NULL&& size > 0)
+				{
+					delete  pContentData;
+					pContentData = NULL;
+				}
+			}
+		}
 		pEMAttachCmd->SetText(szAttachCmdText);
 		if (!pEMAttachCmd->Execute(adCmdText))
 		{
@@ -3229,7 +3263,6 @@ long CSQLServer::SaveAttachment(ATTACH_FILE& attach, long lEmailID)
 			return -1;
 //////////////////////////////////////////////////////////////////////////////////////////////////
 		TCHAR szQuerySQL[512] = { 0 };
-		CString csTemp;
 		csTemp = attach.csGUID;
 		csTemp.Replace(_T("{"), _T(""));
 		csTemp.Replace(_T("}"), _T(""));
@@ -3239,32 +3272,11 @@ long CSQLServer::SaveAttachment(ATTACH_FILE& attach, long lEmailID)
 		if (m_pEMRs->Open(szQuerySQL, CADORecordset::openQuery))
 		{
 			m_pEMRs->Edit();
-			FILE* fp = NULL;
-			char * pContentData = NULL;
-			csTemp = attach.csFileText;
-			if (!csTemp.IsEmpty())
+			if (!attach.csFileText.IsEmpty())
 			{
-				char chPath[512] = { 0 };
-				memset(&chPath, 0, 512);
-				WideCharToMultiByte(CP_ACP, 0, csTemp, csTemp.GetLength(), chPath, 512, NULL, NULL);
-				if (fopen_s(&fp, chPath, "r") == 0)
+				if (strout.length()>0)
 				{
-					fseek(fp, 0, SEEK_END);
-					size = ftell(fp);
-					fseek(fp, 0, SEEK_SET);
-					pContentData = new char[size + 1];
-					memset(pContentData, 0, size + 1);
-					fread_s(pContentData, size, 1, size, fp);
-					fclose(fp);
-					string strout;
-					UTF_8ToGB2312(strout, pContentData, size);
-					if (pContentData != NULL && size > 0)
-						m_pEMRs->AppendChunk(_T("FileText"), const_cast<char*>(strout.c_str()), (UINT)strout.length());
-				}
-				if (pContentData != NULL&& size > 0)
-				{
-					delete  pContentData;
-					pContentData = NULL;
+					m_pEMRs->AppendChunk(_T("FileText"), const_cast<char*>(strout.c_str()), (UINT)strout.length());
 				}
 			}
 			m_pEMRs->Update();

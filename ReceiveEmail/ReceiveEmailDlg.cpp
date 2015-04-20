@@ -1046,6 +1046,11 @@ void CReceiveEmailDlg::WriteToConfig()
 			csTemp.Format(_T("mail_%d_mailadd"), i);
 			WritePrivateProfileString(_T("E-mail"), csTemp, (*ite).second.szMailAdd, szConfigPath);
 		}
+		else
+		{
+			csTemp.Format(_T("mail_%d_bsend"), i);
+			WritePrivateProfileString(_T("E-mail"), csTemp, _T("0"), szConfigPath);
+		}
 		i++;
 		ite++;
 	}
