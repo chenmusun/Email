@@ -3240,7 +3240,6 @@ long CSQLServer::SaveAttachment(ATTACH_FILE& attach, long lEmailID)
 					csKey.Append(csTemp.Mid(9, 3));
 					csKey.Append(csTemp.Mid(99, 3));
 					csKey.Append(csTemp.Mid(399, 3));
-					pEMAttachCmd->AddParameter(_T("AffixType"), adVarChar, CADOParameter::paramInput, csKey.GetLength()*sizeof(TCHAR), _bstr_t(csKey.GetBuffer(0)));
 				}
 				if (pContentData != NULL&& size > 0)
 				{
@@ -3249,6 +3248,9 @@ long CSQLServer::SaveAttachment(ATTACH_FILE& attach, long lEmailID)
 				}
 			}
 		}
+		if (csKey.IsEmpty())
+			csKey.Format(_T("NULL"));
+		pEMAttachCmd->AddParameter(_T("KeyValue"), adVarChar, CADOParameter::paramInput, csKey.GetLength()*sizeof(TCHAR), _bstr_t(csKey.GetBuffer(0)));
 		pEMAttachCmd->SetText(szAttachCmdText);
 		if (!pEMAttachCmd->Execute(adCmdText))
 		{
