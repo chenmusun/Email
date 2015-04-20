@@ -14,7 +14,7 @@ public:
 	MailSocket m_SendSocket;
 	long Logon();//登录
 	long SendHead();//发送邮件头信息
-	long SendTextBody();//发送正文部分
+	long SendTextBody(const string& strtext);//发送正文部分
 	long SendFileBody();//发送邮件附件
 	BOOL Quit();//退出
 	void SetForwardInfo(ForwardSet& info);//设置转发信息

@@ -1202,7 +1202,7 @@ DWORD WINAPI  CReceiveEmailDlg::_AfxMainTestSend(LPVOID lpParam)
 			bRet = FALSE;
 			break;
 		}
-		if (smtp.SendTextBody() != 0)
+		if (smtp.SendTextBody("xxxxxxxxxxxxxxxxxxxxxxxxxxx") != 0)
 		{
 			bRet = FALSE;
 			break;

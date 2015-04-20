@@ -293,14 +293,25 @@ long SMTP::SendHead()
 	return SUCCESS;
 }
 
-long SMTP::SendTextBody()
+long SMTP::SendTextBody(const string& strtext)
 {
 	long lValue(0);
-	char chCommand[1024] = { 0 }, chResult[1024] = { 0 };
-	sprintf_s(chCommand, 1024, 
+	char *pCommand=NULL;
+	long lSize = strtext.length();
+	if (lSize%3==0)
+		lSize = lSize / 3 * 4 + 136;
+	else lSize = (lSize / 3 + 1) * 4 + 136;
+	pCommand = new char[lSize];
+	memset(pCommand, 0, lSize);
+	sprintf_s(pCommand, lSize,
 		"--%s\r\nContent-transfer-encoding: base64\r\nContent-Type: text/plain; charset=\"gb2312\"\r\n\r\n%s\r\n\r\n",
-		m_chBoundary,base64_encode("这是一封测试邮件！").c_str());
-	lValue = m_SendSocket.SendData(chCommand, strlen(chCommand));
+		m_chBoundary, base64_encode(strtext).c_str());
+	lValue = m_SendSocket.SendData(pCommand, strlen(pCommand));
+	if (pCommand)
+	{
+		delete pCommand;
+		pCommand = NULL;
+	}
 	if (lValue < 0)
 		return SEND_ERROR;
 	return SUCCESS;
