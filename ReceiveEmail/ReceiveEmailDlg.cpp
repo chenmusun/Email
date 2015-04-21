@@ -286,7 +286,7 @@ BOOL CReceiveEmailDlg::OnInitDialog()
 	m_log.SetPath(m_csLogPath,m_csLogPath.GetLength());
 #ifdef _DEBUG
 	if (m_csTestText.IsEmpty())
-		m_csTestText.Format(_T("MD50000026224MSG1225972304382372227113923"));
+		m_csTestText.Format(_T("MD50000020859MSG834601304402073576026676"));
 #endif
 	m_startdate = COleDateTime::GetCurrentTime();
 	m_csRunTime.Format(_T("%d年%d月%d日 %d:%d:%d")
@@ -1088,10 +1088,12 @@ DWORD WINAPI  CReceiveEmailDlg::_AfxMainTestAna(LPVOID lpParam)
 		bRet = FALSE;
 		csLog.Format(_T("加载文件失败！"));
 		pDlg->m_log.Log(csLog, csLog.GetLength());
+		csLog.Append(_T("\r\n"));
+		OutputDebugString(csLog);
 		pDlg->PostMessage(__umymessage__anauncomplete__);
 		return -1;
 	}
-	ana.SetClearType(1);
+	ana.SetClearType(0);
 	if (WaitForSingleObject(__HEVENT_TEST_EXIT__, 0L) == WAIT_OBJECT_0)
 	{
 		return 0;
@@ -1108,6 +1110,8 @@ DWORD WINAPI  CReceiveEmailDlg::_AfxMainTestAna(LPVOID lpParam)
 			bRet = FALSE;
 			csLog.Format(_T("AnalysisHead错误！"));
 			pDlg->m_log.Log(csLog, csLog.GetLength());
+			csLog.Append(_T("\r\n"));
+			OutputDebugString(csLog);
 			break;
 		}
 		if (ana.AnalysisBody(ana.GetBoundry(), ana.GetHeadRowCount()) < 0)
@@ -1116,6 +1120,8 @@ DWORD WINAPI  CReceiveEmailDlg::_AfxMainTestAna(LPVOID lpParam)
 			bRet = FALSE;
 			csLog.Format(_T("AnalysisBody错误！"));
 			pDlg->m_log.Log(csLog, csLog.GetLength());
+			csLog.Append(_T("\r\n"));
+			OutputDebugString(csLog);
 			break;
 		}
 		if (ana.AnalysisBoundary(ana.GetBoundry(), ana.GetAttach()) < 0)
@@ -1124,6 +1130,8 @@ DWORD WINAPI  CReceiveEmailDlg::_AfxMainTestAna(LPVOID lpParam)
 			bRet = FALSE;
 			csLog.Format(_T("AnalysisBoundary错误！"));
 			pDlg->m_log.Log(csLog, csLog.GetLength());
+			csLog.Append(_T("\r\n"));
+			OutputDebugString(csLog);
 			break;
 		}
 		sql.SaveToDB(ana.GetEmailItem(),FALSE);

@@ -34,6 +34,7 @@ TCHAR g_MailBoundaryHeadItem[][50] =
 	_T("content-description:"),
 	_T("content-disposition:"),
 	_T("content-id:"),
+	_T("mime-version:"),
 };
 
 TCHAR g_MailContentTypeItem[][50] =
@@ -1835,7 +1836,12 @@ void SaveAttachMent(CMailAnalysis* pana, ATTACH_FILE& attachfile, BOUNDARY_HEAD&
 				OutputDebugString(csDebug);
 #endif
 			}
-			else pana->SetClearType(0);
+			else
+			{
+				sprintf_s(chPath, 512, "PDF2Text [%s] Error!", strInputPath.c_str());
+				pana->m_log.Log(chPath,strlen(chPath));
+				pana->SetClearType(0);
+			}
 		}
 		pana->m_stEmail.vecAttachFiles.push_back(attachfile);
 	}
