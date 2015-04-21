@@ -873,10 +873,18 @@ long CMailAnalysis::GetContentInfo(const CString& csSrc, CString& csContent, CSt
 			lConttype = UNKNOWN_TYPE;
 		} while (0);
 		nOffset = nOffset < 0 ? 0 : nOffset;
+		int nPos2(0), nPos1(0);
 		if (!csTemp.IsEmpty())
 		{
 			for (size_t i = 0; i < sizeof(g_MailContentTypeItem) / sizeof(g_MailContentTypeItem[0]); i++)
 			{
+				nPos1 = csTemp.Find(_T("\""));
+				if (nPos1 >= 0)
+				{
+					nPos2 = csTemp.Find(_T("\""), nPos1 + 1);
+					if (nPos2>0)
+						nStart = nPos2;
+				}
 				nOffset = csTemp.Find(_T(";"), (nStart < 0 ? 0 : nStart));
 				if (nOffset >= 0)
 					nStart = GetKeyWords(csTemp, csSrcTemp, g_MailContentTypeItem[i], _T(";"), csText);
@@ -981,13 +989,21 @@ void CMailAnalysis::GetDispositionInfo(const CString& csSrc, CString& csDis, CSt
 	}
 	StringProcess(csDisposition, csDis);
 	nOffset = nOffset < 0 ? 0 : nOffset;
+	int nPos2(0), nPos1(0);
 	if (!csTemp.IsEmpty())
 	{
 		for (size_t i = 0; i < sizeof(g_MailDispostionItem) / sizeof(g_MailDispostionItem[0]); i++)
 		{
+			nPos1 = csTemp.Find(_T("\""));
+			if (nPos1 >= 0)
+			{
+				nPos2 = csTemp.Find(_T("\""), nPos1 + 1);
+				if (nPos2>0)
+					nStart = nPos2;
+			}
 			nOffset = csTemp.Find(_T(";"), nStart);
 			if (nOffset >= 0)
-				nStart = GetKeyWords(csTemp, csSrcBack, g_MailDispostionItem[i], _T(";"), csText);
+				nStart = GetKeyWords(csTemp, csSrcBack, g_MailDispostionItem[i], _T(";"), csText, nStart);
 			else GetKeyWords(csTemp, csSrcBack, g_MailDispostionItem[i], NULL, csText);
 			if (!csText.IsEmpty())
 			{
@@ -1682,7 +1698,7 @@ void CodeConvert(const CString& csSrc, CString&csDest, int nCharset, int nCodety
 	}
 }
 
-long GetKeyWords(const CString&csSrc1, const CString& csSrc2, LPCTSTR lpKey, LPCTSTR lpEnd, CString& csDest)
+long GetKeyWords(const CString&csSrc1, const CString& csSrc2, LPCTSTR lpKey, LPCTSTR lpEnd, CString& csDest, int nStart)
 {
 	CString csKey(lpKey), csEnd(lpEnd);
 	if (csSrc1.IsEmpty() || csKey.IsEmpty())
@@ -1697,7 +1713,7 @@ long GetKeyWords(const CString&csSrc1, const CString& csSrc2, LPCTSTR lpKey, LPC
 			nEnd = csSrc2.GetLength();
 		else
 		{
-			nEnd = csSrc1.Find(csEnd, nOffset + nKeyLen);
+			nEnd = csSrc1.Find(csEnd, (nOffset + nKeyLen)>nStart?(nOffset+nKeyLen):nStart);
 			if (nEnd<0)
 				nEnd = csSrc2.GetLength();
 		}

@@ -84,7 +84,7 @@ void StringProcess(const CString& csSrc, CString& csDest, CString& csExtra, int 
 void StringProcess(const CString&csSrc, CString& csDest, int nType);
 void CodeConvert(const CString& csSrc, CString&csDest, int nCharset = UTF8, int nCodetype = BASE64);
 void CodeConvert(const CString& csSrc, char *pDest, int nCharset = UTF8, int nCodetype = BASE64);
-long GetKeyWords(const CString&csSrc1, const CString& csSrc2, LPCTSTR lpKey, LPCTSTR lpEnd, CString& csDest);
+long GetKeyWords(const CString&csSrc1, const CString& csSrc2, LPCTSTR lpKey, LPCTSTR lpEnd, CString& csDest,int nStart=0);
 
 
 CString StringEncode(const CString& csSrc);

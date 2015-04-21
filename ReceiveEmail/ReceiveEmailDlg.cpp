@@ -286,7 +286,7 @@ BOOL CReceiveEmailDlg::OnInitDialog()
 	m_log.SetPath(m_csLogPath,m_csLogPath.GetLength());
 #ifdef _DEBUG
 	if (m_csTestText.IsEmpty())
-		m_csTestText.Format(_T("MD50000020859MSG834601304402073576026676"));
+		m_csTestText.Format(_T("MD50000007636MSG2830328304402203397319854"));
 #endif
 	m_startdate = COleDateTime::GetCurrentTime();
 	m_csRunTime.Format(_T("%dƒÍ%d‘¬%d»’ %d:%d:%d")
