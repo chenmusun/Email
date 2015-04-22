@@ -743,7 +743,7 @@ void CReceiveEmailDlg::Stop(long lType)//用于停止工作分配线程
 		SetEvent(__HEVENT_EXIT__);
 	if (m_hMain)
 	{
-		if (WaitForSingleObject(m_hMain, 5000L) != WAIT_OBJECT_0)
+		if (WaitForSingleObject(m_hMain, INFINITE) != WAIT_OBJECT_0)
 		{
 //#ifdef DEBUG
 			OutputDebugString(_T("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXSTOPXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\n"));
