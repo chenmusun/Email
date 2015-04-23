@@ -641,12 +641,12 @@ void CReceiveEmailDlg::LayoutDialog(long cx, long cy)
 		lTop = rtTmp.top;
 		if (m_Name1.m_hWnd)
 		{
-			SetRect(&rtTmp, 253, lTop + lGap, cx - 25, lGap + BTN_HEIGHT + 10);
+			SetRect(&rtTmp, 253, lTop + lGap, cx - 25, lTop+lGap + BTN_HEIGHT);
 			m_Name1.MoveWindow(&rtTmp);
 		}
 		if (m_progress1.m_hWnd)
 		{
-			SetRect(&rtTmp, 253, lGap + lTop + BTN_HEIGHT, cx - 25, BTN_HEIGHT * 2 + lGap + 10);
+			SetRect(&rtTmp, 253, lGap + lTop + BTN_HEIGHT, cx - 25, lTop+BTN_HEIGHT * 2 + lGap);
 			m_progress1.MoveWindow(&rtTmp);
 		}
 		if (m_Name2.m_hWnd)
