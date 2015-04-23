@@ -17,7 +17,7 @@ public:
 	long GetMailCount();//获取邮件总数
 	BOOL Close();//推出邮件服务器
 	string GetUIDL(long lCurrPos);//获取邮件唯一编号
-	long CheckUIDL(const string& strUIDL,const string& strName);//检测UIDL是否已存在MongoDB，若存在不进行接收跳过
+	long CheckUIDL(const string& strUIDL,const string& strName,long lSaveDay=14);//检测UIDL是否已存在MongoDB，若存在不进行接收跳过
 	long GetEMLFile(long lCurrPos,const string& strUIDL);//获取邮件文件
 	//设置邮件接收信息
 	void SetInfo(CString csName, const MailBoxInfo& info, const MongoDBInfo& dbinfo,LPCTSTR lpPath, long lLen);

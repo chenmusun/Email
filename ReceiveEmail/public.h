@@ -55,6 +55,7 @@ struct MailBoxInfo
 	BOOL  bSendMail;			//是否转发
 	TCHAR szMailAdd[128];		//接收邮箱
 	long lStatus;
+	long lSaveDay;
 };
 
 enum RETURN_VALUE

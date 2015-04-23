@@ -460,6 +460,8 @@ BOOL CReceiveEmailDlg::LoadFromConfig()
 			GetPrivateProfileString(_T("E-mail"), csTemp, _T(""), info.szMailAdd, 128, szConfigPath);
 		}
 		else info.bSendMail = FALSE;
+		csTemp.Format(_T("mail_%d_saveday"), i);
+		info.lSaveDay = GetPrivateProfileInt(_T("E-mail"), csTemp, 14, szConfigPath);
 		m_mailList.insert(make_pair(csName, info));
 	}
 	
@@ -555,6 +557,7 @@ BOOL CReceiveEmailDlg::GetMailBoxInfo(CString&csUserName, MailBoxInfo& info, lon
 				wsprintf(info.szAbbreviation, ite->second.szAbbreviation);
 				info.bSendMail = ite->second.bSendMail;
 				wsprintf(info.szMailAdd, ite->second.szMailAdd);
+				info.lSaveDay = ite->second.lSaveDay;
 				m_lLastPos++;
 				ite->second.lStatus = 1;
 				break;
@@ -1051,6 +1054,9 @@ void CReceiveEmailDlg::WriteToConfig()
 			csTemp.Format(_T("mail_%d_bsend"), i);
 			WritePrivateProfileString(_T("E-mail"), csTemp, _T("0"), szConfigPath);
 		}
+		csTemp.Format(_T("mail_%d_saveday"), i);
+		wsprintf(szTemp, _T("%d"), (*ite).second.lSaveDay);
+		WritePrivateProfileString(_T("E-mail"), csTemp, szTemp, szConfigPath);
 		i++;
 		ite++;
 	}
@@ -1440,7 +1446,7 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 								strUDIL = pop3.GetUIDL(i);
 								if (strUDIL.length()>0)
 								{
-									lReturnvalue = pop3.CheckUIDL(strUDIL, strName);
+									lReturnvalue = pop3.CheckUIDL(strUDIL, strName,info.lSaveDay);
 									if (lReturnvalue == MONGO_NOT_FOUND)
 									{
 										if (pop3.GetEMLFile(i, strUDIL) == 0)
@@ -1527,7 +1533,6 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 			}
 			else
 			{
-				//pDlg->GetMailBoxInfo(csUserName, info, 0);
 				csDebug.Format(_T("Thread [0x%x] will wait 5sec!\r\n"), GetCurrentThreadId());
 				OutputDebugString(csDebug);
 				WaitForSingleObject(__HEVENT_MAIN_EXIT__, 5000L);

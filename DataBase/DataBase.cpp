@@ -74,7 +74,7 @@ BOOL CDataBase::ConnectDataBase(string& strErr)
 	return TRUE;
 }
 
-long CDataBase::ExecSQL(const string& strUIDL, string& strErr,const string& strName)
+long CDataBase::CheckUIDLInMongoDB(const string& strUIDL, string& strErr, const string& strName, long lDay)
 {
 	//COleDateTime date;
 	strErr.empty();
@@ -110,10 +110,11 @@ long CDataBase::ExecSQL(const string& strUIDL, string& strErr,const string& strN
 				strValue = bsoReturnValue.toString();
 				mongo::BSONElement obj = bsoReturnValue.getField("DATE");
 				mongo::Date_t date = obj.Date();
-				long long lSrvDate = date.asInt64(), lLocalDate(0), lDay(1209600);
+				long long lSrvDate = date.asInt64(), lLocalDate(0), lSaveDay(15);
 				lSrvDate = lSrvDate / 1000;
 				lLocalDate = GetTimeStamp();
-				if (lLocalDate - lSrvDate > lDay)
+				lSaveDay = (lLocalDate - lSrvDate) / 86400;
+				if (lSaveDay>=lDay)
 					lFound = MONGO_DELETE;
 			}
 

@@ -135,13 +135,15 @@ string POP3::GetUIDL(long lCurrPos)
 	return strUIDL;
 }
 
-long POP3::CheckUIDL(const string& strUIDL, const string& strName)
+long POP3::CheckUIDL(const string& strUIDL, const string& strName, long lSaveDay)
 {
 	long lFound = MONGO_NOT_FOUND;
 	if (strUIDL.length() <= 0)
 		return MONGO_FOUND;
 	string strErr;
-	lFound = m_db.ExecSQL(strUIDL, strErr,strName);
+	if (lSaveDay == 0)
+		lSaveDay = 14;
+	lFound = m_db.CheckUIDLInMongoDB(strUIDL, strErr, strName, lSaveDay);
 	if (strErr.length() > 0)
 	{
 		m_log.Log(strErr.c_str(), strErr.length());

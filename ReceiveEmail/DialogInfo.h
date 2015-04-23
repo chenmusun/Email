@@ -34,4 +34,5 @@ private:
 public:
 	void SetMailBoxInfo(const CString&csName,const MailBoxInfo& info);
 	virtual void OnOK();
+	long m_lDay;
 };

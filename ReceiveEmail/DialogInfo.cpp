@@ -21,6 +21,7 @@ CDialogInfo::CDialogInfo(CWnd* pParent /*=NULL*/)
 	, m_csAbb(_T(""))
 	, m_bSend(FALSE)
 	, m_csRecAdd(_T(""))
+	, m_lDay(0)
 {
 	memset(&m_info, 0, sizeof(MailBoxInfo));
 }
@@ -40,6 +41,7 @@ void CDialogInfo::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_EDIT_ABB, m_csAbb);
 	DDX_Check(pDX, IDC_CHECK_SEND, m_bSend);
 	DDX_Text(pDX, IDC_EDIT_REC, m_csRecAdd);
+	DDX_Text(pDX, IDC_EDIT_DAY, m_lDay);
 }
 
 
@@ -60,6 +62,7 @@ void CDialogInfo::SetMailBoxInfo(const CString&csName,const MailBoxInfo& info)
 	m_csRecAdd.Format(_T("%s"),m_info.szMailAdd);
 	m_lPort = m_info.lPort;
 	m_bSend = m_info.bSendMail;
+	m_lDay = m_info.lSaveDay;
 }
 
 
@@ -112,6 +115,7 @@ void CDialogInfo::OnOK()
 		}
 		m_info.lPort = m_lPort;
 		m_info.bSendMail = m_bSend;
+		m_info.lSaveDay = m_lDay;
 		if (m_bSend)
 		{
 			if (m_csRecAdd.IsEmpty())
