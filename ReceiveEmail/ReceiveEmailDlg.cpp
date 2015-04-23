@@ -1431,11 +1431,9 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 									pop3.Close();
 									break;
 								}
-//#ifdef _DEBUG
 								csDebug.Format(_T("%s Count = %d\tTotal = %d\r\n"), info.szName, i,lResult);
 								OutputDebugString(csDebug);
 								dwTime = GetTickCount64();
-//#endif
 								if (pop3.GetStatus())
 									break;
 								strUDIL.clear();
