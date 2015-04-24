@@ -357,7 +357,7 @@ BOOL POP3::SaveFileToDB(EMAIL_ITEM& email)
 {
 	long lCount(0);
 	char chGUID[128] = { 0 }, chFilePath[512] = {0};
-	string strRemote, strPath, strErr;
+	string strRemote, strPath, strRtr;
 	vector<ATTACH_FILE>::iterator ite = email.vecAttachFiles.begin();
 	while (ite!=email.vecAttachFiles.end())
 	{
@@ -373,8 +373,9 @@ BOOL POP3::SaveFileToDB(EMAIL_ITEM& email)
 		WideCharToMultiByte(CP_ACP, 0, (*ite).csFilePath.GetBuffer(), (*ite).csFilePath.GetLength(), chFilePath, 512, NULL, NULL);
 		strPath = chFilePath;
 		//strPath = "D:\\20150315_既要谋势，又要做活_(王涵_高群山_卢燕津_贾潇君_王连庆_王轶君_唐跃)_兴业宏观中国周报.pdf";
-		if (m_db.SaveFileToMongoDB(strRemote, strPath, strErr) < 0)
+		if (m_db.SaveFileToMongoDB(strRemote, strPath, strRtr) < 0)
 			lCount++;
+		else (*ite).csMD5 = strRtr.c_str();
 		ite++;
 	}
 	if (lCount>0)

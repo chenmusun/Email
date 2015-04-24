@@ -1364,7 +1364,7 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 	ForwardSet fdsinfo;
 	TCHAR szLogPath[MAX_PATH] = { 0 };
 	char chTemp[MAX_PATH] = { 0 }, chLogPath[MAX_PATH] = { 0 };
-	long lResult(0), lReturnvalue(0), lCount(0),i(1),lFailedCount(0),lType(1);
+	long lResult(0), lReturnvalue(0), lCount(0),i(1),lFailedCount(0),lType(0);
 	string strUDIL, strName;
 	vector<string> UidlData;
 	std::vector<string>::iterator ite = UidlData.begin();
