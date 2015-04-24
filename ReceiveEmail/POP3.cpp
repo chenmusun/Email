@@ -374,7 +374,10 @@ BOOL POP3::SaveFileToDB(EMAIL_ITEM& email)
 		strPath = chFilePath;
 		//strPath = "D:\\20150315_既要谋势，又要做活_(王涵_高群山_卢燕津_贾潇君_王连庆_王轶君_唐跃)_兴业宏观中国周报.pdf";
 		if (m_db.SaveFileToMongoDB(strRemote, strPath, strRtr) < 0)
+		{
+			m_log.Log(strRtr.c_str(), strRtr.length());
 			lCount++;
+		}
 		else (*ite).csMD5 = strRtr.c_str();
 		ite++;
 	}

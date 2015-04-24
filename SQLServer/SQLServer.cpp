@@ -2865,7 +2865,7 @@ long CSQLServer::SaveToDB(EMAIL_ITEM& email,BOOL bCheck)
 			}
 			else
 			{
-				csLog.Format(_T("[%s]Insert to SQL Failed!\r\n%s"),email.csUIDL,pEMCmd->GetLastError());
+				csLog.Format(_T("[%s]Insert to SQL Failed!\r\n%s\r\n"),email.csUIDL,pEMCmd->GetLastError());
 				Log(csLog,csLog.GetLength());
 				csLog.Append(_T("\r\n"));
 				OutputDebugString(csLog);
@@ -3254,9 +3254,8 @@ long CSQLServer::SaveAttachment(ATTACH_FILE& attach, long lEmailID)
 		pEMAttachCmd->SetText(szAttachCmdText);
 		if (!pEMAttachCmd->Execute(adCmdText))
 		{
-			csLog.Format(_T("Insert to [T_REPORT_FILES] Error![%s]\r\n%s"),attach.csFilePath,pEMAttachCmd->GetLastError());
+			csLog.Format(_T("Insert to [T_REPORT_FILES] Error![%s]\r\n%s\r\n"), attach.csFilePath, pEMAttachCmd->GetLastError());
 			Log(csLog, csLog.GetLength());
-			csLog.Append(_T("\r\n"));
 			OutputDebugString(csLog);
 			bRet = TRUE;
 		}
@@ -3289,7 +3288,7 @@ long CSQLServer::SaveAttachment(ATTACH_FILE& attach, long lEmailID)
 	{
 		TRACE(_T("\r\n%s"), (TCHAR*)e.ErrorMessage());
 		TRACE(_T("\r\n%s"), (TCHAR*)e.Description());
-		csLog.Format(_T("Insert to [T_REPORT_FILES] Error![%s]\r\n%s\r\n%s"), attach.csFilePath
+		csLog.Format(_T("Insert to [T_REPORT_FILES] Error![%s]\r\n%s\r\n%s\r\n"), attach.csFilePath
 			, (TCHAR*)e.ErrorMessage(), (TCHAR*)e.Description());
 		Log(csLog, csLog.GetLength());
 		csLog.Append(_T("\r\n"));
@@ -3306,7 +3305,7 @@ long CSQLServer::SaveAttachment(ATTACH_FILE& attach, long lEmailID)
 		pMapCmd->SetText(szMapCmdText);
 		if (!pMapCmd->Execute(adCmdText))
 		{
-			csLog.Format(_T("Insert to [T_FILE_AND_REPORT] Error![%s]\r\n%s"), attach.csFilePath,pMapCmd->GetLastError());
+			csLog.Format(_T("Insert to [T_FILE_AND_REPORT] Error![%s]\r\n%s\r\n"), attach.csFilePath,pMapCmd->GetLastError());
 			Log(csLog, csLog.GetLength());
 			csLog.Append(_T("\r\n"));
 			OutputDebugString(csLog);
@@ -3320,7 +3319,7 @@ long CSQLServer::SaveAttachment(ATTACH_FILE& attach, long lEmailID)
 	{
 		TRACE(_T("\r\n%s"), (TCHAR*)e.ErrorMessage());
 		TRACE(_T("\r\n%s"), (TCHAR*)e.Description());
-		csLog.Format(_T("Insert to [T_FILE_AND_REPORT] Error![%s]\r\n%s\r\n%s"), attach.csFilePath
+		csLog.Format(_T("Insert to [T_FILE_AND_REPORT] Error![%s]\r\n%s\r\n%s\r\n"), attach.csFilePath
 			, (TCHAR*)e.ErrorMessage(), (TCHAR*)e.Description());
 		Log(csLog, csLog.GetLength());
 		csLog.Append(_T("\r\n"));

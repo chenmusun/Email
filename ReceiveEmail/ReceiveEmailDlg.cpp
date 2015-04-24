@@ -286,7 +286,7 @@ BOOL CReceiveEmailDlg::OnInitDialog()
 	m_log.SetPath(m_csLogPath,m_csLogPath.GetLength());
 #ifdef _DEBUG
 	if (m_csTestText.IsEmpty())
-		m_csTestText.Format(_T("MD50000007636MSG2830328304402203397319854"));
+		m_csTestText.Format(_T("MD50000019918MSG641034304410433575803953"));
 #endif
 	m_startdate = COleDateTime::GetCurrentTime();
 	m_csRunTime.Format(_T("%d年%d月%d日 %d:%d:%d")
@@ -1454,7 +1454,7 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 #ifdef _DEBUG
 											lType = 0;
 #endif
-											if (pDlg->MailAnalysis(pop3, sql, smtp, strUDIL, info, lType)<0)
+											if (pDlg->MailAnalysis(pop3, sql, smtp, strUDIL, info, lType)<0)//邮件解析
 											{
 												sprintf_s(chDebug, 512, "Analysis [%s] Error!", strUDIL.c_str());
 //#ifdef _DEBUG

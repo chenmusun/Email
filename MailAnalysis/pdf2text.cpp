@@ -41,7 +41,7 @@ int CPDFTransToText::PDFToText(string fileName, string inputFilesPath, string ou
 	if (fileName.length() <= 4)
 	{
 		FSDK_OutputLog("Failure: The file name is invalid. Please check it.\r\n");
-		return -1;
+		return -3;
 	}
 	
 	//Open an input PDF file
@@ -185,14 +185,22 @@ int PDF2Text(string inputFilePath, string outputFilePath, string& outputname, in
 	CPDFTransToText Pdf2Text;
 	Pdf2Text.m_strDestFolder = outputFilePath;
 	Pdf2Text.m_strSrcFile = inputFilePath;
+
+	string logPath;
+	logPath = Pdf2Text.m_strDestFolder;
+	logPath += "/log.txt";
+	FSDK_OpenLog(logPath.c_str());
+	FSDK_OutputLog("Foxit PDF SDK example: pdf2text\r\n\r\n");
 	FS_BOOL bRet = FSDK_InitializeLibray(TRUE);
 	if (!bRet)
 	{
-		return 0;
+		FSDK_CloseLog();
+		return -2;
 	}
 	if (!FSDK_PDFModule_Initialize())
 	{
 		FSDK_FinalizeLibrary();
+		FSDK_CloseLog();
 		return -1;
 	}
 	string inputFolder, pdfName;
@@ -201,11 +209,15 @@ int PDF2Text(string inputFilePath, string outputFilePath, string& outputname, in
 	{
 		pdfName = FSDK_GetFileName(Pdf2Text.m_strSrcFile.c_str());
 		inputFolder = FSDK_GetCustomInputPath(Pdf2Text.m_strSrcFile.c_str());
+		FSDK_OutputLog("Input from folder: %s\r\n", inputFolder.c_str());
+		FSDK_OutputLog("Output to folder: %s\r\n", Pdf2Text.m_strDestFolder.c_str());
 		nVal = Pdf2Text.PDFToText(pdfName, inputFolder, Pdf2Text.m_strDestFolder, outputname, nPageNum,time);
 	}
 	//Finalize PDF module.
 	FSDK_PDFModule_Finalize();
 	//Finalize SDK library.
 	FSDK_FinalizeLibrary();
+	//Close log file.
+	FSDK_CloseLog();
 	return nVal;
 }

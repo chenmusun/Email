@@ -1459,7 +1459,13 @@ void CMailAnalysis::Clear()
 	if (!m_csSavePath.IsEmpty())
 	{
 		if (m_lClearType == 1)
+		{
 			RemoveDirectory(m_csSavePath);
+			CString csPath(m_csSavePath);
+			m_csSavePath.Append(_T("\\log.txt"));
+			if (PathFileExists(csPath))
+				DeleteFile(csPath);
+		}
 		m_csSavePath.Empty();
 	}
 	if (!m_csFilePath.IsEmpty())

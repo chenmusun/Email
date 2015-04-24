@@ -171,6 +171,11 @@ long CDataBase::SaveFileToMongoDB(string& remotename, string& strPath, string& s
 	storeFile函数用来上传指定路径的文件，参数一：文件路径，参数二：数据库存储名称
 	write函数下载文件，参数：文件保存路径
 	*/
+	if (m_dbinfo.nUseDB != 1)
+	{
+		strRtr = "No use Database!";
+		return 0;
+	}
 	if (remotename.length() <= 0)
 	{
 		strRtr = "RemoteName is Empty!";
@@ -179,11 +184,6 @@ long CDataBase::SaveFileToMongoDB(string& remotename, string& strPath, string& s
 	if (strPath.length() <= 0)
 	{
 		strRtr = "Path is Empty!";
-		return -1;
-	}
-	if (m_dbinfo.nUseDB != 1)
-	{
-		strRtr = "No use Database!";
 		return -1;
 	}
 	try
