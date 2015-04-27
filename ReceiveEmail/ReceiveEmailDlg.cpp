@@ -1452,7 +1452,7 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 										if (pop3.GetEMLFile(i, strUDIL) == 0)
 										{
 #ifdef _DEBUG
-											lType = 0;
+											lType = 1;
 #endif
 											if (pDlg->MailAnalysis(pop3, sql, smtp, strUDIL, info, lType)<0)//ÓÊ¼þ½âÎö
 											{

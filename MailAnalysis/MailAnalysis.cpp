@@ -1430,6 +1430,7 @@ long CMailAnalysis::SaveToFile(CString& csCode, LPCTSTR lpFileName, int nCodeTyp
 
 void CMailAnalysis::Clear()
 {
+	CString csTemp;
 	//m_csText.RemoveAll();
 	m_lHeadRowCount = 0;
 	m_lCurrRow = 0;
@@ -1460,11 +1461,10 @@ void CMailAnalysis::Clear()
 	{
 		if (m_lClearType == 1)
 		{
+			csTemp.Format(_T("%s\\log.txt"),m_csSavePath);
+			if (PathFileExists(csTemp))
+				DeleteFile(csTemp);
 			RemoveDirectory(m_csSavePath);
-			CString csPath(m_csSavePath);
-			m_csSavePath.Append(_T("\\log.txt"));
-			if (PathFileExists(csPath))
-				DeleteFile(csPath);
 		}
 		m_csSavePath.Empty();
 	}
@@ -1795,6 +1795,63 @@ void CMailAnalysis::SetLogPath(const char*pPath)
 	}
 }
 
+long CMailAnalysis::MailAnalysis(const CString& csFileName)
+{
+	EMAIL_ITEM email;
+	email.Init();
+	BOOL bRet = TRUE;
+	CMailAnalysis ana;
+	CString csUIDL(csFileName);
+	csUIDL.Replace(_T(".eml"),_T(""));
+	ana.SetAbbreviation(this->m_csAbbreviation);
+	ana.LoadFile(m_csSavePath, csUIDL);
+	ana.SetClearType(m_lClearType);
+	do
+	{
+		if (ana.AnalysisHead() < 0)
+		{
+			ana.SetClearType(0);
+			bRet = FALSE;
+			break;
+		}
+		if (ana.AnalysisBody(ana.GetBoundry(), ana.GetHeadRowCount()) < 0)
+		{
+			ana.SetClearType(0);
+			bRet = FALSE;
+			break;
+		}
+		if (ana.AnalysisBoundary(ana.GetBoundry(), ana.GetAttach()) < 0)
+		{
+			ana.SetClearType(0);
+			bRet = FALSE;
+			break;
+		}
+		email = ana.GetEmailItem();
+	} while (0);
+	if (bRet)
+	{
+		m_stEmail.csContentType = email.csContentType;
+		m_stEmail.csDate = email.csDate;
+		if (m_stEmail.csEmailContent.IsEmpty())
+			m_stEmail.csEmailContent = email.csEmailContent;
+		if (m_stEmail.csEmailContentHTML.IsEmpty())
+			m_stEmail.csEmailContentHTML = email.csEmailContentHTML;
+		//m_stEmail.csFrom = email.csFrom;
+		//m_stEmail.csSubject = email.csSubject;
+		//m_stEmail.csTime = email.csTime;
+		vector<ATTACH_FILE>::iterator ite = email.vecAttachFiles.begin();
+		while (ite!=email.vecAttachFiles.end())
+		{
+			m_stEmail.vecAttachFiles.push_back((*ite));
+			ite++;
+		}
+	}
+	ana.Clear();
+	if (bRet)
+		return 0;
+	return -1;
+}
+
 void FormatFileName(CString& csFileName)
 {
 	if (csFileName.IsEmpty())
@@ -1831,40 +1888,48 @@ void SaveAttachMent(CMailAnalysis* pana, ATTACH_FILE& attachfile, BOUNDARY_HEAD&
 	}
 	if (pana->SaveToFile(ite->csText, stBouHead.csAttachmentName, stBouHead.lEncode) == 0)
 	{
-		string strInputPath, strOutputPath, strOutPutName;
-		char chPath[512] = { 0 };
-		memset(&chPath, 0, 512);
-		attachfile.Init();
-		attachfile.lType = 1;
-		pana->m_stEmail.lHasAffix = 1;
-		pana->m_lAttachmentCount++;
-		attachfile.csFileName = csFileName;
-		attachfile.csLocalFileName = stBouHead.csAttachmentName;
-		attachfile.csFilePath.Format(_T("%s%s"), pana->m_csSavePath, stBouHead.csAttachmentName);
-		attachfile.csAffixType = stBouHead.csContentType;
-		if (attachfile.csLocalFileName.Find(_T(".pdf"))>0)
+		lPos = csFileName.Find(_T(".eml"));
+		if (lPos > 0)
 		{
-			WideCharToMultiByte(CP_ACP, 0, attachfile.csFilePath, attachfile.csFilePath.GetLength(), chPath, 512, NULL, NULL);
-			strInputPath = chPath;
-			memset(&chPath, 0, 512);
-			WideCharToMultiByte(CP_ACP, 0, pana->m_csSavePath, pana->m_csSavePath.GetLength(), chPath, 512, NULL, NULL);
-			strOutputPath = chPath;
-			if (PDF2Text(strInputPath, strOutputPath, strOutPutName, attachfile.nPageNum, attachfile.nTime) == 0)
-			{
-				attachfile.csFileText = strOutPutName.c_str();
-#ifdef _DEBUG
-				CString csDebug;
-				csDebug.Format(_T("ElapsedTime = %dms\tPageNum = %d\r\n"), attachfile.nTime, attachfile.nPageNum);
-				OutputDebugString(csDebug);
-#endif
-			}
-			else
-			{
-				sprintf_s(chPath, 512, "PDF2Text [%s] Error!", strInputPath.c_str());
-				pana->m_log.Log(chPath,strlen(chPath));
-				pana->SetClearType(0);
-			}
+			pana->MailAnalysis(stBouHead.csAttachmentName);
 		}
-		pana->m_stEmail.vecAttachFiles.push_back(attachfile);
+		else
+		{
+			string strInputPath, strOutputPath, strOutPutName;
+			char chPath[512] = { 0 };
+			memset(&chPath, 0, 512);
+			attachfile.Init();
+			attachfile.lType = 1;
+			pana->m_stEmail.lHasAffix = 1;
+			pana->m_lAttachmentCount++;
+			attachfile.csFileName = csFileName;
+			attachfile.csLocalFileName = stBouHead.csAttachmentName;
+			attachfile.csFilePath.Format(_T("%s%s"), pana->m_csSavePath, stBouHead.csAttachmentName);
+			attachfile.csAffixType = stBouHead.csContentType;
+			if (attachfile.csLocalFileName.Find(_T(".pdf")) > 0)
+			{
+				WideCharToMultiByte(CP_ACP, 0, attachfile.csFilePath, attachfile.csFilePath.GetLength(), chPath, 512, NULL, NULL);
+				strInputPath = chPath;
+				memset(&chPath, 0, 512);
+				WideCharToMultiByte(CP_ACP, 0, pana->m_csSavePath, pana->m_csSavePath.GetLength(), chPath, 512, NULL, NULL);
+				strOutputPath = chPath;
+				if (PDF2Text(strInputPath, strOutputPath, strOutPutName, attachfile.nPageNum, attachfile.nTime) == 0)
+				{
+					attachfile.csFileText = strOutPutName.c_str();
+#ifdef _DEBUG
+					CString csDebug;
+					csDebug.Format(_T("ElapsedTime = %dms\tPageNum = %d\r\n"), attachfile.nTime, attachfile.nPageNum);
+					OutputDebugString(csDebug);
+#endif
+				}
+				else
+				{
+					sprintf_s(chPath, 512, "PDF2Text [%s] Error!", strInputPath.c_str());
+					pana->m_log.Log(chPath, strlen(chPath));
+					pana->SetClearType(0);
+				}
+			}
+			pana->m_stEmail.vecAttachFiles.push_back(attachfile);
+		}
 	}
 }

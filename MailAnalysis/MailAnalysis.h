@@ -47,6 +47,7 @@ public:
 	inline EMAIL_ITEM& GetEmailItem(){ return m_stEmail; }
 	friend void SaveAttachMent(CMailAnalysis* pana, ATTACH_FILE& attachfile, BOUNDARY_HEAD& stBouHead, vector<ATTACH>::iterator& ite);
 	inline void SetClearType(long lType){ m_lClearType = lType; }
+	long MailAnalysis(const CString& csFileName);
 private:
 	long GetContentInfo(const CString& csSrc, CString& csContent, CString& csExtra, long& lConttype);
 	void GetDispositionInfo(const CString& csSrc, CString& csDis, CString& csExtra);
