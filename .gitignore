@@ -66,3 +66,4 @@ ReceiveEmail/Log
 *.tlh
 ReceiveEmail/x64/Release/msado25.tli
 *.tlh
+/ReceiveEmail/PDF
