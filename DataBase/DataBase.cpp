@@ -230,3 +230,22 @@ BOOL CDataBase::DelUIDL(const string& strUIDL, const string& strName)
 	else return FALSE;
 	return TRUE;
 }
+
+BOOL CDataBase::GetFileFromMongoDB(const string& strFileName,const string&strSavePath,string& strErr)
+{
+	if (strFileName.length() <= 0)
+		strErr = "FileName is empty!";
+	gridfs_offset size(0), afsize(0);
+	if (connect.isStillConnected())
+	{
+		GridFS fs(connect, m_dbinfo.chDBName);
+		GridFile file = fs.findFileByName(strFileName);
+		size = file.getContentLength();
+		string strPath(strSavePath);
+		strPath.append(strFileName);
+		afsize = file.write(strPath);
+	}
+	if (afsize > 0 && size == afsize)
+		return TRUE;
+	return FALSE;
+}

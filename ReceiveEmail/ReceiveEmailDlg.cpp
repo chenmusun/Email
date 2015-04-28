@@ -12,6 +12,7 @@
 #include "GGJsonAdapter.h"
 #include "SettingDlg.h"
 #include "DialogInfo.h"
+#include "DialogPDF.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -191,6 +192,7 @@ void CReceiveEmailDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_BUTTON2, m_btnTest2);
 	DDX_Control(pDX, IDC_MFCEDITBROWSE1, m_editpath);
 	DDX_Control(pDX, IDC_STATIC_TIME, m_time);
+	DDX_Control(pDX, IDC_BUTTON_PDF, m_btnPDF);
 }
 
 BEGIN_MESSAGE_MAP(CReceiveEmailDlg, CDialogEx)
@@ -209,6 +211,7 @@ BEGIN_MESSAGE_MAP(CReceiveEmailDlg, CDialogEx)
 	ON_NOTIFY(NM_RCLICK, IDC_LIST_MAILBOX, &CReceiveEmailDlg::OnNMRClickListMailbox)
 	ON_COMMAND(ID_ADDITEM, &CReceiveEmailDlg::OnAdditem)
 	ON_COMMAND(ID_DELITEM, &CReceiveEmailDlg::OnDelitem)
+	ON_BN_CLICKED(IDC_BUTTON_PDF, &CReceiveEmailDlg::OnBnClickedButtonPdf)
 END_MESSAGE_MAP()
 
 
@@ -717,7 +720,7 @@ void CReceiveEmailDlg::LayoutDialog(long cx, long cy)
 	}
 	if (m_editpath.m_hWnd)
 	{
-		SetRect(&rtTmp, 243, cy - BTN_HEIGHT*2 - GAP*2, 243 + BTN_LENGTH * 3 + HORIZON_GAP, cy - BTN_HEIGHT-GAP*2);
+		SetRect(&rtTmp, 243, cy - BTN_HEIGHT*2 - GAP*2, 243 + BTN_LENGTH * 3 + HORIZON_GAP*2, cy - BTN_HEIGHT-GAP*2);
 		m_editpath.MoveWindow(&rtTmp);
 	}
 	if (m_time.m_hWnd)
@@ -732,8 +735,13 @@ void CReceiveEmailDlg::LayoutDialog(long cx, long cy)
 	}
 	if (m_btnTest2.m_hWnd)
 	{
-		SetRect(&rtTmp, 243 + HORIZON_GAP + BTN_LENGTH*2, cy - BTN_HEIGHT - GAP, 243 + BTN_LENGTH*3 + HORIZON_GAP, cy - GAP);
+		SetRect(&rtTmp, 243 + HORIZON_GAP + BTN_LENGTH, cy - BTN_HEIGHT - GAP, 243 + BTN_LENGTH*2 + HORIZON_GAP, cy - GAP);
 		m_btnTest2.MoveWindow(&rtTmp);
+	}
+	if (m_btnPDF.m_hWnd)
+	{
+		SetRect(&rtTmp, 243 + HORIZON_GAP*2 + BTN_LENGTH*2, cy - BTN_HEIGHT - GAP, 243 + BTN_LENGTH * 3 + HORIZON_GAP*2, cy - GAP);
+		m_btnPDF.MoveWindow(&rtTmp);
 	}
 }
 
@@ -1761,4 +1769,13 @@ long CReceiveEmailDlg::SendEmail(SMTP& smtp)
 	if (smtp.Quit())
 		return 0;
 	return 0;
+}
+
+
+void CReceiveEmailDlg::OnBnClickedButtonPdf()
+{
+	// TODO:  在此添加控件通知处理程序代码
+	CDialogPDF pdf;
+	pdf.SetMongoDBInfo(m_dbinfo);
+	pdf.DoModal();
 }

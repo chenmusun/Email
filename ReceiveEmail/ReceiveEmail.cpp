@@ -39,6 +39,7 @@ CReceiveEmailApp theApp;
 
 BOOL CReceiveEmailApp::InitInstance()
 {
+//TODO: call AfxInitRichEdit2() to initialize richedit2 library.
 	WSADATA wsaData;
 	WORD sockVersion = MAKEWORD(2, 2);
 	if (0 != WSAStartup(sockVersion, &wsaData))
@@ -57,7 +58,7 @@ BOOL CReceiveEmailApp::InitInstance()
 	InitCommonControlsEx(&InitCtrls);
 
 	CWinApp::InitInstance();
-
+	AfxInitRichEdit2();
 
 	AfxEnableControlContainer();
 

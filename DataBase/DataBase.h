@@ -4,6 +4,7 @@
 // 任何其他项目上不应定义此符号。这样，源文件中包含此文件的任何其他项目都会将
 // DATABASE_API 函数视为是从 DLL 导入的，而此 DLL 则将用此宏定义的
 // 符号视为是被导出的。
+#pragma once
 #ifdef DATABASE_EXPORTS
 #define DATABASE_API __declspec(dllexport)
 #else
@@ -36,6 +37,7 @@ public:
 	inline int GetUseDB(){ return m_dbinfo.nUseDB; }
 	long SaveFileToMongoDB(string& remotename,string& strPath,string& strRtr);
 	BOOL DelUIDL(const string& strUIDL,const string& strName);
+	BOOL GetFileFromMongoDB(const string& strFileName,const string&strSavePath,string& strErr);
 private:
 	DBClientConnection connect;//Mongo连接实例
 	MongoDBInfo m_dbinfo;

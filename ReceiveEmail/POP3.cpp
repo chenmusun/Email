@@ -66,7 +66,7 @@ long POP3::GetMailCount()
 {
 	string strCount, strTotalSize;
 	int nValue(0),nError(0);
-	char chCommand[128] = { 0 }, chResult[128] = { 0 };
+	char chCommand[128] = { 0 }, chResult[128] = { 0 }, chError[128] = { 0 };
 	sprintf_s(chCommand, 128, "STAT\r\n");
 	nValue = m_Socket.SendData(chCommand, strlen(chCommand));
 	if (nValue < 0)
@@ -77,7 +77,8 @@ long POP3::GetMailCount()
 	if (nValue <= 0)
 	{
 		nError = WSAGetLastError();
-		m_log.Log(nError);
+		GetErrorMessage(nError, chError, 128);
+		m_log.Log(chError,strlen(chError));
 		m_log.Log(chResult, strlen(chResult));
 	}
 	StringProcess(chResult, strCount, strTotalSize);
@@ -109,7 +110,7 @@ string POP3::GetUIDL(long lCurrPos)
 {
 	DWORD nCount = 0;
 	int nValue(0), nError(0);
-	char chCommand[128] = { 0 }, chResult[128] = { 0 };
+	char chCommand[128] = { 0 }, chResult[128] = { 0 }, chError[128] = {0};
 	string strNum,strUIDL;
 	long lMailCount(0);
 	sprintf_s(chCommand, 128, "UIDL %d\r\n",lCurrPos);
@@ -123,7 +124,9 @@ string POP3::GetUIDL(long lCurrPos)
 	if (nValue <= 0)
 	{
 		nError = WSAGetLastError();
-		m_log.Log(nError);m_log.Log(chResult, strlen(chResult));
+		GetErrorMessage(nError, chError, 128);
+		m_log.Log(chError, strlen(chError));
+		m_log.Log(chResult, strlen(chResult));
 	}
 	StringProcess(chResult, strNum, strUIDL);
 	auto pos = strUIDL.find(":");
@@ -183,7 +186,7 @@ long POP3::GetEMLFile(long lCurrPos,const string& strUIDL)
 	FILE *pFile;
 	CMyJob* pMyJob = NULL;
 	string strCurrPos, strSize,strEMail;
-	char chCommand[128] = { 0 }, chResult[256] = { 0 }, chTemp[65536] = { 0 };
+	char chCommand[128] = { 0 }, chResult[256] = { 0 }, chTemp[65536] = { 0 }, chError[128] = {0};
 	int nValue(0), nError(0),nFailedCount(0);
 	long lTotalSize(0), lRecSize(0),n(0),lLastDataSize(0),lSize(0);
 	char chPath[MAX_PATH] = { 0 };
@@ -201,7 +204,8 @@ long POP3::GetEMLFile(long lCurrPos,const string& strUIDL)
 	if (!StringProcess(chResult, strCurrPos, strSize))
 	{
 		nError = WSAGetLastError();
-		m_log.Log(nError);
+		GetErrorMessage(nError, chError, 128);
+		m_log.Log(chError, strlen(chError));
 		m_log.Log(chResult, strlen(chResult));
 		return RETURN_FAIL;
 	}

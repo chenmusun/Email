@@ -133,6 +133,21 @@ inline void GetErrorMessage(int error, char* pMessage,int nLen=MAX_PATH)
 	case HOST_UNREACHABLE:
 		sprintf_s(pMessage, nLen, "目标主机不可达！");
 		break;
+	case 10051:
+		sprintf_s(pMessage, nLen, "向一个无法连接的网络尝试了一个套接字操作");
+		break;
+	case 10052:
+		sprintf_s(pMessage, nLen, "当该操作在进行中，由于保持活动的操作检测到一个 故障，该连接中断");
+		break;
+	case 10053:
+		sprintf_s(pMessage, nLen, "您的主机中的软件放弃了一个已建立的连接");
+		break;
+	case 10054:
+		sprintf_s(pMessage, nLen, "远程主机强迫关闭了一个现有的连接");
+		break;
+	case 10060:
+		sprintf_s(pMessage,nLen,"由于连接方在一段时间后没有正确的答复或连接的主机没有反应，连接尝试失败");
+		break;
 	default:
 		break;
 	}

@@ -114,7 +114,7 @@ long SMTP::Logon()
 		return LOGIN_ERROR;
 	}
 
-	char chUsername[128] = { 0 }, chPass[256] = { 0 };
+	char chUsername[128] = { 0 }, chPass[256] = { 0 }, chError[128] = {0};
 	sprintf_s(chUsername, 128, "%s\r\n", base64_encode(m_forwardinfo.username).c_str());
 	sprintf_s(chPass, 256, "%s\r\n", base64_encode(m_forwardinfo.pass).c_str());
 	lValue = m_SendSocket.SendData(chUsername,strlen(chUsername));
@@ -136,7 +136,8 @@ long SMTP::Logon()
 	if (lValue < 0)
 	{
 		int nErr = WSAGetLastError();
-		m_log.Log(nErr);
+		GetErrorMessage(nErr, chError, 128);
+		m_log.Log(chError, strlen(chError));
 		m_log.Log("Send PASS Error!", strlen("Send PASS Error!"));
 		return SEND_ERROR;
 	}

@@ -131,4 +131,6 @@ public:
 	afx_msg void OnAdditem();
 	afx_msg void OnDelitem();
 	long SendEmail(SMTP& smtp);
+	CButton m_btnPDF;
+	afx_msg void OnBnClickedButtonPdf();
 };
