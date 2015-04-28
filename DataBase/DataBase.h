@@ -24,7 +24,7 @@ using namespace mongo;
 class DATABASE_API CDataBase {
 public:
 	CDataBase(void);
-	~CDataBase();
+	virtual ~CDataBase();
 	// TODO:  在此添加您的方法。
 public:
 	BOOL ConnectDataBase(string& strErr);//连接数据库（格式：数据库IP地址:端口），连接之前需要设定表明、用户名、密码
@@ -42,6 +42,7 @@ private:
 	DBClientConnection connect;//Mongo连接实例
 	MongoDBInfo m_dbinfo;
 	//GridFS m_gridfs;
+	BOOL m_bConnect;
 private:
 protected:
 };

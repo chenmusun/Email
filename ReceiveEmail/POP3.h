@@ -30,6 +30,8 @@ public:
 	BOOL SaveFileToDB(EMAIL_ITEM& email);
 	inline BOOL GetStatus(){ return m_bFailed; }
 	BOOL DeleteFromDB(EMAIL_ITEM& email);
+	void SetDBInfo(const MongoDBInfo& dbinfo);
+	BOOL GetFileFromDB(const string&strFileName, const string&strSavePath, string&strErr);
 private:
 	CDataBase m_db;//数据库操作实例
 	MailSocket m_Socket;//POP3套接字

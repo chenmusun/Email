@@ -1,6 +1,7 @@
 #pragma once
 #include "afxbutton.h"
-#include "../DataBase/DataBase.h"
+#include "POP3.h"
+#include "afxeditbrowsectrl.h"
 
 
 // CDialogPDF ¶Ô»°¿ò
@@ -29,4 +30,6 @@ public:
 public:
 	afx_msg void OnBnClickedMfcbuttonGet();
 	void SetMongoDBInfo(const MongoDBInfo& info);
+	virtual BOOL OnInitDialog();
+	CMFCEditBrowseCtrl m_Path;
 };

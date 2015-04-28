@@ -16,7 +16,7 @@ DATABASE_API int fnDataBase(void)
 
 // 这是已导出类的构造函数。
 // 有关类定义的信息，请参阅 DataBase.h
-CDataBase::CDataBase(void)
+CDataBase::CDataBase(void) :m_bConnect(FALSE)
 {
 	memset(&m_dbinfo, 0, sizeof(MongoDBInfo));
 	return;
@@ -71,6 +71,7 @@ BOOL CDataBase::ConnectDataBase(string& strErr)
 			return FALSE;
 		}
 	}
+	m_bConnect = TRUE;
 	return TRUE;
 }
 
@@ -87,7 +88,7 @@ long CDataBase::CheckUIDLInMongoDB(const string& strUIDL, string& strErr, const 
 	string strIndexName(m_dbinfo.chDBName);
 	strIndexName.append(".");
 	strIndexName.append(m_dbinfo.chTable);
-	if (connect.isStillConnected())
+	if (connect.isStillConnected() && m_bConnect)
 	{
 		BSONObj cmd, obj = BSON("UIDL" << strUIDL << "DATE" << DATENOW<<"TO"<<strName)
 			, bsoReturnValue, bsoQuery = BSON("UIDL" << strUIDL), bsoValue;
@@ -132,9 +133,10 @@ void CDataBase::DisConnectDataBase()
 {
 	BSONObj info;
 	if (m_dbinfo.nUseDB != 1) return;
-	if (connect.isStillConnected())
+	if (connect.isStillConnected() && m_bConnect)
 	{
 		connect.logout(m_dbinfo.chDBName, info);
+		m_bConnect = FALSE;
 	}
 }
 
@@ -189,7 +191,7 @@ long CDataBase::SaveFileToMongoDB(string& remotename, string& strPath, string& s
 	try
 	{
 		string strerr;
-		if (connect.isStillConnected())
+		if (connect.isStillConnected() && m_bConnect)
 		{
 			GridFS fs(connect, m_dbinfo.chDBName);
 			//fs.storeFile(strPath, remotename);
@@ -219,7 +221,7 @@ BOOL CDataBase::DelUIDL(const string& strUIDL, const string& strName)
 	strIndexName.append(m_dbinfo.chTable);
 	BSONObj cmd, obj = BSON("UIDL" << strUIDL << "TO" << strName)
 		, bsoReturnValue, bsoQuery = BSON("UIDL" << strUIDL), bsoValue;
-	if (connect.isStillConnected())
+	if (connect.isStillConnected() && m_bConnect)
 	{
 		bsoReturnValue = connect.findAndRemove(strIndexName, bsoQuery);
 		if (bsoReturnValue.isEmpty())
@@ -233,19 +235,39 @@ BOOL CDataBase::DelUIDL(const string& strUIDL, const string& strName)
 
 BOOL CDataBase::GetFileFromMongoDB(const string& strFileName,const string&strSavePath,string& strErr)
 {
+	BOOL bRet = FALSE;
+	string strTemp,strTempPath;
+	int nStart(0);
 	if (strFileName.length() <= 0)
 		strErr = "FileName is empty!";
 	gridfs_offset size(0), afsize(0);
-	if (connect.isStillConnected())
+	string strPath(strSavePath);
+	
+	if (connect.isStillConnected() && m_bConnect)
 	{
 		GridFS fs(connect, m_dbinfo.chDBName);
-		GridFile file = fs.findFileByName(strFileName);
-		size = file.getContentLength();
-		string strPath(strSavePath);
-		strPath.append(strFileName);
-		afsize = file.write(strPath);
+		auto pos = strFileName.find(";", nStart);
+		while ((pos > 0) && (pos != strFileName.npos))
+		{
+			strTemp = strFileName.substr(nStart, pos - nStart);
+			nStart = pos + 1;
+			if (strTemp.length() > 0)
+			{
+				GridFile file = fs.findFileByName(strTemp);
+				if (file.exists())
+				{
+					strPath = strSavePath;
+					strPath.append("\\");
+					strPath.append(strTemp);
+					size = file.getContentLength();
+					afsize = file.write(strPath);
+				}
+			}
+			if (size > 0 && size == afsize)
+				bRet = TRUE;
+			else bRet = FALSE;
+			pos = strFileName.find(";", nStart);
+		}
 	}
-	if (afsize > 0 && size == afsize)
-		return TRUE;
-	return FALSE;
+	return bRet;
 }

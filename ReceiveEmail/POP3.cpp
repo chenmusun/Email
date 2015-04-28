@@ -313,7 +313,8 @@ void POP3::SetInfo(CString csName, const MailBoxInfo& info,const MongoDBInfo& db
 {
 	WideCharToMultiByte(CP_ACP, 0, csName.GetBuffer(), csName.GetLength(), m_chName, 64, NULL, NULL);
 	memcpy_s(&m_Info, sizeof(MailBoxInfo), &info, sizeof(MailBoxInfo));
-	m_db.SetDBInfo(dbinfo);
+	SetDBInfo(dbinfo);
+	//m_db.SetDBInfo(dbinfo);
 	if (lpPath)
 	{
 		memset(m_CurrPath, 0, MAX_PATH);
@@ -402,5 +403,15 @@ BOOL POP3::DeleteFromDB(EMAIL_ITEM& email)
 	if(m_db.DelUIDL(strUIDL,strTo))
 		return TRUE;
 	return FALSE;
+}
+
+void POP3::SetDBInfo(const MongoDBInfo& dbinfo)
+{
+	m_db.SetDBInfo(dbinfo);
+}
+
+BOOL POP3::GetFileFromDB(const string&strFileName, const string&strSavePath, string&strErr)
+{
+	return m_db.GetFileFromMongoDB(strFileName, strSavePath, strErr);
 }
 /////////////////////////////////////////////////////////////////////
