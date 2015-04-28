@@ -120,7 +120,7 @@ long CMailAnalysis::LoadFile(LPCTSTR lpPath, LPCTSTR lpUIDL, long lType)
 	m_csUIDL.Format(_T("%s"), lpUIDL);
 
 	m_csFilePath.Format(_T("%s\\%s.eml"), m_szMainPath, m_csUIDL);
-	m_csSavePath.Format(_T("%s\\%s\\"), m_szMainPath, m_csUIDL);
+	m_csSavePath.Format(_T("%s\\%s"), m_szMainPath, m_csUIDL);
 	BOOL bRet = stream.Open(m_csFilePath, CFile::modeRead);
 	if (bRet == FALSE)
 	{
@@ -514,7 +514,7 @@ long CMailAnalysis::AnalysisBoundary(const CString& csBoundary, vector<ATTACH>& 
 					if (SaveToFile(ite->csText, chMainname, stBouHead.lCharset, stBouHead.lEncode) == 0)
 					{
 						attachfile.lType = 0;
-						attachfile.csFilePath.Format(_T("%s%s"), m_csSavePath, chMainname);
+						attachfile.csFilePath.Format(_T("%s\\%s"), m_csSavePath, chMainname);
 						attachfile.csFileName.Format(_T("%s"), chMainname);
 						m_stEmail.csContentType = _T("text/plain");
 						m_stEmail.csEmailContent = attachfile.csFilePath;
@@ -535,7 +535,7 @@ long CMailAnalysis::AnalysisBoundary(const CString& csBoundary, vector<ATTACH>& 
 					{
 						
 						attachfile.lType = 0;
-						attachfile.csFilePath.Format(_T("%s%s"), m_csSavePath, chMainname);
+						attachfile.csFilePath.Format(_T("%s\\%s"), m_csSavePath, chMainname);
 						attachfile.csFileName.Format(_T("%s"), chMainname);
 						if (m_stEmail.csContentType.IsEmpty())
 							m_stEmail.csContentType = _T("text/html");
@@ -1203,7 +1203,7 @@ long CMailAnalysis::SaveToFile(CString& csCode, LPCTSTR lpFileName, int nCharset
 	if ((GetFileAttributes(m_csSavePath) == 0xFFFFFFFF))
 		CreateDirectory(m_csSavePath, NULL);
 	FormatFileName(csFileName);
-	csSavePath.Format(_T("%s%s"), m_csSavePath, csFileName);
+	csSavePath.Format(_T("%s\\%s"), m_csSavePath, csFileName);
 	CodeConvert(csCode, csDeCode, nCharset, nCodeType);
 	if (!csDeCode.IsEmpty())
 	{
@@ -1232,7 +1232,7 @@ long CMailAnalysis::SaveToFile(CString& csCode, LPCTSTR lpFileName, int nCodeTyp
 	if ((GetFileAttributes(m_csSavePath) == 0xFFFFFFFF))
 		CreateDirectory(m_csSavePath, NULL);
 	FormatFileName(csFileName);
-	csSavePath.Format(_T("%s%s"), m_csSavePath, csFileName);
+	csSavePath.Format(_T("%s\\%s"), m_csSavePath, csFileName);
 	int LEN(0), ibytes(0);
 	LEN = WideCharToMultiByte(CP_ACP, 0, csCode, -1, NULL, 0, NULL, NULL);
 	char*pText = new char[LEN + 1];
@@ -1457,11 +1457,22 @@ void CMailAnalysis::Clear()
 		}
 		m_stEmail.vecAttachFiles.clear();
 	}
+	if (!m_csSubSavePath.IsEmpty())
+	{
+		if (m_lClearType == 1)
+		{
+			csTemp.Format(_T("%s\\log.txt"), m_csSubSavePath);
+			if (PathFileExists(csTemp))
+				DeleteFile(csTemp);
+			RemoveDirectory(m_csSubSavePath);
+		}
+		m_csSubSavePath.Empty();
+	}
 	if (!m_csSavePath.IsEmpty())
 	{
 		if (m_lClearType == 1)
 		{
-			csTemp.Format(_T("%s\\log.txt"),m_csSavePath);
+			csTemp.Format(_T("%s\\log.txt"), m_csSavePath);
 			if (PathFileExists(csTemp))
 				DeleteFile(csTemp);
 			RemoveDirectory(m_csSavePath);
@@ -1804,49 +1815,57 @@ long CMailAnalysis::MailAnalysis(const CString& csFileName)
 	CString csUIDL(csFileName);
 	csUIDL.Replace(_T(".eml"),_T(""));
 	ana.SetAbbreviation(this->m_csAbbreviation);
-	ana.LoadFile(m_csSavePath, csUIDL);
-	ana.SetClearType(m_lClearType);
-	do
+	if(ana.LoadFile(m_csSavePath, csUIDL)==0)
 	{
-		if (ana.AnalysisHead() < 0)
+		m_csSubSavePath.Format(_T("%s\\%s"),m_csSavePath,csUIDL);
+		do
 		{
-			ana.SetClearType(0);
-			bRet = FALSE;
-			break;
+			if (ana.AnalysisHead() < 0)
+			{
+				ana.SetClearType(0);
+				bRet = FALSE;
+				break;
+			}
+			if (ana.AnalysisBody(ana.GetBoundry(), ana.GetHeadRowCount()) < 0)
+			{
+				ana.SetClearType(0);
+				bRet = FALSE;
+				break;
+			}
+			if (ana.AnalysisBoundary(ana.GetBoundry(), ana.GetAttach()) < 0)
+			{
+				ana.SetClearType(0);
+				bRet = FALSE;
+				break;
+			}
+			email = ana.GetEmailItem();
+		} while (0);
+		if (bRet)
+		{
+			m_stEmail.csContentType = email.csContentType;
+			m_stEmail.csDate = email.csDate;
+			if (m_stEmail.csEmailContent.IsEmpty())
+				m_stEmail.csEmailContent = email.csEmailContent;
+			if (m_stEmail.csEmailContentHTML.IsEmpty())
+				m_stEmail.csEmailContentHTML = email.csEmailContentHTML;
+			//m_stEmail.csFrom = email.csFrom;
+			//m_stEmail.csSubject = email.csSubject;
+			//m_stEmail.csTime = email.csTime;
+			vector<ATTACH_FILE>::iterator ite = email.vecAttachFiles.begin();
+			while (ite != email.vecAttachFiles.end())
+			{
+				m_stEmail.vecAttachFiles.push_back((*ite));
+				ite++;
+			}
 		}
-		if (ana.AnalysisBody(ana.GetBoundry(), ana.GetHeadRowCount()) < 0)
+		if (m_lClearType == 1)
 		{
-			ana.SetClearType(0);
-			bRet = FALSE;
-			break;
-		}
-		if (ana.AnalysisBoundary(ana.GetBoundry(), ana.GetAttach()) < 0)
-		{
-			ana.SetClearType(0);
-			bRet = FALSE;
-			break;
-		}
-		email = ana.GetEmailItem();
-	} while (0);
-	if (bRet)
-	{
-		m_stEmail.csContentType = email.csContentType;
-		m_stEmail.csDate = email.csDate;
-		if (m_stEmail.csEmailContent.IsEmpty())
-			m_stEmail.csEmailContent = email.csEmailContent;
-		if (m_stEmail.csEmailContentHTML.IsEmpty())
-			m_stEmail.csEmailContentHTML = email.csEmailContentHTML;
-		//m_stEmail.csFrom = email.csFrom;
-		//m_stEmail.csSubject = email.csSubject;
-		//m_stEmail.csTime = email.csTime;
-		vector<ATTACH_FILE>::iterator ite = email.vecAttachFiles.begin();
-		while (ite!=email.vecAttachFiles.end())
-		{
-			m_stEmail.vecAttachFiles.push_back((*ite));
-			ite++;
+			csUIDL.Format(_T("%s\\%s"), m_csSavePath, csFileName);
+			if (PathFileExists(csUIDL))
+				DeleteFile(csUIDL);
 		}
 	}
-	ana.Clear();
+	else bRet = FALSE;
 	if (bRet)
 		return 0;
 	return -1;
@@ -1904,7 +1923,7 @@ void SaveAttachMent(CMailAnalysis* pana, ATTACH_FILE& attachfile, BOUNDARY_HEAD&
 			pana->m_lAttachmentCount++;
 			attachfile.csFileName = csFileName;
 			attachfile.csLocalFileName = stBouHead.csAttachmentName;
-			attachfile.csFilePath.Format(_T("%s%s"), pana->m_csSavePath, stBouHead.csAttachmentName);
+			attachfile.csFilePath.Format(_T("%s\\%s"), pana->m_csSavePath, stBouHead.csAttachmentName);
 			attachfile.csAffixType = stBouHead.csContentType;
 			if (attachfile.csLocalFileName.Find(_T(".pdf")) > 0)
 			{

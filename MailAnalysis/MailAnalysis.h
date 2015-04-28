@@ -69,6 +69,7 @@ private:
 	CString m_csMessageID;
 	CString m_csFilePath;//EML文件路径
 	CString m_csSavePath;//附件保存路径
+	CString m_csSubSavePath;
 	CString m_csCharset; //源字符集
 	//list<CString> m_lsAttachFile;
 	long m_lAttachmentCount; //附件数量

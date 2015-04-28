@@ -1452,7 +1452,7 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 										if (pop3.GetEMLFile(i, strUDIL) == 0)
 										{
 #ifdef _DEBUG
-											lType = 1;
+											lType = 0;
 #endif
 											if (pDlg->MailAnalysis(pop3, sql, smtp, strUDIL, info, lType)<0)//ÓÊ¼þ½âÎö
 											{
@@ -1493,6 +1493,14 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 								pDlg->m_showinfo[dwID].lTotal = lCount;
 								for (long i = 1; i < lResult + 1; i++)
 								{
+									if (WaitForSingleObject(__HEVENT_MAIN_EXIT__, 10L) == WAIT_OBJECT_0)
+									{
+										pDlg->GetMailBoxInfo(csUserName, info, 0);
+										pop3.QuitDataBase();
+										sql.CloseDB();
+										pop3.Close();
+										break;
+									}
 //#ifdef _DEBUG
 									csDebug.Format(_T("%s Del-Count = %d\r\n"), info.szName, i);
 									OutputDebugString(csDebug);
@@ -1552,55 +1560,56 @@ long CReceiveEmailDlg::MailAnalysis(POP3& pop3, CSQLServer& sql, SMTP& smtp, con
 	BOOL bRet = TRUE;
 	CString csUIDL(strUIDL.c_str()), csPath(pop3.GetCurrPath());
 	CMailAnalysis ana;
-	ana.SetAbbreviation(info.szAbbreviation);
-	ana.LoadFile(csPath, csUIDL);
-	ana.SetClearType(lType);
-//#ifdef _DEBUG
 	DWORD dwTime(0);
-	dwTime = GetTickCount64();
-//#endif
-	do
+	ana.SetAbbreviation(info.szAbbreviation);
+	if(ana.LoadFile(csPath, csUIDL)==0)
 	{
-		if (ana.AnalysisHead() < 0)
+		ana.SetClearType(lType);
+		dwTime = GetTickCount64();
+		do
 		{
-			ana.SetClearType(0);
-			bRet = FALSE;
-			break;
-		}
-		if (ana.AnalysisBody(ana.GetBoundry(), ana.GetHeadRowCount()) < 0)
+			if (ana.AnalysisHead() < 0)
+			{
+				ana.SetClearType(0);
+				bRet = FALSE;
+				break;
+			}
+			if (ana.AnalysisBody(ana.GetBoundry(), ana.GetHeadRowCount()) < 0)
+			{
+				ana.SetClearType(0);
+				bRet = FALSE;
+				break;
+			}
+			if (ana.AnalysisBoundary(ana.GetBoundry(), ana.GetAttach()) < 0)
+			{
+				ana.SetClearType(0);
+				bRet = FALSE;
+				break;
+			}
+			if (sql.SaveToDB(ana.GetEmailItem()) == 0)
+			{
+				pop3.SaveFileToDB(ana.GetEmailItem());
+			}
+			else
+			{
+				pop3.DeleteFromDB(ana.GetEmailItem());
+				sql.DeleteFromSQL(ana.GetEmailItem());
+				ana.SetClearType(0);
+			}
+		} while (0);
+		if (info.bSendMail)
 		{
-			ana.SetClearType(0);
-			bRet = FALSE;
-			break;
+			char chTemp[MAX_PATH] = { 0 };
+			WideCharToMultiByte(CP_ACP, 0, info.szMailAdd, 128, chTemp, MAX_PATH, NULL, NULL);
+			smtp.InitSMTPPro();
+			smtp.SetReceiver(chTemp);
+			smtp.SetCurrPath(pop3.GetCurrPath());
+			smtp.AddAttachFileName(strUIDL);
+			SendEmail(smtp);
 		}
-		if (ana.AnalysisBoundary(ana.GetBoundry(), ana.GetAttach()) < 0)
-		{
-			ana.SetClearType(0);
-			bRet = FALSE;
-			break;
-		}
-		if (sql.SaveToDB(ana.GetEmailItem()) == 0)
-		{
-			pop3.SaveFileToDB(ana.GetEmailItem());
-		}
-		else
-		{
-			pop3.DeleteFromDB(ana.GetEmailItem());
-			sql.DeleteFromSQL(ana.GetEmailItem());
-			ana.SetClearType(0);	
-		}
-	} while (0);
-	if (info.bSendMail)
-	{
-		char chTemp[MAX_PATH] = { 0 };
-		WideCharToMultiByte(CP_ACP, 0, info.szMailAdd, 128, chTemp, MAX_PATH, NULL, NULL);
-		smtp.InitSMTPPro();
-		smtp.SetReceiver(chTemp);
-		smtp.SetCurrPath(pop3.GetCurrPath());
-		smtp.AddAttachFileName(strUIDL);
-		SendEmail(smtp);
+		ana.Clear();
 	}
-	ana.Clear();
+	else bRet = FALSE;
 //#ifdef _DEBUG
 	dwTime = GetTickCount64() - dwTime;
 	CString csDebug;
@@ -1610,8 +1619,7 @@ long CReceiveEmailDlg::MailAnalysis(POP3& pop3, CSQLServer& sql, SMTP& smtp, con
 //#endif
 	if (bRet)
 		return 0;
-	else
-		return -1;
+	return -1;
 }
 
 void CReceiveEmailDlg::OnLvnItemchangedListMailbox(NMHDR *pNMHDR, LRESULT *pResult)
