@@ -24,7 +24,7 @@ CDataBase::CDataBase(void) :m_bConnect(FALSE)
 
 CDataBase::~CDataBase()
 {
-
+	//connect.~DBClientConnection();
 }
 
 BOOL CDataBase::ConnectDataBase(string& strErr)

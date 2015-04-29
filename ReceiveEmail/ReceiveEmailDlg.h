@@ -7,13 +7,17 @@
 #include "afxcmn.h"
 #include "resource.h"
 
-#include "ftlFake.h"
-#include "MyJob.h"
 #include "afxwin.h"
 #include "afxdtctl.h"
 #include "public.h"
 #include "../GGDataAPI/ggdataapi.h"
 #include "afxeditbrowsectrl.h"
+#include "POP3.h"
+#include "../Log/Log.h"
+#include "SendEmail.h"
+#include "../MailAnalysis/MailAnalysis.h"
+#include "../SQLServer/SQLServer.h"
+#include "../DataBase/DataBase.h"
 
 struct ShowInfo
 {
@@ -26,7 +30,7 @@ struct ShowInfo
 
 
 // CReceiveEmailDlg 对话框
-class CReceiveEmailDlg : public CDialogEx/*, public IFThreadPoolCallBack<MyJobParam*>*/
+class CReceiveEmailDlg : public CDialogEx
 {
 // 构造
 public:
@@ -108,8 +112,6 @@ public:
 	void Stop(long lType=0);
 	void SetShowInfo(long lTextWnd,LPCTSTR =NULL,long lProgress=0);
 	virtual BOOL PreTranslateMessage(MSG* pMsg);
-	virtual void OnJobBegin(LONG nJobIndex, CFJobBase<MyJobParam*>* pJob);
-	virtual void OnJobEnd(LONG nJobIndex, CFJobBase<MyJobParam*>* pJob);
 	long SetTextWnd(long lType,long lCurrPos,long lStatus=0);
 	void InitTextWnd();
 	void WriteToConfig();

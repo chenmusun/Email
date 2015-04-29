@@ -5,7 +5,7 @@
 
 const char ENDOFCHAR[5] = { 0x0d, 0x0a, 0x2e, 0x0d, 0x0a };
 
-POP3::POP3() :m_bConnect(FALSE), m_pParent(NULL), m_bFailed(FALSE)
+POP3::POP3() :m_bConnect(FALSE), m_bFailed(FALSE)
 {
 	memset(m_CurrPath, 0, MAX_PATH);
 	memset(m_chName, 0, 64);
@@ -71,6 +71,9 @@ long POP3::GetMailCount()
 	nValue = m_Socket.SendData(chCommand, strlen(chCommand));
 	if (nValue < 0)
 	{
+		nError = WSAGetLastError();
+		GetErrorMessage(nError, chError, 128);
+		m_log.Log(chError, strlen(chError));
 		return SEND_ERROR;
 	}
 	nValue = m_Socket.ReceiveData(chResult, sizeof(chResult));
@@ -138,36 +141,41 @@ string POP3::GetUIDL(long lCurrPos)
 	return strUIDL;
 }
 
-long POP3::CheckUIDL(const string& strUIDL, const string& strName, long lSaveDay)
+/*long POP3::CheckUIDL(const string& strUIDL, const string& strName, long lSaveDay)
 {
 	long lFound = MONGO_NOT_FOUND;
 	if (strUIDL.length() <= 0)
 		return MONGO_FOUND;
-	string strErr;
-	if (lSaveDay == 0)
+		string strErr;
+		if (lSaveDay == 0)
 		lSaveDay = 14;
-	lFound = m_db.CheckUIDLInMongoDB(strUIDL, strErr, strName, lSaveDay);
-	if (strErr.length() > 0)
-	{
+		lFound = m_db.CheckUIDLInMongoDB(strUIDL, strErr, strName, lSaveDay);
+		if (strErr.length() > 0)
+		{
 		m_log.Log(strErr.c_str(), strErr.length());
-	}
+		}
 	return lFound;
-}
+}*/
 
-void POP3::QuitDataBase()
+/*void POP3::QuitDataBase()
 {
 	if (m_bConnect)
 	{
 		m_db.DisConnectDataBase();
 		m_bConnect = FALSE;
 	}
-}
+}*/
 
-BOOL POP3::ConnectDataBase()
+/*BOOL POP3::ConnectDataBase()
 {
 	string strErr;
 	if (m_db.ConnectDataBase(strErr))
 	{
+#ifdef _DEBUG
+		char chDebug[128] = { 0 };
+		sprintf_s(chDebug, 128, "Connect [%s] MongoDB Success!\r\n", m_db.GetDBName().c_str());
+		OutputDebugStringA(chDebug);
+#endif
 		m_bConnect = TRUE;
 		return TRUE;
 	}
@@ -176,7 +184,7 @@ BOOL POP3::ConnectDataBase()
 		m_log.Log(strErr.c_str(), strErr.length());
 	}
 	return FALSE;
-}
+}*/
 
 long POP3::GetEMLFile(long lCurrPos,const string& strUIDL)
 {
@@ -229,7 +237,6 @@ long POP3::GetEMLFile(long lCurrPos,const string& strUIDL)
 		{
 			return SEND_ERROR;
 		}
-		pMyJob = (CMyJob*)m_pParent;
 		do
 		{
 			n = 0;
@@ -309,12 +316,10 @@ long POP3::GetEMLFile(long lCurrPos,const string& strUIDL)
 }
 
 
-void POP3::SetInfo(CString csName, const MailBoxInfo& info,const MongoDBInfo& dbinfo,LPCTSTR lpPath, long lLen)
+void POP3::SetInfo(CString csName, const MailBoxInfo& info,LPCTSTR lpPath, long lLen)
 {
 	WideCharToMultiByte(CP_ACP, 0, csName.GetBuffer(), csName.GetLength(), m_chName, 64, NULL, NULL);
 	memcpy_s(&m_Info, sizeof(MailBoxInfo), &info, sizeof(MailBoxInfo));
-	SetDBInfo(dbinfo);
-	//m_db.SetDBInfo(dbinfo);
 	if (lpPath)
 	{
 		memset(m_CurrPath, 0, MAX_PATH);
@@ -358,60 +363,50 @@ void POP3::SetLogPath(const char*pPath)
 	}
 }
 
-BOOL POP3::SaveFileToDB(EMAIL_ITEM& email)
-{
-	long lCount(0);
-	char chGUID[128] = { 0 }, chFilePath[512] = {0};
-	string strRemote, strPath, strRtr;
-	vector<ATTACH_FILE>::iterator ite = email.vecAttachFiles.begin();
-	while (ite!=email.vecAttachFiles.end())
-	{
-		memset(&chGUID, 0, 128);
-		memset(&chFilePath, 0,512);
-		if ((*ite).lType == 0)
-		{
-			ite++;
-			continue;
-		}
-		WideCharToMultiByte(CP_ACP, 0, (*ite).csRemoteName.GetBuffer(), (*ite).csRemoteName.GetLength(), chGUID, 128, NULL, NULL);
-		strRemote = chGUID;
-		WideCharToMultiByte(CP_ACP, 0, (*ite).csFilePath.GetBuffer(), (*ite).csFilePath.GetLength(), chFilePath, 512, NULL, NULL);
-		strPath = chFilePath;
-		//strPath = "D:\\20150315_既要谋势，又要做活_(王涵_高群山_卢燕津_贾潇君_王连庆_王轶君_唐跃)_兴业宏观中国周报.pdf";
-		if (m_db.SaveFileToMongoDB(strRemote, strPath, strRtr) < 0)
-		{
-			m_log.Log(strRtr.c_str(), strRtr.length());
-			lCount++;
-		}
-		else (*ite).csMD5 = strRtr.c_str();
-		ite++;
-	}
-	if (lCount>0)
-		return FALSE;
-	return TRUE;
-}
+//BOOL POP3::SaveFileToDB(EMAIL_ITEM& email)
+//{
+//	long lCount(0);
+//	char chGUID[128] = { 0 }, chFilePath[512] = {0};
+//	string strRemote, strPath, strRtr;
+//	vector<ATTACH_FILE>::iterator ite = email.vecAttachFiles.begin();
+//	while (ite!=email.vecAttachFiles.end())
+//	{
+//		memset(&chGUID, 0, 128);
+//		memset(&chFilePath, 0,512);
+//		if ((*ite).lType == 0)
+//		{
+//			ite++;
+//			continue;
+//		}
+//		WideCharToMultiByte(CP_ACP, 0, (*ite).csRemoteName.GetBuffer(), (*ite).csRemoteName.GetLength(), chGUID, 128, NULL, NULL);
+//		strRemote = chGUID;
+//		WideCharToMultiByte(CP_ACP, 0, (*ite).csFilePath.GetBuffer(), (*ite).csFilePath.GetLength(), chFilePath, 512, NULL, NULL);
+//		strPath = chFilePath;
+//		//strPath = "D:\\20150315_既要谋势，又要做活_(王涵_高群山_卢燕津_贾潇君_王连庆_王轶君_唐跃)_兴业宏观中国周报.pdf";
+//		if (m_db.SaveFileToMongoDB(strRemote, strPath, strRtr) < 0)
+//		{
+//			m_log.Log(strRtr.c_str(), strRtr.length());
+//			lCount++;
+//		}
+//		else (*ite).csMD5 = strRtr.c_str();
+//		ite++;
+//	}
+//	if (lCount>0)
+//		return FALSE;
+//	return TRUE;
+//}
 
-BOOL POP3::DeleteFromDB(EMAIL_ITEM& email)
-{
-	char chTemp[MAX_PATH] = { 0 };
-	string strUIDL, strTo;
-	WideCharToMultiByte(CP_ACP, 0, email.csUIDL, email.csUIDL.GetLength(), chTemp, MAX_PATH, NULL, NULL);
-	strUIDL = chTemp;
-	memset(&chTemp, 0, MAX_PATH);
-	WideCharToMultiByte(CP_ACP, 0, email.csTo, email.csTo.GetLength(), chTemp, MAX_PATH, NULL, NULL);
-	strTo = chTemp;
-	if(m_db.DelUIDL(strUIDL,strTo))
-		return TRUE;
-	return FALSE;
-}
-
-void POP3::SetDBInfo(const MongoDBInfo& dbinfo)
-{
-	m_db.SetDBInfo(dbinfo);
-}
-
-BOOL POP3::GetFileFromDB(const string&strFileName, const string&strSavePath, string&strErr)
-{
-	return m_db.GetFileFromMongoDB(strFileName, strSavePath, strErr);
-}
+//BOOL POP3::DeleteFromDB(EMAIL_ITEM& email)
+//{
+//	char chTemp[MAX_PATH] = { 0 };
+//	string strUIDL, strTo;
+//	WideCharToMultiByte(CP_ACP, 0, email.csUIDL, email.csUIDL.GetLength(), chTemp, MAX_PATH, NULL, NULL);
+//	strUIDL = chTemp;
+//	memset(&chTemp, 0, MAX_PATH);
+//	WideCharToMultiByte(CP_ACP, 0, email.csTo, email.csTo.GetLength(), chTemp, MAX_PATH, NULL, NULL);
+//	strTo = chTemp;
+//	if(m_db.DelUIDL(strUIDL,strTo))
+//		return TRUE;
+//	return FALSE;
+//}
 /////////////////////////////////////////////////////////////////////

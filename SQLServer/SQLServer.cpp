@@ -3019,6 +3019,11 @@ BOOL CSQLServer::Connect(SQLDBInfo& sqlinfo, int nType)
 		//#endif
 		return FALSE;
 	}
+#ifdef _DEBUG
+	CString csDebug;
+	csDebug.Format(_T("Connect [%s]-[%s] success!\r\n"), m_csServer, m_csDatabase);
+	OutputDebugString(csDebug);
+#endif
 	return TRUE;
 }
 

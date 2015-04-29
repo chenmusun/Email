@@ -5,6 +5,7 @@
 #include "ReceiveEmail.h"
 #include "DialogPDF.h"
 #include "afxdialogex.h"
+#include "../DataBase/DataBase.h"
 
 extern TCHAR __Main_Path__[MAX_PATH];
 
@@ -67,19 +68,11 @@ void CDialogPDF::OnBnClickedMfcbuttonGet()
 	WideCharToMultiByte(CP_ACP, 0, m_csSavePath, m_csSavePath.GetLength()*sizeof(TCHAR), chTemp, 512, NULL, NULL);
 	strPath = chTemp;
 	m_modbinfo.nUseDB = 1;
-	POP3 pop3;
-	pop3.SetDBInfo(m_modbinfo);
-	if (pop3.ConnectDataBase())
-	{
-		if (pop3.GetFileFromDB(strFileName, strPath, strErr))
-		{
-			csText.Format(_T("Success!"));
-		}
-		else csText = strErr.c_str();
-		pop3.QuitDataBase();
-	}
-	else csText.Format(_T("Connect to DB Error!"));
-	AfxMessageBox(csText);
+	//TODO:
+	CDataBase db;
+	/*db.SetDBInfo(m_modbinfo);
+	if (db.ConnectDataBase(strErr))
+		AfxMessageBox(_T("Success!"));*/
 	OnOK();
 }
 

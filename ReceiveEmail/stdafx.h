@@ -133,6 +133,9 @@ inline void GetErrorMessage(int error, char* pMessage,int nLen=MAX_PATH)
 	case HOST_UNREACHABLE:
 		sprintf_s(pMessage, nLen, "目标主机不可达！");
 		break;
+	case 10038:
+		sprintf_s(pMessage, nLen, "在一个非套接字上尝试了一个操作");
+		break;
 	case 10051:
 		sprintf_s(pMessage, nLen, "向一个无法连接的网络尝试了一个套接字操作");
 		break;
