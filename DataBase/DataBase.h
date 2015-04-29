@@ -41,7 +41,6 @@ public:
 private:
 	DBClientConnection connect;//MongoÁ¬½ÓÊµÀý
 	MongoDBInfo m_dbinfo;
-	//GridFS m_gridfs;
 	BOOL m_bConnect;
 private:
 protected:

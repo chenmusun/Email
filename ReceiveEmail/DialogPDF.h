@@ -1,6 +1,5 @@
 #pragma once
 #include "afxbutton.h"
-#include "POP3.h"
 #include "afxeditbrowsectrl.h"
 
 

@@ -31,8 +31,6 @@ public:
 	virtual void OnCancelJob();
 	BOOL Wait();
 	CLog m_log;
-	long SendEmail();
-	long MailAnalysis(POP3& pop3, CSQLServer& sql,const string& strUIDL, LPCTSTR lpAbb,long lType = 0);
 private:
 	POP3 m_pop3;
 	SMTP m_smtp;
