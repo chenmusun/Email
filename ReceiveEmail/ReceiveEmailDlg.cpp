@@ -1376,7 +1376,7 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 		POP3 pop3;
 		CSQLServer sql;
 		SMTP smtp;
-		CDataBase db;
+		//CDataBase db;
 		DWORD dwID = GetCurrentThreadId();
 		DWORD dwTime(0);
 		while (true)
@@ -1405,7 +1405,7 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 				WideCharToMultiByte(CP_ACP, 0, szLogPath, MAX_PATH, chLogPath, MAX_PATH, NULL, NULL);
 				pop3.SetLogPath(chLogPath);
 				pop3.SetInfo(info.szName, info, __Main_Path__, lstrlen(__Main_Path__));
-				db.SetDBInfo(dbinfo);
+				//db.SetDBInfo(dbinfo);
 				sql.SetLogPath(chLogPath);
 				WideCharToMultiByte(CP_ACP, 0, info.szAbbreviation, 64, chTemp, MAX_PATH, NULL, NULL);
 				strName = chTemp;
@@ -1420,7 +1420,7 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 				lResult = pop3.Login(info.szServerAdd, info.lPort, csUserName, info.szPasswd);
 				if (lResult >= 0)
 				{
-					if (sql.Connect(sqlinfo) && db.ConnectDataBase(strErr))
+					if (sql.Connect(sqlinfo) /*&& db.ConnectDataBase(strErr)*/)
 					{
 						lResult = pop3.GetMailCount();
 						if (lResult > 0)
