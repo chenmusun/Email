@@ -1426,15 +1426,15 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 				lResult = pop3.Login(info.szServerAdd, info.lPort, csUserName, info.szPasswd);
 				if (lResult >= 0)
 				{
-					if (pop3.ConnectDataBase() && sql.Connect(sqlinfo))
+					if (/*pop3.ConnectDataBase() && */sql.Connect(sqlinfo))
 					{
 						lResult = pop3.GetMailCount();
-						pDlg->m_showinfo[dwID].lTotal = lResult;
-						swprintf_s(pDlg->m_showinfo[dwID].szAbbreviation, 64, _T("%s"), info.szAbbreviation);
-						swprintf_s(pDlg->m_showinfo[dwID].szName, 128, _T("%s"), info.szName);
-						pDlg->m_showinfo[dwID].lStatus = 0;
 						if (lResult > 0)
 						{
+							pDlg->m_showinfo[dwID].lTotal = lResult;
+							swprintf_s(pDlg->m_showinfo[dwID].szAbbreviation, 64, _T("%s"), info.szAbbreviation);
+							swprintf_s(pDlg->m_showinfo[dwID].szName, 128, _T("%s"), info.szName);
+							pDlg->m_showinfo[dwID].lStatus = 0;
 							for (i = 1; i < lResult + 1; i++)
 							{
 								if (WaitForSingleObject(__HEVENT_MAIN_EXIT__, 10L) == WAIT_OBJECT_0)
