@@ -29,7 +29,7 @@ CDataBase::~CDataBase()
 
 BOOL CDataBase::ConnectDataBase(string& strErr)
 {
-	string strWhat;
+	string strWhat, strDBAdd(m_dbinfo.chDBAdd), strDBname(m_dbinfo.chDBName), strUser(m_dbinfo.chUserName), strPass(m_dbinfo.chPasswd);
 	strErr.empty();//将错误信息清空
 	if (m_dbinfo.nUseDB != 1)
 		return TRUE;
@@ -38,10 +38,10 @@ BOOL CDataBase::ConnectDataBase(string& strErr)
 		try
 		{
 			mongo::client::initialize();
-			if (connect.connect(m_dbinfo.chDBAdd, strErr))
+			if (connect.connect(strDBAdd, strErr))
 			{
 				connect.setSoTimeout(1000);
-				if (!connect.auth(m_dbinfo.chDBName, m_dbinfo.chUserName, m_dbinfo.chPasswd, strErr))//登陆数据库验证
+				if (!connect.auth(strDBname, strUser, strPass, strErr))//登陆数据库验证
 				{
 #ifdef _DEBUG
 					OutputDebugStringA(strErr.c_str());
@@ -70,6 +70,10 @@ BOOL CDataBase::ConnectDataBase(string& strErr)
 #endif
 			return FALSE;
 		}
+	}
+	else
+	{
+		return FALSE;
 	}
 	m_bConnect = TRUE;
 	return TRUE;

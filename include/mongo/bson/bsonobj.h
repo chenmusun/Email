@@ -17,7 +17,6 @@
 
 #pragma once
 
-#include <boost/intrusive_ptr.hpp>
 #include <boost/noncopyable.hpp>
 #include <set>
 #include <list>
@@ -393,6 +392,15 @@ namespace mongo {
         bool equal(const BSONObj& r) const;
 
         /**
+         * Functor compatible with std::hash for std::unordered_{map,set}
+         * Warning: The hash function is subject to change. Do not use in cases where hashes need
+         *          to be consistent across versions.
+         */
+        struct Hasher {
+            size_t operator() (const BSONObj& obj) const;
+        };
+
+        /**
          * @param otherObj
          * @return true if 'this' is a prefix of otherObj- in other words if
          * otherObj contains the same field names and field vals in the same
@@ -442,15 +450,6 @@ namespace mongo {
         */
         bool getObjectID(BSONElement& e) const;
 
-        /** @return A hash code for the object */
-        int hash() const {
-            unsigned x = 0;
-            const char *p = objdata();
-            for ( int i = 0; i < objsize(); i++ )
-                x = x * 131 + p[i];
-            return (x & 0x7fffffff) | 0x8000000; // must be > 0
-        }
-
         // Return a version of this object where top level elements of types
         // that are not part of the bson wire protocol are replaced with
         // string identifier equivalents.
@@ -463,9 +462,6 @@ namespace mongo {
 
         /** true unless corrupt */
         bool valid() const;
-
-        /** @return an md5 value for this object. */
-        std::string md5() const;
 
         bool operator==( const BSONObj& other ) const { return equal( other ); }
         bool operator!=(const BSONObj& other) const { return !operator==( other); }

@@ -68,11 +68,17 @@ void CDialogPDF::OnBnClickedMfcbuttonGet()
 	WideCharToMultiByte(CP_ACP, 0, m_csSavePath, m_csSavePath.GetLength()*sizeof(TCHAR), chTemp, 512, NULL, NULL);
 	strPath = chTemp;
 	m_modbinfo.nUseDB = 1;
-	//TODO:
 	CDataBase db;
-	/*db.SetDBInfo(m_modbinfo);
+	db.SetDBInfo(m_modbinfo);
 	if (db.ConnectDataBase(strErr))
-		AfxMessageBox(_T("Success!"));*/
+	{
+		if (!db.GetFileFromMongoDB(strFileName, strPath, strErr))
+			csText = strErr.c_str();
+		else
+			csText.Format(_T("Success!"));
+	}
+	else csText = strErr.c_str();
+	AfxMessageBox(csText);
 	OnOK();
 }
 

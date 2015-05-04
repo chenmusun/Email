@@ -141,7 +141,7 @@ string POP3::GetUIDL(long lCurrPos)
 	return strUIDL;
 }
 
-/*long POP3::CheckUIDL(const string& strUIDL, const string& strName, long lSaveDay)
+long POP3::CheckUIDL(const string& strUIDL, const string& strName, long lSaveDay)
 {
 	long lFound = MONGO_NOT_FOUND;
 	if (strUIDL.length() <= 0)
@@ -155,18 +155,18 @@ string POP3::GetUIDL(long lCurrPos)
 		m_log.Log(strErr.c_str(), strErr.length());
 		}
 	return lFound;
-}*/
+}
 
-/*void POP3::QuitDataBase()
+void POP3::QuitDataBase()
 {
 	if (m_bConnect)
 	{
 		m_db.DisConnectDataBase();
 		m_bConnect = FALSE;
 	}
-}*/
+}
 
-/*BOOL POP3::ConnectDataBase()
+BOOL POP3::ConnectDataBase()
 {
 	string strErr;
 	if (m_db.ConnectDataBase(strErr))
@@ -184,7 +184,7 @@ string POP3::GetUIDL(long lCurrPos)
 		m_log.Log(strErr.c_str(), strErr.length());
 	}
 	return FALSE;
-}*/
+}
 
 long POP3::GetEMLFile(long lCurrPos,const string& strUIDL)
 {
@@ -363,50 +363,55 @@ void POP3::SetLogPath(const char*pPath)
 	}
 }
 
-//BOOL POP3::SaveFileToDB(EMAIL_ITEM& email)
-//{
-//	long lCount(0);
-//	char chGUID[128] = { 0 }, chFilePath[512] = {0};
-//	string strRemote, strPath, strRtr;
-//	vector<ATTACH_FILE>::iterator ite = email.vecAttachFiles.begin();
-//	while (ite!=email.vecAttachFiles.end())
-//	{
-//		memset(&chGUID, 0, 128);
-//		memset(&chFilePath, 0,512);
-//		if ((*ite).lType == 0)
-//		{
-//			ite++;
-//			continue;
-//		}
-//		WideCharToMultiByte(CP_ACP, 0, (*ite).csRemoteName.GetBuffer(), (*ite).csRemoteName.GetLength(), chGUID, 128, NULL, NULL);
-//		strRemote = chGUID;
-//		WideCharToMultiByte(CP_ACP, 0, (*ite).csFilePath.GetBuffer(), (*ite).csFilePath.GetLength(), chFilePath, 512, NULL, NULL);
-//		strPath = chFilePath;
-//		//strPath = "D:\\20150315_既要谋势，又要做活_(王涵_高群山_卢燕津_贾潇君_王连庆_王轶君_唐跃)_兴业宏观中国周报.pdf";
-//		if (m_db.SaveFileToMongoDB(strRemote, strPath, strRtr) < 0)
-//		{
-//			m_log.Log(strRtr.c_str(), strRtr.length());
-//			lCount++;
-//		}
-//		else (*ite).csMD5 = strRtr.c_str();
-//		ite++;
-//	}
-//	if (lCount>0)
-//		return FALSE;
-//	return TRUE;
-//}
+BOOL POP3::SaveFileToDB(EMAIL_ITEM& email)
+{
+	long lCount(0);
+	char chGUID[128] = { 0 }, chFilePath[512] = {0};
+	string strRemote, strPath, strRtr;
+	vector<ATTACH_FILE>::iterator ite = email.vecAttachFiles.begin();
+	while (ite!=email.vecAttachFiles.end())
+	{
+		memset(&chGUID, 0, 128);
+		memset(&chFilePath, 0,512);
+		if ((*ite).lType == 0)
+		{
+			ite++;
+			continue;
+		}
+		WideCharToMultiByte(CP_ACP, 0, (*ite).csRemoteName.GetBuffer(), (*ite).csRemoteName.GetLength(), chGUID, 128, NULL, NULL);
+		strRemote = chGUID;
+		WideCharToMultiByte(CP_ACP, 0, (*ite).csFilePath.GetBuffer(), (*ite).csFilePath.GetLength(), chFilePath, 512, NULL, NULL);
+		strPath = chFilePath;
+		//strPath = "D:\\20150315_既要谋势，又要做活_(王涵_高群山_卢燕津_贾潇君_王连庆_王轶君_唐跃)_兴业宏观中国周报.pdf";
+		if (m_db.SaveFileToMongoDB(strRemote, strPath, strRtr) < 0)
+		{
+			m_log.Log(strRtr.c_str(), strRtr.length());
+			lCount++;
+		}
+		else (*ite).csMD5 = strRtr.c_str();
+		ite++;
+	}
+	if (lCount>0)
+		return FALSE;
+	return TRUE;
+}
 
-//BOOL POP3::DeleteFromDB(EMAIL_ITEM& email)
-//{
-//	char chTemp[MAX_PATH] = { 0 };
-//	string strUIDL, strTo;
-//	WideCharToMultiByte(CP_ACP, 0, email.csUIDL, email.csUIDL.GetLength(), chTemp, MAX_PATH, NULL, NULL);
-//	strUIDL = chTemp;
-//	memset(&chTemp, 0, MAX_PATH);
-//	WideCharToMultiByte(CP_ACP, 0, email.csTo, email.csTo.GetLength(), chTemp, MAX_PATH, NULL, NULL);
-//	strTo = chTemp;
-//	if(m_db.DelUIDL(strUIDL,strTo))
-//		return TRUE;
-//	return FALSE;
-//}
+BOOL POP3::DeleteFromDB(EMAIL_ITEM& email)
+{
+	char chTemp[MAX_PATH] = { 0 };
+	string strUIDL, strTo;
+	WideCharToMultiByte(CP_ACP, 0, email.csUIDL, email.csUIDL.GetLength(), chTemp, MAX_PATH, NULL, NULL);
+	strUIDL = chTemp;
+	memset(&chTemp, 0, MAX_PATH);
+	WideCharToMultiByte(CP_ACP, 0, email.csTo, email.csTo.GetLength(), chTemp, MAX_PATH, NULL, NULL);
+	strTo = chTemp;
+	if(m_db.DelUIDL(strUIDL,strTo))
+		return TRUE;
+	return FALSE;
+}
+
+void POP3::SetDBinfo(const MongoDBInfo& dbinfo)
+{
+	m_db.SetDBInfo(dbinfo);
+}
 /////////////////////////////////////////////////////////////////////

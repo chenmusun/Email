@@ -42,10 +42,13 @@
 // util/assert_util.h
 #pragma push_macro("verify")
 #undef verify
-#define verify MONGO_verify
+#define verify(expression) MONGO_verify(expression)
 #pragma push_macro("invariant")
 #undef invariant
 #define invariant MONGO_invariant
+#pragma push_macro("invariantOK")
+#undef invariantOK
+#define invariantOK MONGO_invariantOK
 #pragma push_macro("wassert")
 #undef wassert
 #define wassert MONGO_wassert

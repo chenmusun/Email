@@ -93,8 +93,13 @@ namespace mongo {
          */
         QueryOption_PartialResults = 1 << 7 ,
 
-        QueryOption_AllSupported = QueryOption_CursorTailable | QueryOption_SlaveOk | QueryOption_OplogReplay | QueryOption_NoCursorTimeout | QueryOption_AwaitData | QueryOption_Exhaust | QueryOption_PartialResults
-
+        QueryOption_AllSupported = QueryOption_CursorTailable |
+            QueryOption_SlaveOk |
+            QueryOption_OplogReplay |
+            QueryOption_NoCursorTimeout |
+            QueryOption_AwaitData |
+            QueryOption_Exhaust |
+            QueryOption_PartialResults,
     };
 
     /**
@@ -329,7 +334,7 @@ namespace mongo {
             , _database( database )
             , _options( options ) {
 
-            _fillServers( servers );
+            _fillServers( servers, false );
             switch ( _type ) {
             case MASTER:
                 verify( _servers.size() == 1 );
@@ -350,10 +355,10 @@ namespace mongo {
 
         static ConnectionString _parseURL( const std::string& url, std::string& errmsg );
 
-        void _fillServers( std::string s );
+        void _fillServers( std::string s, bool legacy = true );
         void _finishInit();
 
-        BSONObj _makeAuthObjFromOptions() const;
+        BSONObj _makeAuthObjFromOptions(int maxWireVersion) const;
 
         ConnectionType _type;
         std::vector<HostAndPort> _servers;
@@ -717,8 +722,6 @@ namespace mongo {
         /** Authorize access to a particular database.
             Authentication is separate for each database on the server -- you may authenticate for any
             number of databases on a single connection.
-            The "admin" database is special and once authenticated provides access to all databases on the
-            server.
             @param      digestPassword  if password is plain text, set this to true.  otherwise assumed to be pre-digested
             @param[out] authLevel       level of authentication for the given user
             @return true if successful
@@ -894,7 +897,13 @@ namespace mongo {
 
            returns true if successful
         */
-        bool copyDatabase(const std::string &fromdb, const std::string &todb, const std::string &fromhost = "", BSONObj *info = 0);
+        bool copyDatabase(const std::string& fromdb,
+                          const std::string& todb,
+                          const std::string& fromhost = "",
+                          const std::string& mechanism = "DEFAULT",
+                          const std::string& username = "",
+                          const std::string& password = "",
+                          BSONObj *info = 0);
 
         /** The Mongo database provides built-in performance profiling capabilities.  Uset setDbProfilingLevel()
            to enable.  Profiling information is then written to the system.profile collection, which one can
@@ -1066,12 +1075,13 @@ namespace mongo {
            retValue  return value from the jscode function.
            args      args to pass to the jscode function.  when invoked, the 'args' variable will be defined
                      for use by the jscode.
+           nolock    if true, the server will not take a global write lock when executing the jscode.
 
            returns true if runs ok.
 
            See testDbEval() in dbclient.cpp for an example of usage.
         */
-        bool eval(const std::string &dbname, const std::string &jscode, BSONObj& info, BSONElement& retValue, BSONObj *args = 0);
+        bool eval(const std::string &dbname, const std::string &jscode, BSONObj& info, BSONElement& retValue, BSONObj *args = 0, bool nolock = false);
 
         /** validate a collection, checking for errors and reporting back statistics.
             this operation is slow and blocking.
@@ -1119,10 +1129,9 @@ namespace mongo {
 
         /**
          * Get a list of all the current collections in db.
-         * Returns fully qualified names.
          */
-        std::list<std::string> getCollectionNames( const std::string& db );
-
+        std::list<std::string> getCollectionNames( const std::string& db,
+                                                   const BSONObj& filter = BSONObj() );
         /**
          * { name : "<short collection name>",
          *   options : { }
@@ -1130,6 +1139,21 @@ namespace mongo {
          */
         std::list<BSONObj> getCollectionInfos( const std::string& db,
                                                const BSONObj& filter = BSONObj() );
+
+        /**
+         * Returns a DBClientCursor with collection information objects.
+         *
+         *  Example collection information object:
+         *  {
+         *      "name" : "mongo_cxx_driver",
+         *      "options" : {
+         *          "flags" : 1
+         *      }
+         *  }
+         */
+        std::auto_ptr<DBClientCursor> enumerateCollections( const std::string& db,
+                                                            const BSONObj& filter = BSONObj(),
+                                                            int batchSize = 0 );
 
         bool exists( const std::string& ns );
 
@@ -1161,7 +1185,11 @@ namespace mongo {
         /**
          * Enumerates all indexes on ns (a db-qualified collection name). Returns a list of the index names.
          */
-        virtual std::list<std::string> getIndexNames( const std::string& ns );
+        virtual std::list<std::string> getIndexNames( const std::string& ns, int options = 0 );
+
+        virtual std::auto_ptr<DBClientCursor> enumerateIndexes( const std::string& ns,
+                                                                int options = 0,
+                                                                int batchSize = 0 );
 
         virtual void dropIndex( const std::string& ns , BSONObj keys );
         virtual void dropIndex( const std::string& ns , const std::string& indexName );
@@ -1284,6 +1312,12 @@ namespace mongo {
             bool upsert,
             const BSONObj& fields,
             BSONObjBuilder* out
+        );
+
+        std::auto_ptr<DBClientCursor> _legacyCollectionInfo(
+            const std::string& db,
+            const BSONObj& filter,
+            int batchSize
         );
     };
 

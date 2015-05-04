@@ -1,8 +1,4 @@
-/* @file misc.h
-*/
-
-/*
- *    Copyright 2009 10gen Inc.
+/*    Copyright 2015 MongoDB Inc.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -19,23 +15,15 @@
 
 #pragma once
 
-#include <ctime>
-#include <limits>
-#include <string>
-
-#include "mongo/platform/cstdint.h"
-#include "mongo/util/assert_util.h"
-#include "mongo/util/time_support.h"
+#include <cstddef>
+#include <cstring>
 
 namespace mongo {
 
-    // Like strlen, but only scans up to n bytes.
-    // Returns -1 if no '0' found.
-    inline int strnlen( const char *s, int n ) {
-        for( int i = 0; i < n; ++i )
-            if ( !s[ i ] )
-                return i;
-        return -1;
-    }
+#ifdef MONGO_HAVE_STRNLEN
+    using ::strnlen;
+#else
+    size_t strnlen(const char *s, size_t maxlen);
+#endif
 
-}
+}  // namespace mongo

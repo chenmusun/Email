@@ -14,6 +14,7 @@
 #include <string>
 using namespace std;
 #include <winsock2.h>
+#include <cstdlib>
 #include "mongo/client/dbclient.h"
 #include "mongo/bson/bson.h"
 using namespace mongo;

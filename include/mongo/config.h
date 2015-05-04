@@ -16,7 +16,7 @@
 #pragma once
 
 // Define to 1 if SSL support is enabled
-#define MONGO_SSL 1
+// #undef MONGO_SSL
 
 // Define to 1 if SASL support is enabled
 // #undef MONGO_SASL
@@ -37,4 +37,8 @@
 #define MONGO_BYTE_ORDER 1234
 
 // Define to 1 if std::is_trivially_copyable is supported
-// #undef MONGO_HAVE_STD_IS_TRIVIALLY_COPYABLE
+#define MONGO_HAVE_STD_IS_TRIVIALLY_COPYABLE 1
+
+// Define to 1 if this platform provides the strnlen(3) function
+#define MONGO_HAVE_STRNLEN 1
+

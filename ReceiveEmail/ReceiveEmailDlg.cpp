@@ -1404,6 +1404,7 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 				WideCharToMultiByte(CP_ACP, 0, szLogPath, MAX_PATH, chLogPath, MAX_PATH, NULL, NULL);
 				pop3.SetLogPath(chLogPath);
 				pop3.SetInfo(info.szName, info, __Main_Path__, lstrlen(__Main_Path__));
+				pop3.SetDBinfo(dbinfo);
 				sql.SetLogPath(chLogPath);
 				WideCharToMultiByte(CP_ACP, 0, info.szAbbreviation, 64, chTemp, MAX_PATH, NULL, NULL);
 				strName = chTemp;
@@ -1418,7 +1419,7 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 				lResult = pop3.Login(info.szServerAdd, info.lPort, csUserName, info.szPasswd);
 				if (lResult >= 0)
 				{
-					if (/*pop3.ConnectDataBase() && */sql.Connect(sqlinfo))
+					if (pop3.ConnectDataBase() && sql.Connect(sqlinfo))
 					{
 						lResult = pop3.GetMailCount();
 						if (lResult > 0)
@@ -1432,7 +1433,7 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 								if (WaitForSingleObject(__HEVENT_MAIN_EXIT__, 10L) == WAIT_OBJECT_0)
 								{
 									pDlg->GetMailBoxInfo(csUserName, info, 0);
-									//pop3.QuitDataBase();
+									pop3.QuitDataBase();
 									sql.CloseDB();
 									pop3.Close();
 									break;
@@ -1446,7 +1447,7 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 								strUDIL = pop3.GetUIDL(i);
 								if (strUDIL.length()>0)
 								{
-									lReturnvalue = /*pop3.CheckUIDL(strUDIL, strName,info.lSaveDay)*/-1;
+									lReturnvalue = pop3.CheckUIDL(strUDIL, strName,info.lSaveDay);
 									if (lReturnvalue == MONGO_NOT_FOUND)
 									{
 										if (pop3.GetEMLFile(i, strUDIL) == 0)
@@ -1496,7 +1497,7 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 									if (WaitForSingleObject(__HEVENT_MAIN_EXIT__, 10L) == WAIT_OBJECT_0)
 									{
 										pDlg->GetMailBoxInfo(csUserName, info, 0);
-										//pop3.QuitDataBase();
+										pop3.QuitDataBase();
 										sql.CloseDB();
 										pop3.Close();
 										break;
@@ -1519,7 +1520,7 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 									pDlg->m_showinfo[dwID].lCurr = i;
 								}
 							}
-							//pop3.QuitDataBase();
+							pop3.QuitDataBase();
 							pDlg->GetMailBoxInfo(csUserName, info,0);
 						}
 					}// end of if
@@ -1530,7 +1531,7 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 					GetErrorMessage(lResult, szError);
 					csDebug.Format(_T("登陆 %s 出现问题[%s]\r\nThread [0x%x] will wait 5 sec!\r\n"), 
 						info.szName, szError, GetCurrentThreadId());
-					//pop3.QuitDataBase();
+					pop3.QuitDataBase();
 					OutputDebugString(csDebug);
 					OutputDebugString(_T("\r\n"));
 					if (WaitForSingleObject(__HEVENT_MAIN_EXIT__, 5000L) == WAIT_OBJECT_0)
