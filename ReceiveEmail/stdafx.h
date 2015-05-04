@@ -52,12 +52,6 @@
 #endif
 #include <afxsock.h>
 
-#include "ftlFake.h"
-#include "ftlThread.h"
-#include "ftlThreadPool.h"
-
-using namespace FTL;
-
 #include <list>
 #include <string>
 #include <set>

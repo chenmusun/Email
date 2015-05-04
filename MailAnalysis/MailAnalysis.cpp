@@ -1927,11 +1927,7 @@ void SaveAttachMent(CMailAnalysis* pana, ATTACH_FILE& attachfile, BOUNDARY_HEAD&
 			attachfile.csAffixType = stBouHead.csContentType;
 			if (attachfile.csLocalFileName.Find(_T(".pdf")) > 0)
 			{
-				WideCharToMultiByte(CP_ACP, 0, attachfile.csFilePath, attachfile.csFilePath.GetLength(), chPath, 512, NULL, NULL);
-				strInputPath = chPath;
-				memset(&chPath, 0, 512);
-				WideCharToMultiByte(CP_ACP, 0, pana->m_csSavePath, pana->m_csSavePath.GetLength(), chPath, 512, NULL, NULL);
-				strOutputPath = chPath;
+				WideCharToMultiByte(CP_ACP, 0, attachfile.csFilePath, attachfile.csFilePath.GetLength(), chPath, 512, NULL, NULL);				strInputPath = chPath;				memset(&chPath, 0, 512);				WideCharToMultiByte(CP_ACP, 0, pana->m_csSavePath, pana->m_csSavePath.GetLength(), chPath, 512, NULL, NULL);				strOutputPath = chPath;				strOutputPath.append("\\");
 				if (PDF2Text(strInputPath, strOutputPath, strOutPutName, attachfile.nPageNum, attachfile.nTime) == 0)
 				{
 					attachfile.csFileText = strOutPutName.c_str();

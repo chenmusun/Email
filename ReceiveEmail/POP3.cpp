@@ -1,6 +1,5 @@
 #include "stdafx.h"
 #include "POP3.h"
-#include "MyJob.h"
 #include "../include/json/json.h"
 
 const char ENDOFCHAR[5] = { 0x0d, 0x0a, 0x2e, 0x0d, 0x0a };
@@ -192,7 +191,6 @@ long POP3::GetEMLFile(long lCurrPos,const string& strUIDL)
 	CString csDebug;
 //#endif
 	FILE *pFile;
-	CMyJob* pMyJob = NULL;
 	string strCurrPos, strSize,strEMail;
 	char chCommand[128] = { 0 }, chResult[256] = { 0 }, chTemp[65536] = { 0 }, chError[128] = {0};
 	int nValue(0), nError(0),nFailedCount(0);
