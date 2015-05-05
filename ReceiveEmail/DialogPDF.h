@@ -31,4 +31,6 @@ public:
 	void SetMongoDBInfo(const MongoDBInfo& info);
 	virtual BOOL OnInitDialog();
 	CMFCEditBrowseCtrl m_Path;
+	CString m_csFilePath;
+	afx_msg void OnBnClickedMfcbuttonPdf2txt();
 };

@@ -175,7 +175,6 @@ void  CPDFTransToText::BrowseFolder(void* folder, string inputFilesPath, string 
 	} while (TRUE);
 }
 
-
 int PDF2Text(string inputFilePath, string outputFilePath, string& outputname, int& nPageNum, int& time)
 {
 	int nVal = -1;

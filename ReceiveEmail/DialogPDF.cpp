@@ -6,6 +6,7 @@
 #include "DialogPDF.h"
 #include "afxdialogex.h"
 #include "../DataBase/DataBase.h"
+#include "../MailAnalysis/MailAnalysis.h"
 
 extern TCHAR __Main_Path__[MAX_PATH];
 
@@ -17,6 +18,7 @@ CDialogPDF::CDialogPDF(CWnd* pParent /*=NULL*/)
 	: CDialogEx(CDialogPDF::IDD, pParent)
 	, m_csGUID(_T(""))
 	, m_csSavePath(_T(""))
+	, m_csFilePath(_T(""))
 {
 	memset(&m_modbinfo, 0, sizeof(MongoDBInfo));
 }
@@ -32,11 +34,13 @@ void CDialogPDF::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_MFCEDITBROWSE1, m_csSavePath);
 	DDX_Control(pDX, IDC_MFCBUTTON_GET, m_btnGet);
 	DDX_Control(pDX, IDC_MFCEDITBROWSE1, m_Path);
+	DDX_Text(pDX, IDC_MFCEDITBROWSE2, m_csFilePath);
 }
 
 
 BEGIN_MESSAGE_MAP(CDialogPDF, CDialogEx)
 	ON_BN_CLICKED(IDC_MFCBUTTON_GET, &CDialogPDF::OnBnClickedMfcbuttonGet)
+	ON_BN_CLICKED(IDC_MFCBUTTON_PDF2TXT, &CDialogPDF::OnBnClickedMfcbuttonPdf2txt)
 END_MESSAGE_MAP()
 
 
@@ -79,7 +83,6 @@ void CDialogPDF::OnBnClickedMfcbuttonGet()
 	}
 	else csText = strErr.c_str();
 	AfxMessageBox(csText);
-	OnOK();
 }
 
 void CDialogPDF::SetMongoDBInfo(const MongoDBInfo& info)
@@ -101,4 +104,28 @@ BOOL CDialogPDF::OnInitDialog()
 
 	return TRUE;  // return TRUE unless you set the focus to a control
 	// 异常:  OCX 属性页应返回 FALSE
+}
+
+
+void CDialogPDF::OnBnClickedMfcbuttonPdf2txt()
+{
+	// TODO:  在此添加控件通知处理程序代码
+	UpdateData(TRUE);
+	if (m_csFilePath.IsEmpty())
+	{
+		AfxMessageBox(_T("请输入文件路径!"));
+		return;
+	}
+	CString csTemp(m_csSavePath);
+	char chPath[512] = { 0 };
+	string strInputPath, strOutputPath, strOutPutName;
+	int nPageNum(0),nTime(0);
+	if (m_csFilePath.Find(_T(".pdf")) > 0)
+	{
+		WideCharToMultiByte(CP_ACP, 0, m_csFilePath, m_csFilePath.GetLength(), chPath, 512, NULL, NULL);		strInputPath = chPath;		memset(&chPath, 0, 512);		auto pos = m_csFilePath.ReverseFind(_T('\\'));		if (pos > 0)		{			csTemp = m_csFilePath.Left(pos);		}		WideCharToMultiByte(CP_ACP, 0, csTemp, csTemp.GetLength(), chPath, 512, NULL, NULL);		strOutputPath = chPath;		strOutputPath.append("\\");		if (PDF2TXT(strInputPath, strOutputPath, strOutPutName, nPageNum, nTime) == 0)
+		{
+			csTemp.Format(_T("Success!\r\nPagenum=%d\tTime=%d"),nPageNum,nTime);
+			AfxMessageBox(csTemp);
+		}
+	}	
 }

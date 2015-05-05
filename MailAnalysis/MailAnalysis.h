@@ -19,6 +19,7 @@
 #include "../ReceiveEmail/public.h"
 #include "../Log/Log.h"
 using namespace std;
+#include "pdf2text.h"
 
 #include "public.h"
 
@@ -98,3 +99,5 @@ MAILANALYSIS_API int fnMailAnalysis(void);
 void FormatFileName(CString& csFileName);
 
 void SaveAttachMent(CMailAnalysis* pana, ATTACH_FILE& attachfile, BOUNDARY_HEAD& stBouHead,  vector<ATTACH>::iterator& ite);
+
+MAILANALYSIS_API int PDF2TXT(string inputFilePath, string outputFilePath, string& outputname, int& nPageNum, int& time);

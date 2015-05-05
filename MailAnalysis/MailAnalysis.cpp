@@ -6,7 +6,7 @@
 #include "../GGDataAPI/utf8.hpp"
 #include "../ReceiveEmail/public.h"
 #include "CodeConvert.h"
-#include "pdf2text.h"
+
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -1947,4 +1947,9 @@ void SaveAttachMent(CMailAnalysis* pana, ATTACH_FILE& attachfile, BOUNDARY_HEAD&
 			pana->m_stEmail.vecAttachFiles.push_back(attachfile);
 		}
 	}
+}
+
+MAILANALYSIS_API int PDF2TXT(string inputFilePath, string outputFilePath, string& outputname, int& nPageNum, int& time)
+{
+	return PDF2Text(inputFilePath, outputFilePath, outputname, nPageNum, time);
 }

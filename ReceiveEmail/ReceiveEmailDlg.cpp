@@ -1329,7 +1329,7 @@ void CReceiveEmailDlg::StopMain()
 	{
 		if (m_hProcess[i])
 		{
-			if (WaitForSingleObject(m_hProcess[i], INFINITE) != WAIT_OBJECT_0)
+			if (WaitForSingleObject(m_hProcess[i], 10000) != WAIT_OBJECT_0)
 			{
 				TerminateThread(m_hProcess[i], 0);
 			}
@@ -1589,11 +1589,11 @@ long CReceiveEmailDlg::MailAnalysis(POP3& pop3, CSQLServer& sql, SMTP& smtp, con
 			}
 			if (sql.SaveToDB(ana.GetEmailItem()) == 0)
 			{
-				//pop3.SaveFileToDB(ana.GetEmailItem());
+				pop3.SaveFileToDB(ana.GetEmailItem());
 			}
 			else
 			{
-				//pop3.DeleteFromDB(ana.GetEmailItem());
+				pop3.DeleteFromDB(ana.GetEmailItem());
 				sql.DeleteFromSQL(ana.GetEmailItem());
 				ana.SetClearType(0);
 			}
