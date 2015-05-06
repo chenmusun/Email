@@ -335,22 +335,28 @@ void POP3::SetInfo(CString csName, const MailBoxInfo& info,LPCTSTR lpPath, long 
 
 long POP3::DelEmail(long lCurrPos,const string& strUIDL)
 {
+	string strSUIDL;
 	int nValue(0), nError(0);
 	char chCommand[128] = { 0 }, chResult[256] = { 0 }, chTemp[65537] = { 0 };
-	sprintf_s(chCommand, 128, "DELE %d\r\n", lCurrPos);
-	nValue = m_Socket.SendData(chCommand, strlen(chCommand));
-	if (nValue <= 0)
+	strSUIDL = GetUIDL(lCurrPos);
+	if (strSUIDL == strUIDL)
 	{
-		return SEND_ERROR;
+		sprintf_s(chCommand, 128, "DELE %d\r\n", lCurrPos);
+		nValue = m_Socket.SendData(chCommand, strlen(chCommand));
+		if (nValue <= 0)
+		{
+			return SEND_ERROR;
+		}
+		nValue = m_Socket.ReceiveData(chResult, 256);
+		if (StringProcess(chResult))
+		{
+			//DeleteFile()
+			sprintf_s(chTemp, 65537, "%s\\%s.eml", m_CurrPath, strUIDL.c_str());
+			if (remove(chTemp) >= 0)
+				return SUCCESS;
+		}
 	}
-	nValue = m_Socket.ReceiveData(chResult, 256);
-	if (!StringProcess(chResult))
-		return RETURN_FAIL;
-	//DeleteFile()
-	sprintf_s(chTemp, 65537, "%s\\%s.eml", m_CurrPath, strUIDL.c_str());
-	if(remove(chTemp)>=0)
-		return SUCCESS;
-	return SUCCESS;
+	return RETURN_FAIL;
 }
 
 void POP3::SetLogPath(const char*pPath)

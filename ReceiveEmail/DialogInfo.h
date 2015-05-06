@@ -28,11 +28,11 @@ public:
 	CString m_csAbb;
 	BOOL m_bSend;
 	CString m_csRecAdd;
-	MailBoxInfo m_info;
 private:
-	
+	MailBoxInfo* m_pInfo;
+	CString* m_pName;
 public:
-	void SetMailBoxInfo(const CString&csName,const MailBoxInfo& info);
+	void SetMailBoxInfo(CString*pcsName,MailBoxInfo* pinfo);
 	virtual void OnOK();
 	long m_lDay;
 };

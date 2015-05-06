@@ -1492,7 +1492,7 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 								ite = UidlData.begin();
 								pDlg->m_showinfo[dwID].lStatus = 1;
 								pDlg->m_showinfo[dwID].lTotal = lCount;
-								for (long i = 1; i < lResult + 1; i++)
+								for (long i = 1,j=1; i < lResult + 1; i++)
 								{
 									if (WaitForSingleObject(__HEVENT_MAIN_EXIT__, 10L) == WAIT_OBJECT_0)
 									{
@@ -1502,10 +1502,6 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 										pop3.Close();
 										break;
 									}
-//#ifdef _DEBUG
-									csDebug.Format(_T("%s Del-Count = %d\r\n"), info.szName, i);
-									OutputDebugString(csDebug);
-//#endif
 									strUDIL.clear();
 									strUDIL = pop3.GetUIDL(i);
 									if (strUDIL.length() > 0)
@@ -1514,7 +1510,11 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 										if (ite != UidlData.end())
 										{
 											if (pop3.DelEmail(i, strUDIL) == SUCCESS)
+											{
 												UidlData.erase(ite);
+												csDebug.Format(_T("%s Del-Count = %d\r\n"), info.szName, j++);
+												OutputDebugString(csDebug);
+											}
 										}
 									}
 									pDlg->m_showinfo[dwID].lCurr = i;
@@ -1647,34 +1647,30 @@ void CReceiveEmailDlg::OnNMDblclkListMailbox(NMHDR *pNMHDR, LRESULT *pResult)
 		ite = m_mailList.find(csName);
 		if (ite != m_mailList.end())
 		{
-			dlg.SetMailBoxInfo(csName, (*ite).second);
+			csTemp.Format(_T("%s"), csName);
+			dlg.SetMailBoxInfo(&csName, &(*ite).second);
 			if (dlg.DoModal() == IDOK)
 			{
 				if (!bRun)
 				{
-					if (dlg.m_csMailAdd != csName)
+					if (csTemp != csName)
 					{
 						MAILLIST_ITE itecheck = m_mailList.begin();
-						itecheck = m_mailList.find(dlg.m_csMailAdd);
+						itecheck = m_mailList.find(csName);
 						if (itecheck != m_mailList.end())
 						{
-							csTemp.Format(_T("已存在[%s]!"), dlg.m_csMailAdd);
+							csTemp.Format(_T("已存在[%s]!"), csName);
 							AfxMessageBox(csTemp);
 						}
 						else
 						{
 							MailBoxInfo info;
 							memset(&info, 0, sizeof(MailBoxInfo));
-							memcpy_s(&info, sizeof(MailBoxInfo), &dlg.m_info, sizeof(MailBoxInfo));
+							memcpy_s(&info, sizeof(MailBoxInfo),&(*ite).second, sizeof(MailBoxInfo));
 							m_mailList.erase(ite);
-							m_mailList.insert(make_pair(dlg.m_csMailAdd, info));
+							m_mailList.insert(make_pair(csName, info));
 							InitMailList();
 						}
-					}
-					else
-					{
-						memset(&(*ite).second, 0, sizeof(MailBoxInfo));
-						memcpy_s(&(*ite).second, sizeof(MailBoxInfo), &dlg.m_info, sizeof(MailBoxInfo));
 					}
 				}
 			}
@@ -1722,7 +1718,14 @@ void CReceiveEmailDlg::OnAdditem()
 		{
 			MailBoxInfo info;
 			memset(&info, 0, sizeof(MailBoxInfo));
-			memcpy_s(&info, sizeof(MailBoxInfo), &dlg.m_info, sizeof(MailBoxInfo));
+			wsprintf(info.szMailAdd, _T("%s"), dlg.m_csMailAdd);
+			wsprintf(info.szName, _T("%s"), dlg.m_csName);
+			wsprintf(info.szAbbreviation, _T("%s"), dlg.m_csAbb);
+			wsprintf(info.szPasswd, _T("%s"), dlg.m_csPasswd);
+			wsprintf(info.szServerAdd, _T("%s"), dlg.m_csSrvAdd);
+			info.bSendMail = dlg.m_bSend;
+			info.lPort = dlg.m_lPort;
+			info.lSaveDay = dlg.m_lDay;
 			m_mailList.insert(make_pair(dlg.m_csMailAdd, info));
 			InitMailList();
 		}

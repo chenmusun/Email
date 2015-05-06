@@ -22,8 +22,9 @@ CDialogInfo::CDialogInfo(CWnd* pParent /*=NULL*/)
 	, m_bSend(FALSE)
 	, m_csRecAdd(_T(""))
 	, m_lDay(0)
+	, m_pInfo(NULL)
+	, m_pName(NULL)
 {
-	memset(&m_info, 0, sizeof(MailBoxInfo));
 }
 
 CDialogInfo::~CDialogInfo()
@@ -51,18 +52,19 @@ END_MESSAGE_MAP()
 
 // CDialogInfo 消息处理程序
 
-void CDialogInfo::SetMailBoxInfo(const CString&csName,const MailBoxInfo& info)
+void CDialogInfo::SetMailBoxInfo(CString*pcsName, MailBoxInfo* pinfo)
 {
-	memcpy_s(&m_info, sizeof(MailBoxInfo), &info, sizeof(MailBoxInfo));
-	m_csMailAdd.Format(_T("%s"), csName);
-	m_csName.Format(_T("%s"), m_info.szName);
-	m_csSrvAdd.Format(_T("%s"), m_info.szServerAdd);
-	m_csPasswd.Format(_T("%s"), m_info.szPasswd);
-	m_csAbb.Format(_T("%s"), m_info.szAbbreviation);
-	m_csRecAdd.Format(_T("%s"),m_info.szMailAdd);
-	m_lPort = m_info.lPort;
-	m_bSend = m_info.bSendMail;
-	m_lDay = m_info.lSaveDay;
+	m_pInfo = pinfo;
+	m_csMailAdd.Format(_T("%s"), *pcsName);
+	m_csName.Format(_T("%s"), pinfo->szName);
+	m_csSrvAdd.Format(_T("%s"), pinfo->szServerAdd);
+	m_csPasswd.Format(_T("%s"), pinfo->szPasswd);
+	m_csAbb.Format(_T("%s"), pinfo->szAbbreviation);
+	m_csRecAdd.Format(_T("%s"), pinfo->szMailAdd);
+	m_lPort = pinfo->lPort;
+	m_bSend = pinfo->bSendMail;
+	m_lDay = pinfo->lSaveDay;
+	m_pName = pcsName;
 }
 
 
@@ -70,11 +72,12 @@ void CDialogInfo::OnOK()
 {
 	// TODO:  在此添加专用代码和/或调用基类
 	UpdateData(TRUE);
+	//UpdateData();
 	CString csText;
 	long lErr(0);
 	do 
 	{
-		if (m_csMailAdd.IsEmpty())
+		if (m_csMailAdd.IsEmpty() || m_csMailAdd.GetLength()>64)
 		{
 			lErr = 1;
 			break;
@@ -84,46 +87,38 @@ void CDialogInfo::OnOK()
 			lErr = 2;
 			break;
 		}
-		if (m_csName.IsEmpty())
+		if (m_csName.IsEmpty() || m_csName.GetLength()>64)
 		{
 			lErr = 3;
 			break;
 		}
-		wsprintf(m_info.szName, _T("%s"),m_csName.Left(63));
-		if (m_csAbb.IsEmpty())
+		if (m_csAbb.IsEmpty() || m_csAbb.GetLength()>64)
 		{
 			lErr = 4;
 			break;
 		}
-		wsprintf(m_info.szAbbreviation, _T("%s"), m_csAbb.Left(63));
-		if (m_csSrvAdd.IsEmpty())
+		if (m_csSrvAdd.IsEmpty() || m_csSrvAdd.GetLength()>64)
 		{
 			lErr = 5; 
 			break;
 		}
-		wsprintf(m_info.szServerAdd, _T("%s"), m_csSrvAdd.Left(63));
-		if (m_csPasswd.IsEmpty())
+		if (m_csPasswd.IsEmpty()||m_csPasswd.GetLength()>128)
 		{
 			lErr = 6; 
 			break;
 		}
-		wsprintf(m_info.szPasswd, _T("%s"), m_csPasswd.Left(127));
 		if (m_lPort<=0)
 		{
 			lErr = 7; 
 			break;
 		}
-		m_info.lPort = m_lPort;
-		m_info.bSendMail = m_bSend;
-		m_info.lSaveDay = m_lDay;
 		if (m_bSend)
 		{
-			if (m_csRecAdd.IsEmpty())
+			if (m_csRecAdd.IsEmpty() || m_csRecAdd.GetLength()>128)
 			{
 				lErr = 8; 
 				break;
 			}
-			wsprintf(m_info.szMailAdd, _T("%s"), m_csRecAdd.Left(63));
 		}
 	} while (0);
 	switch (lErr)
@@ -154,7 +149,19 @@ void CDialogInfo::OnOK()
 		break;
 	case 0:
 	default:
+	{
+		memset(m_pInfo, 0, sizeof(MailBoxInfo));
+		m_pInfo->bSendMail = m_bSend;
+		m_pInfo->lPort = m_lPort;
+		m_pInfo->lSaveDay = m_lDay;
+		wsprintf(m_pInfo->szMailAdd, _T("%s"), m_csRecAdd);
+		wsprintf(m_pInfo->szName, _T("%s"), m_csName);
+		wsprintf(m_pInfo->szAbbreviation, _T("%s"), m_csAbb);
+		wsprintf(m_pInfo->szPasswd, _T("%s"), m_csPasswd);
+		wsprintf(m_pInfo->szServerAdd, _T("%s"), m_csSrvAdd);
+		*m_pName = m_csMailAdd;
 		CDialogEx::OnOK();
+	}
 		break;
 	}
 	if (csText.GetLength() > 0)
