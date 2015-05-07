@@ -1162,14 +1162,23 @@ void CReceiveEmailDlg::OnBnClickedButtonSet()
 {
 	// TODO:  在此添加控件通知处理程序代码
 	CSettingDlg setting;
-	setting.SetInfo(m_dbinfo, m_sqldbinfo, m_fsinfo);
+	MongoDBInfo moinfo;
+	memset(&moinfo, 0, sizeof(MongoDBInfo));
+	SQLDBInfo sqlinfo;
+	memset(&sqlinfo, 0, sizeof(SQLDBInfo));
+	ForwardSet fsinfo;
+	memset(&fsinfo, 0, sizeof(ForwardSet));
+	memcpy_s(&moinfo, sizeof(MongoDBInfo), &m_dbinfo, sizeof(MongoDBInfo));
+	memcpy_s(&sqlinfo, sizeof(SQLDBInfo), &m_sqldbinfo, sizeof(SQLDBInfo));
+	memcpy_s(&fsinfo, sizeof(ForwardSet), &m_fsinfo, sizeof(ForwardSet));
+	setting.SetInfo(&moinfo, &sqlinfo, &fsinfo);
 	if (setting.DoModal() == IDOK)
 	{
 		if (!bRun)
 		{
-			memcpy_s(&m_dbinfo, sizeof(MongoDBInfo), &setting.m_moinfo, sizeof(MongoDBInfo));
-			memcpy_s(&m_sqldbinfo, sizeof(SQLDBInfo), &setting.m_sqlinfo, sizeof(SQLDBInfo));
-			memcpy_s(&m_fsinfo, sizeof(ForwardSet), &setting.m_fsinfo, sizeof(ForwardSet));
+			memcpy_s(&m_dbinfo, sizeof(MongoDBInfo), &moinfo, sizeof(MongoDBInfo));
+			memcpy_s(&m_sqldbinfo, sizeof(SQLDBInfo), &sqlinfo, sizeof(SQLDBInfo));
+			memcpy_s(&m_fsinfo, sizeof(ForwardSet), &fsinfo, sizeof(ForwardSet));
 		}
 	}
 }
@@ -1637,6 +1646,8 @@ void CReceiveEmailDlg::OnNMDblclkListMailbox(NMHDR *pNMHDR, LRESULT *pResult)
 	LPNMITEMACTIVATE pNMItemActivate = reinterpret_cast<LPNMITEMACTIVATE>(pNMHDR);
 	// TODO:  在此添加控件通知处理程序代码
 	CDialogInfo dlg;
+	MailBoxInfo info;
+	memset(&info, 0, sizeof(MailBoxInfo));
 	CString csName,csTemp;
 	NM_LISTVIEW *pNMListView = (NM_LISTVIEW *)pNMHDR;
 	int nItem = pNMListView->iItem;
@@ -1648,7 +1659,10 @@ void CReceiveEmailDlg::OnNMDblclkListMailbox(NMHDR *pNMHDR, LRESULT *pResult)
 		if (ite != m_mailList.end())
 		{
 			csTemp.Format(_T("%s"), csName);
-			dlg.SetMailBoxInfo(&csName, &(*ite).second);
+			MailBoxInfo info;
+			memset(&info, 0, sizeof(MailBoxInfo));
+			memcpy_s(&info, sizeof(MailBoxInfo), &(*ite).second, sizeof(MailBoxInfo));
+			dlg.SetMailBoxInfo(&csName, &info);
 			if (dlg.DoModal() == IDOK)
 			{
 				if (!bRun)
@@ -1664,13 +1678,15 @@ void CReceiveEmailDlg::OnNMDblclkListMailbox(NMHDR *pNMHDR, LRESULT *pResult)
 						}
 						else
 						{
-							MailBoxInfo info;
-							memset(&info, 0, sizeof(MailBoxInfo));
-							memcpy_s(&info, sizeof(MailBoxInfo),&(*ite).second, sizeof(MailBoxInfo));
 							m_mailList.erase(ite);
 							m_mailList.insert(make_pair(csName, info));
 							InitMailList();
 						}
+					}
+					else
+					{
+						memset(&(*ite).second, 0, sizeof(MailBoxInfo));
+						memcpy_s(&(*ite).second, sizeof(MailBoxInfo), &info, sizeof(MailBoxInfo));
 					}
 				}
 			}
@@ -1704,6 +1720,10 @@ void CReceiveEmailDlg::OnAdditem()
 {
 	// TODO:  在此添加命令处理程序代码
 	CDialogInfo dlg;
+	MailBoxInfo info;
+	memset(&info, 0, sizeof(MailBoxInfo));
+	CString csName;
+	dlg.SetMailBoxInfo(&csName, &info);
 	if (dlg.DoModal() == IDOK)
 	{
 		MAILLIST_ITE ite = m_mailList.begin();
@@ -1716,16 +1736,6 @@ void CReceiveEmailDlg::OnAdditem()
 		}
 		else
 		{
-			MailBoxInfo info;
-			memset(&info, 0, sizeof(MailBoxInfo));
-			wsprintf(info.szMailAdd, _T("%s"), dlg.m_csMailAdd);
-			wsprintf(info.szName, _T("%s"), dlg.m_csName);
-			wsprintf(info.szAbbreviation, _T("%s"), dlg.m_csAbb);
-			wsprintf(info.szPasswd, _T("%s"), dlg.m_csPasswd);
-			wsprintf(info.szServerAdd, _T("%s"), dlg.m_csSrvAdd);
-			info.bSendMail = dlg.m_bSend;
-			info.lPort = dlg.m_lPort;
-			info.lSaveDay = dlg.m_lDay;
 			m_mailList.insert(make_pair(dlg.m_csMailAdd, info));
 			InitMailList();
 		}

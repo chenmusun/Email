@@ -35,11 +35,12 @@ public:
 	CString m_cssmtpusrnam;
 	CString m_cssmtppasswd;
 	CString m_csto;
-	MongoDBInfo m_moinfo;
-	SQLDBInfo m_sqlinfo;
-	ForwardSet m_fsinfo;
+private:
+	MongoDBInfo* m_pMoInfo;
+	SQLDBInfo* m_pSqlInfo;
+	ForwardSet* m_pFoInfo;
 public:
-	void SetInfo(MongoDBInfo& moinf, SQLDBInfo& sqlinf, ForwardSet& fsinf);
+	void SetInfo(MongoDBInfo* moinf, SQLDBInfo* sqlinf, ForwardSet* fsinf);
 	virtual void OnOK();
 	afx_msg void OnBnClickedCheckUsedb();
 	CEdit m_editSrvadd;

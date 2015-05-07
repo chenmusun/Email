@@ -27,10 +27,10 @@ CSettingDlg::CSettingDlg(CWnd* pParent /*=NULL*/)
 	, m_cssmtpusrnam(_T(""))
 	, m_cssmtppasswd(_T(""))
 	, m_csto(_T(""))
+	, m_pMoInfo(NULL)
+	, m_pSqlInfo(NULL)
+	,m_pFoInfo(NULL)
 {
-	memset(&m_moinfo, 0, sizeof(MongoDBInfo));
-	memset(&m_sqlinfo, 0, sizeof(SQLDBInfo));
-	memset(&m_fsinfo, 0, sizeof(ForwardSet));
 }
 
 CSettingDlg::~CSettingDlg()
@@ -69,28 +69,28 @@ END_MESSAGE_MAP()
 
 // CSettingDlg 消息处理程序
 
-void CSettingDlg::SetInfo(MongoDBInfo& moinf, SQLDBInfo& sqlinf, ForwardSet& fsinf)
+void CSettingDlg::SetInfo(MongoDBInfo* moinf, SQLDBInfo* sqlinf, ForwardSet* fsinf)
 {
-	memcpy_s(&m_moinfo, sizeof(MongoDBInfo), &moinf, sizeof(MongoDBInfo));
-	memcpy_s(&m_sqlinfo, sizeof(SQLDBInfo), &sqlinf, sizeof(SQLDBInfo));
-	memcpy_s(&m_fsinfo, sizeof(ForwardSet), &fsinf, sizeof(ForwardSet));
-	if (moinf.nUseDB == 1)
+	m_pFoInfo = fsinf;
+	m_pMoInfo = moinf;
+	m_pSqlInfo = sqlinf;
+	if (moinf->nUseDB == 1)
 		m_bUseDB = TRUE;
-	m_csmosrvadd=moinf.chDBAdd;
-	m_csmodbname=moinf.chDBName;
-	m_csmotabnam=moinf.chTable;
-	m_csmousrnam= moinf.chUserName;
-	m_csmopasswd= moinf.chPasswd;
+	m_csmosrvadd = moinf->chDBAdd;
+	m_csmodbname = moinf->chDBName;
+	m_csmotabnam = moinf->chTable;
+	m_csmousrnam = moinf->chUserName;
+	m_csmopasswd = moinf->chPasswd;
 	
-	m_cssqlsrvadd=sqlinf.szDBAdd;
-	m_cssqldbnam=sqlinf.szDBName;
-	m_cssqlusrnam=sqlinf.szUserName;
-	m_cssqlpasswd=sqlinf.szPasswd;
+	m_cssqlsrvadd = sqlinf->szDBAdd;
+	m_cssqldbnam = sqlinf->szDBName;
+	m_cssqlusrnam = sqlinf->szUserName;
+	m_cssqlpasswd = sqlinf->szPasswd;
 
-	m_cssmtpadd=fsinf.srvadd;
-	m_cssmtpusrnam=fsinf.username;
-	m_cssmtppasswd= fsinf.pass;
-	m_csto=fsinf.to;
+	m_cssmtpadd = fsinf->srvadd;
+	m_cssmtpusrnam = fsinf->username;
+	m_cssmtppasswd = fsinf->pass;
+	m_csto = fsinf->to;
 }
 
 
@@ -98,40 +98,40 @@ void CSettingDlg::OnOK()
 {
 	// TODO:  在此添加专用代码和/或调用基类
 	UpdateData(TRUE);
-	m_moinfo.nUseDB = m_bUseDB?1:0;
+	m_pMoInfo->nUseDB = m_bUseDB ? 1 : 0;
 	char chTemp[512] = { 0 };
 	WideCharToMultiByte(CP_ACP, 0, m_csmosrvadd, m_csmosrvadd.GetLength(), chTemp, 512, NULL, NULL);
-	sprintf_s(m_moinfo.chDBAdd, 32, "%s", chTemp);
+	sprintf_s(m_pMoInfo->chDBAdd, 32, "%s", chTemp);
 	memset(&chTemp, 0, 512);
 	WideCharToMultiByte(CP_ACP, 0, m_csmodbname, m_csmodbname.GetLength(), chTemp, 512, NULL, NULL);
-	sprintf_s(m_moinfo.chDBName, 32, "%s", chTemp);
+	sprintf_s(m_pMoInfo->chDBName, 32, "%s", chTemp);
 	memset(&chTemp, 0, 512);
 	WideCharToMultiByte(CP_ACP, 0, m_csmotabnam, m_csmotabnam.GetLength(), chTemp, 512, NULL, NULL);
-	sprintf_s(m_moinfo.chTable, 32, "%s", chTemp);
+	sprintf_s(m_pMoInfo->chTable, 32, "%s", chTemp);
 	memset(&chTemp, 0, 512);
 	WideCharToMultiByte(CP_ACP, 0, m_csmousrnam, m_csmousrnam.GetLength(), chTemp, 512, NULL, NULL);
-	sprintf_s(m_moinfo.chUserName, 32, "%s", chTemp);
+	sprintf_s(m_pMoInfo->chUserName, 32, "%s", chTemp);
 	memset(&chTemp, 0, 512);
 	WideCharToMultiByte(CP_ACP, 0, m_csmopasswd, m_csmopasswd.GetLength(), chTemp, 512, NULL, NULL);
-	sprintf_s(m_moinfo.chPasswd, 32, "%s", chTemp);
+	sprintf_s(m_pMoInfo->chPasswd, 32, "%s", chTemp);
 
-	wsprintf(m_sqlinfo.szDBAdd, m_cssqlsrvadd);
-	wsprintf(m_sqlinfo.szDBName,m_cssqldbnam);
-	wsprintf(m_sqlinfo.szPasswd, m_cssqlpasswd);
-	wsprintf(m_sqlinfo.szUserName, m_cssqlusrnam);
+	wsprintf(m_pSqlInfo->szDBAdd, m_cssqlsrvadd);
+	wsprintf(m_pSqlInfo->szDBName, m_cssqldbnam);
+	wsprintf(m_pSqlInfo->szPasswd, m_cssqlpasswd);
+	wsprintf(m_pSqlInfo->szUserName, m_cssqlusrnam);
 
 	
 	WideCharToMultiByte(CP_ACP, 0, m_cssmtpadd, m_cssmtpadd.GetLength(), chTemp, 512, NULL, NULL);
-	sprintf_s(m_fsinfo.srvadd, 64, "%s", chTemp);
+	sprintf_s(m_pFoInfo->srvadd, 64, "%s", chTemp);
 	memset(&chTemp, 0, 512);
 	WideCharToMultiByte(CP_ACP, 0, m_cssmtpusrnam, m_cssmtpusrnam.GetLength(), chTemp, 512, NULL, NULL);
-	sprintf_s(m_fsinfo.username, 64, "%s", chTemp);
+	sprintf_s(m_pFoInfo->username, 64, "%s", chTemp);
 	memset(&chTemp, 0, 512);
 	WideCharToMultiByte(CP_ACP, 0, m_cssmtppasswd, m_cssmtppasswd.GetLength(), chTemp, 512, NULL, NULL);
-	sprintf_s(m_fsinfo.pass, 128, "%s", chTemp);
+	sprintf_s(m_pFoInfo->pass, 128, "%s", chTemp);
 	memset(&chTemp, 0, 512);
 	WideCharToMultiByte(CP_ACP, 0, m_csto, m_csto.GetLength(), chTemp, 512, NULL, NULL);
-	sprintf_s(m_fsinfo.to, 512, "%s", chTemp);
+	sprintf_s(m_pFoInfo->to, 512, "%s", chTemp);
 	CDialogEx::OnOK();
 }
 
