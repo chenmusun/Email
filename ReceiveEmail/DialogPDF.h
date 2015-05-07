@@ -33,4 +33,5 @@ public:
 	CMFCEditBrowseCtrl m_Path;
 	CString m_csFilePath;
 	afx_msg void OnBnClickedMfcbuttonPdf2txt();
+	afx_msg void OnBnClickedMfcbuttonOpenfo();
 };

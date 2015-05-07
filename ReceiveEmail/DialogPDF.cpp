@@ -41,6 +41,7 @@ void CDialogPDF::DoDataExchange(CDataExchange* pDX)
 BEGIN_MESSAGE_MAP(CDialogPDF, CDialogEx)
 	ON_BN_CLICKED(IDC_MFCBUTTON_GET, &CDialogPDF::OnBnClickedMfcbuttonGet)
 	ON_BN_CLICKED(IDC_MFCBUTTON_PDF2TXT, &CDialogPDF::OnBnClickedMfcbuttonPdf2txt)
+	ON_BN_CLICKED(IDC_MFCBUTTON_OPENFO, &CDialogPDF::OnBnClickedMfcbuttonOpenfo)
 END_MESSAGE_MAP()
 
 
@@ -128,4 +129,13 @@ void CDialogPDF::OnBnClickedMfcbuttonPdf2txt()
 			AfxMessageBox(csTemp);
 		}
 	}	
+}
+
+
+void CDialogPDF::OnBnClickedMfcbuttonOpenfo()
+{
+	// TODO:  在此添加控件通知处理程序代码
+	UpdateData(TRUE);
+	if (!m_csSavePath.IsEmpty())
+		ShellExecute(NULL, _T("open"), m_csSavePath, NULL, NULL, SW_SHOWNORMAL);
 }
