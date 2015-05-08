@@ -1929,20 +1929,14 @@ void SaveAttachMent(CMailAnalysis* pana, ATTACH_FILE& attachfile, BOUNDARY_HEAD&
 			{
 				WideCharToMultiByte(CP_ACP, 0, attachfile.csFilePath, attachfile.csFilePath.GetLength(), chPath, 512, NULL, NULL);				strInputPath = chPath;				memset(&chPath, 0, 512);				WideCharToMultiByte(CP_ACP, 0, pana->m_csSavePath, pana->m_csSavePath.GetLength(), chPath, 512, NULL, NULL);				strOutputPath = chPath;				strOutputPath.append("\\");
 				if (PDF2Text(strInputPath, strOutputPath, strOutPutName, attachfile.nPageNum, attachfile.nTime) == 0)
-				{
-					attachfile.csFileText = strOutPutName.c_str();
-#ifdef _DEBUG
-					CString csDebug;
-					csDebug.Format(_T("ElapsedTime = %dms\tPageNum = %d\r\n"), attachfile.nTime, attachfile.nPageNum);
-					OutputDebugString(csDebug);
-#endif
-				}
-				else
-				{
-					sprintf_s(chPath, 512, "PDF2Text [%s] Error!", strInputPath.c_str());
-					pana->m_log.Log(chPath, strlen(chPath));
-					pana->SetClearType(0);
-				}
+				{
+					attachfile.csFileText = strOutPutName.c_str();
+#ifdef _DEBUG					CString csDebug;					csDebug.Format(_T("ElapsedTime = %dms\tPageNum = %d\r\n"), attachfile.nTime, attachfile.nPageNum);					OutputDebugString(csDebug);
+#endif
+				}
+				else
+				{					sprintf_s(chPath, 512, "PDF2Text [%s] Error!", strInputPath.c_str());					pana->m_log.Log(chPath, strlen(chPath));					pana->SetClearType(0);
+				}
 			}
 			pana->m_stEmail.vecAttachFiles.push_back(attachfile);
 		}

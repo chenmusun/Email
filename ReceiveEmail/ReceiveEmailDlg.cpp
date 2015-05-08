@@ -44,7 +44,7 @@ DWORD WINAPI  CReceiveEmailDlg::_AfxMain(LPVOID lpParam)
 		CString csDebug;
 //#endif
 		map<DWORD, ShowInfo>::iterator ite = pDlg->m_showinfo.begin();
-		long lCurrPos = 0;
+		long lCurrPos = 0,lPercent(0);
 		double dValue(0);
 		while (true)
 		{
@@ -63,19 +63,20 @@ DWORD WINAPI  CReceiveEmailDlg::_AfxMain(LPVOID lpParam)
 					OutputDebugStringA("WAIT1 __HEVENT_EXIT__\r\n");
 					break;
 				}
-				dValue = (double)ite->second.lCurr / ite->second.lTotal;
+				dValue = ite->second.lTotal<=0?0:(double)ite->second.lCurr / ite->second.lTotal;
+				lPercent = (long)(dValue * 100);
 				switch (ite->second.lStatus)
 				{
 				case 0:
-					swprintf_s(szInfo, 128, _T("%s\t[%d/%d]"), ite->second.szName, ite->second.lCurr, ite->second.lTotal);
+					swprintf_s(szInfo, 128, _T("%s\t[%d/%d]\t[%d%%]"), ite->second.szName, ite->second.lCurr, ite->second.lTotal, lPercent);
 					break;
 				case 1:
-					swprintf_s(szInfo, 128, _T("清理----%s\t[%d/%d]"), ite->second.szName, ite->second.lCurr, ite->second.lTotal);
+					swprintf_s(szInfo, 128, _T("清理----%s\t[%d/%d]\t[%d%%]"), ite->second.szName, ite->second.lCurr, ite->second.lTotal, lPercent);
 					break;
 				default:
 					break;
 				}
-				pDlg->SetShowInfo(lCurrPos, szInfo, (long)(dValue * 100));
+				pDlg->SetShowInfo(lCurrPos, szInfo, lPercent);
 				ite++;
 				lCurrPos++;
 			}
@@ -1501,7 +1502,7 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 								ite = UidlData.begin();
 								pDlg->m_showinfo[dwID].lStatus = 1;
 								pDlg->m_showinfo[dwID].lTotal = lCount;
-								for (long i = 1,j=1; i < lResult + 1; i++)
+								for (long i = 1,j=0; i < lResult + 1; i++)
 								{
 									if (WaitForSingleObject(__HEVENT_MAIN_EXIT__, 10L) == WAIT_OBJECT_0)
 									{
@@ -1526,7 +1527,7 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 											}
 										}
 									}
-									pDlg->m_showinfo[dwID].lCurr = i;
+									pDlg->m_showinfo[dwID].lCurr = j;
 								}
 							}
 							pop3.QuitDataBase();
