@@ -239,7 +239,7 @@ BOOL CDataBase::DelUIDL(const string& strUIDL, const string& strName)
 
 BOOL CDataBase::GetFileFromMongoDB(const string& strFileName,const string&strSavePath,string& strErr)
 {
-	BOOL bRet = FALSE;
+	BOOL bRet = TRUE;
 	string strTemp,strTempPath;
 	int nStart(0);
 	if (strFileName.length() <= 0)
@@ -266,9 +266,10 @@ BOOL CDataBase::GetFileFromMongoDB(const string& strFileName,const string&strSav
 					size = file.getContentLength();
 					afsize = file.write(strPath);
 				}
+				else strErr = "File not exists!";
 			}
 			if (size > 0 && size == afsize)
-				bRet = TRUE;
+				bRet = bRet?TRUE:FALSE;
 			else bRet = FALSE;
 			pos = strFileName.find(";", nStart);
 		}

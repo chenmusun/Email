@@ -3209,7 +3209,7 @@ long CSQLServer::SaveAttachment(ATTACH_FILE& attach, long lEmailID)
 		}
 		CADOCommand * pEMAttachCmd = new CADOCommand(&m_db);
 		if (pEMAttachCmd == NULL) throw;
-		TCHAR szAttachCmdText[512] = _T("INSERT INTO [ReportEmailDB].[dbo].[T_REPORT_FILES](GUID, FileName, FileSize,FilePages,AffixType,EmailID,ElapsedTime,KeyValue) VALUES(CONVERT(UNIQUEIDENTIFIER, ?), ?, ?,?,?,?,?,?)");
+		TCHAR szAttachCmdText[512] = _T("INSERT INTO [ReportEmailDB].[dbo].[T_REPORT_FILES](GUID, FileName, FileSize,FilePages,AffixType,EmailID,ElapsedTime,KeyValue,RemoteName) VALUES(CONVERT(UNIQUEIDENTIFIER, ?), ?, ?,?,?,?,?,?,?)");
 		pEMAttachCmd->AddParameter(_T("GUID"), adGUID, CADOParameter::paramInput, csGuid.GetLength()*sizeof(TCHAR), _bstr_t(csGuid.GetBuffer(0)));
 		if (attach.csFileName.IsEmpty())
 			attach.csFileName.Format(_T("NULL"));
@@ -3256,6 +3256,9 @@ long CSQLServer::SaveAttachment(ATTACH_FILE& attach, long lEmailID)
 		if (csKey.IsEmpty())
 			csKey.Format(_T("NULL"));
 		pEMAttachCmd->AddParameter(_T("KeyValue"), adVarChar, CADOParameter::paramInput, csKey.GetLength()*sizeof(TCHAR), _bstr_t(csKey.GetBuffer(0)));
+		if (attach.csRemoteName.IsEmpty())
+			attach.csRemoteName.Format(_T("NULL"));
+		pEMAttachCmd->AddParameter(_T("RemoteName"), adVarChar, CADOParameter::paramInput, attach.csRemoteName.GetLength()*sizeof(TCHAR), _bstr_t(attach.csRemoteName.GetBuffer(0)));
 		pEMAttachCmd->SetText(szAttachCmdText);
 		if (!pEMAttachCmd->Execute(adCmdText))
 		{
