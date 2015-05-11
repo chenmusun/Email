@@ -1465,7 +1465,7 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 #ifdef _DEBUG
 											lType = 0;
 #endif
-											if (pDlg->MailAnalysis(pop3, sql, smtp, strUDIL, info, lType)<0)//邮件解析
+											if (pDlg->MailAnalysis(pop3, sql, smtp, strUDIL, info, chLogPath,lType)<0)//邮件解析
 											{
 												sprintf_s(chDebug, 512, "Analysis [%s] Error!", strUDIL.c_str());
 //#ifdef _DEBUG
@@ -1566,7 +1566,7 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 	return 0;
 }
 
-long CReceiveEmailDlg::MailAnalysis(POP3& pop3, CSQLServer& sql, SMTP& smtp, const string& strUIDL, const MailBoxInfo& info, long lType)
+long CReceiveEmailDlg::MailAnalysis(POP3& pop3, CSQLServer& sql, SMTP& smtp, const string& strUIDL, const MailBoxInfo& info, const char* pLogPath, long lType)
 {
 	BOOL bRet = TRUE;
 	CString csUIDL(strUIDL.c_str()), csPath(pop3.GetCurrPath());
@@ -1575,6 +1575,7 @@ long CReceiveEmailDlg::MailAnalysis(POP3& pop3, CSQLServer& sql, SMTP& smtp, con
 	ana.SetAbbreviation(info.szAbbreviation);
 	if(ana.LoadFile(csPath, csUIDL)==0)
 	{
+		ana.SetLogPath(pLogPath);
 		ana.SetClearType(lType);
 		dwTime = GetTickCount64();
 		do
