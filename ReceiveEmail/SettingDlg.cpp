@@ -5,6 +5,8 @@
 #include "ReceiveEmail.h"
 #include "SettingDlg.h"
 #include "afxdialogex.h"
+#include "../DataBase/DataBase.h"
+#include "../SQLServer/SQLServer.h"
 
 
 // CSettingDlg 对话框
@@ -64,6 +66,8 @@ void CSettingDlg::DoDataExchange(CDataExchange* pDX)
 
 BEGIN_MESSAGE_MAP(CSettingDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_CHECK_USEDB, &CSettingDlg::OnBnClickedCheckUsedb)
+	ON_BN_CLICKED(IDC_MFCBUTTON_MOTEST, &CSettingDlg::OnBnClickedMfcbuttonMotest)
+	ON_BN_CLICKED(IDC_MFCBUTTON_SQLTEST, &CSettingDlg::OnBnClickedMfcbuttonSqltest)
 END_MESSAGE_MAP()
 
 
@@ -175,4 +179,71 @@ BOOL CSettingDlg::OnInitDialog()
 
 	return TRUE;  // return TRUE unless you set the focus to a control
 	// 异常:  OCX 属性页应返回 FALSE
+}
+
+
+void CSettingDlg::OnBnClickedMfcbuttonMotest()
+{
+	// TODO:  在此添加控件通知处理程序代码
+	UpdateData(TRUE);
+	m_pMoInfo->nUseDB = m_bUseDB ? 1 : 0;
+	char chTemp[512] = { 0 };
+	WideCharToMultiByte(CP_ACP, 0, m_csmosrvadd, m_csmosrvadd.GetLength(), chTemp, 512, NULL, NULL);
+	sprintf_s(m_pMoInfo->chDBAdd, 32, "%s", chTemp);
+	memset(&chTemp, 0, 512);
+	WideCharToMultiByte(CP_ACP, 0, m_csmodbname, m_csmodbname.GetLength(), chTemp, 512, NULL, NULL);
+	sprintf_s(m_pMoInfo->chDBName, 32, "%s", chTemp);
+	memset(&chTemp, 0, 512);
+	WideCharToMultiByte(CP_ACP, 0, m_csmotabnam, m_csmotabnam.GetLength(), chTemp, 512, NULL, NULL);
+	sprintf_s(m_pMoInfo->chTable, 32, "%s", chTemp);
+	memset(&chTemp, 0, 512);
+	WideCharToMultiByte(CP_ACP, 0, m_csmousrnam, m_csmousrnam.GetLength(), chTemp, 512, NULL, NULL);
+	sprintf_s(m_pMoInfo->chUserName, 32, "%s", chTemp);
+	memset(&chTemp, 0, 512);
+	WideCharToMultiByte(CP_ACP, 0, m_csmopasswd, m_csmopasswd.GetLength(), chTemp, 512, NULL, NULL);
+	sprintf_s(m_pMoInfo->chPasswd, 32, "%s", chTemp);
+	if (m_pMoInfo->nUseDB == 1)
+	{
+		CDataBase db;
+		CString csDebug;
+		string strErr;
+		db.SetDBInfo(*m_pMoInfo);
+		if (db.ConnectDataBase(strErr))
+		{
+			db.DisConnectDataBase();
+			char chDebug[512] = { 0 };
+			sprintf_s(chDebug, 512, "Connect [%s]-[%s] Success!", m_pMoInfo->chDBAdd, m_pMoInfo->chDBName);
+			csDebug = chDebug;
+		}
+		else
+		{
+			csDebug.Format(_T("Conncet failed! "));
+			csDebug += strErr.c_str();
+			
+		}
+		AfxMessageBox(csDebug);
+	}
+}
+
+
+void CSettingDlg::OnBnClickedMfcbuttonSqltest()
+{
+	// TODO:  在此添加控件通知处理程序代码
+	UpdateData(TRUE);
+	wsprintf(m_pSqlInfo->szDBAdd, m_cssqlsrvadd);
+	wsprintf(m_pSqlInfo->szDBName, m_cssqldbnam);
+	wsprintf(m_pSqlInfo->szPasswd, m_cssqlpasswd);
+	wsprintf(m_pSqlInfo->szUserName, m_cssqlusrnam);
+	CSQLServer sql;
+	CString csDebug;
+	if (sql.Connect(*m_pSqlInfo))
+	{
+		sql.CloseDB();
+		csDebug.Format(_T("Connect [%s]-[%s] Success!"),m_pSqlInfo->szDBAdd,m_pSqlInfo->szDBName);
+	}
+	else
+	{
+		csDebug.Format(_T("Conncet failed! "));
+	}
+	AfxMessageBox(csDebug);
 }

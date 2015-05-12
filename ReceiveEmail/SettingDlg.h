@@ -49,4 +49,6 @@ public:
 	CEdit m_editUsrnam;
 	CEdit m_editPass;
 	virtual BOOL OnInitDialog();
+	afx_msg void OnBnClickedMfcbuttonMotest();
+	afx_msg void OnBnClickedMfcbuttonSqltest();
 };
