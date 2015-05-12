@@ -523,12 +523,6 @@ void CReceiveEmailDlg::OnDestroy()
 	CDialogEx::OnDestroy();
 
 	// TODO:  在此处添加消息处理程序代码
-	/*if (m_pTestTheradPool)
-	{
-		m_pTestTheradPool->StopAndWait(FTL_MAX_THREAD_DEADLINE_CHECK);
-		delete m_pTestTheradPool;
-		m_pTestTheradPool = NULL;
-	}*/
 }
 
 BOOL CReceiveEmailDlg::GetMailBoxInfo(CString&csUserName, MailBoxInfo& info, long lStatus)
@@ -771,6 +765,7 @@ void CReceiveEmailDlg::Stop(long lType)//用于停止工作分配线程
 	}
 	for (int n = 0; n < 5; n++)
 		m_TextWnd[n] = -1;
+	m_showinfo.clear();
 }
 
 void CReceiveEmailDlg::SetShowInfo(long lTextWnd, LPCTSTR lpName, long lProgress)
@@ -1358,7 +1353,6 @@ void CReceiveEmailDlg::StopMain()
 		ite->second.lStatus = 0;
 		ite++;
 	}
-	//m_showinfo.clear();
 //#ifdef _DEBUG
 	OutputDebugStringA("STOP　MAIN\r\n");
 //#endif
@@ -1532,6 +1526,7 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 							}
 							pop3.QuitDataBase();
 							pDlg->GetMailBoxInfo(csUserName, info,0);
+							memset(&pDlg->m_showinfo[dwID], 0, sizeof(ShowInfo));
 						}
 					}// end of if
 				}
