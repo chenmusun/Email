@@ -186,28 +186,30 @@ void CSettingDlg::OnBnClickedMfcbuttonMotest()
 {
 	// TODO:  在此添加控件通知处理程序代码
 	UpdateData(TRUE);
-	m_pMoInfo->nUseDB = m_bUseDB ? 1 : 0;
+	MongoDBInfo moinfo;
+	memset(&moinfo, 0, sizeof(MongoDBInfo));
+	moinfo.nUseDB = m_bUseDB ? 1 : 0;
 	char chTemp[512] = { 0 };
 	WideCharToMultiByte(CP_ACP, 0, m_csmosrvadd, m_csmosrvadd.GetLength(), chTemp, 512, NULL, NULL);
-	sprintf_s(m_pMoInfo->chDBAdd, 32, "%s", chTemp);
+	sprintf_s(moinfo.chDBAdd, 32, "%s", chTemp);
 	memset(&chTemp, 0, 512);
 	WideCharToMultiByte(CP_ACP, 0, m_csmodbname, m_csmodbname.GetLength(), chTemp, 512, NULL, NULL);
-	sprintf_s(m_pMoInfo->chDBName, 32, "%s", chTemp);
+	sprintf_s(moinfo.chDBName, 32, "%s", chTemp);
 	memset(&chTemp, 0, 512);
 	WideCharToMultiByte(CP_ACP, 0, m_csmotabnam, m_csmotabnam.GetLength(), chTemp, 512, NULL, NULL);
-	sprintf_s(m_pMoInfo->chTable, 32, "%s", chTemp);
+	sprintf_s(moinfo.chTable, 32, "%s", chTemp);
 	memset(&chTemp, 0, 512);
 	WideCharToMultiByte(CP_ACP, 0, m_csmousrnam, m_csmousrnam.GetLength(), chTemp, 512, NULL, NULL);
-	sprintf_s(m_pMoInfo->chUserName, 32, "%s", chTemp);
+	sprintf_s(moinfo.chUserName, 32, "%s", chTemp);
 	memset(&chTemp, 0, 512);
 	WideCharToMultiByte(CP_ACP, 0, m_csmopasswd, m_csmopasswd.GetLength(), chTemp, 512, NULL, NULL);
-	sprintf_s(m_pMoInfo->chPasswd, 32, "%s", chTemp);
-	if (m_pMoInfo->nUseDB == 1)
+	sprintf_s(moinfo.chPasswd, 32, "%s", chTemp);
+	if (moinfo.nUseDB == 1)
 	{
 		CDataBase db;
 		CString csDebug;
 		string strErr;
-		db.SetDBInfo(*m_pMoInfo);
+		db.SetDBInfo(moinfo);
 		if (db.ConnectDataBase(strErr))
 		{
 			db.DisConnectDataBase();
@@ -230,13 +232,15 @@ void CSettingDlg::OnBnClickedMfcbuttonSqltest()
 {
 	// TODO:  在此添加控件通知处理程序代码
 	UpdateData(TRUE);
-	wsprintf(m_pSqlInfo->szDBAdd, m_cssqlsrvadd);
-	wsprintf(m_pSqlInfo->szDBName, m_cssqldbnam);
-	wsprintf(m_pSqlInfo->szPasswd, m_cssqlpasswd);
-	wsprintf(m_pSqlInfo->szUserName, m_cssqlusrnam);
+	SQLDBInfo sqlinfo;
+	memset(&sqlinfo, 0, sizeof(SQLDBInfo));
+	wsprintf(sqlinfo.szDBAdd, m_cssqlsrvadd);
+	wsprintf(sqlinfo.szDBName, m_cssqldbnam);
+	wsprintf(sqlinfo.szPasswd, m_cssqlpasswd);
+	wsprintf(sqlinfo.szUserName, m_cssqlusrnam);
 	CSQLServer sql;
 	CString csDebug;
-	if (sql.Connect(*m_pSqlInfo))
+	if (sql.Connect(sqlinfo))
 	{
 		sql.CloseDB();
 		csDebug.Format(_T("Connect [%s]-[%s] Success!"),m_pSqlInfo->szDBAdd,m_pSqlInfo->szDBName);
