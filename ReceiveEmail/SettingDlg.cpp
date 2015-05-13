@@ -221,7 +221,6 @@ void CSettingDlg::OnBnClickedMfcbuttonMotest()
 		{
 			csDebug.Format(_T("Conncet failed! "));
 			csDebug += strErr.c_str();
-			
 		}
 		AfxMessageBox(csDebug);
 	}

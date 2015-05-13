@@ -250,18 +250,6 @@ long POP3::GetEMLFile(long lCurrPos,const string& strUIDL)
 				OutputDebugString(csDebug);
 //#endif
 			}
-			/*else if (n == 0)
-			{
-			CString csLog;
-			csLog.Format(_T("Connection closed\n"));
-			#ifdef DEBUG
-			csDebug = csLog;
-			OutputDebugString(csDebug);
-			#endif
-			nError = WSAGetLastError();
-			m_log.Log(nError);
-			m_log.Log(csLog, csLog.GetLength());
-			}*/
 			else if (n<=0)
 			{
 				CString csLog;
@@ -280,6 +268,7 @@ long POP3::GetEMLFile(long lCurrPos,const string& strUIDL)
 				if (lRecSize < lTotalSize)
 				{
 					nFailedCount++;
+					Sleep(500);
 					continue;
 				}
 				break;
@@ -417,5 +406,10 @@ BOOL POP3::DeleteFromDB(EMAIL_ITEM& email)
 void POP3::SetDBinfo(const MongoDBInfo& dbinfo)
 {
 	m_db.SetDBInfo(dbinfo);
+}
+
+BOOL POP3::DeleteFromDB(const string& strUIDL)
+{
+	return m_db.DelUIDL(strUIDL);
 }
 /////////////////////////////////////////////////////////////////////

@@ -30,6 +30,7 @@ public:
 	BOOL ConnectDataBase();
 	void POP3::QuitDataBase();
 	void SetDBinfo(const MongoDBInfo& dbinfo);
+	BOOL DeleteFromDB(const string& strUIDL);
 private:
 	MailSocket m_Socket;//POP3套接字
 	char m_CurrPath[MAX_PATH];//当前路径

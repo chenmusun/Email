@@ -364,7 +364,8 @@ long CMailAnalysis::AnalysisHead()
 	{
 		csTemp.Empty();
 		StringProcess(csSubject.GetAt(i), csTemp, _SUBJECT_);
-		csOutPut.AppendFormat(_T("%s"), StringEncode(csTemp));
+		StringProcess(csTemp, csTemp);
+		csOutPut.AppendFormat(_T("%s"), csTemp);
 	}
 	if (!csOutPut.IsEmpty())
 		m_stEmail.csSubject = csOutPut;
@@ -904,38 +905,38 @@ long CMailAnalysis::GetContentInfo(const CString& csSrc, CString& csContent, CSt
 						csName = csText;
 						StringProcess(csName, csName);
 						nLast = 0;
-						do
-						{
-							nPos = csName.Find(_T("?=\t=?"), nLast);
-							if (nPos < 0)
-							{
-								nPos = csName.Find(_T("?= =?"), nLast);
-								if (nPos < 0)
-								{
-									csNameTemp = csName.Mid(nLast);
-									StringProcess(csNameTemp, csNameTemp);
-									csCnName.Append(StringEncode(csNameTemp));
-								}
-								else
-								{
-									//nPos += 2;
-									csNameTemp = csName.Mid(nLast, nPos - nLast);
-									nLast = nPos + 1;
-									csNameTemp.Replace(_T("\t"), _T(""));
-									StringProcess(csNameTemp, csNameTemp);
-									csCnName.Append(StringEncode(csNameTemp));
-								}
-							}
-							else
-							{
-								nPos += 2;
-								csNameTemp = csName.Mid(nLast, nPos - nLast);
-								nLast = nPos + 1;
-								csNameTemp.Replace(_T("\t"), _T(""));
-								StringProcess(csNameTemp, csNameTemp);
-								csCnName.Append(StringEncode(csNameTemp));
-							}
-						} while (nPos >= 0);
+						//do
+						//{
+						//	nPos = csName.Find(_T("?=\t=?"), nLast);
+						//	if (nPos < 0)
+						//	{
+						//		nPos = csName.Find(_T("?= =?"), nLast);
+						//		if (nPos < 0)
+						//		{
+						//			csNameTemp = csName.Mid(nLast);
+						//			StringProcess(csNameTemp, csNameTemp);
+						//			csCnName.Append(StringEncode(csNameTemp));
+						//		}
+						//		else
+						//		{
+						//			//nPos += 2;
+						//			csNameTemp = csName.Mid(nLast, nPos - nLast);
+						//			nLast = nPos + 1;
+						//			csNameTemp.Replace(_T("\t"), _T(""));
+						//			StringProcess(csNameTemp, csNameTemp);
+						//			csCnName.Append(StringEncode(csNameTemp));
+						//		}
+						//	}
+						//	else
+						//	{
+						//		nPos += 2;
+						//		csNameTemp = csName.Mid(nLast, nPos - nLast);
+						//		nLast = nPos + 1;
+						//		csNameTemp.Replace(_T("\t"), _T(""));
+						//		StringProcess(csNameTemp, csNameTemp);
+						//		csCnName.Append(StringEncode(csNameTemp));
+						//	}
+						//} while (nPos >= 0);
 						csName = csCnName;
 						csExtra = csName;
 						nRet = i;
@@ -1490,11 +1491,15 @@ void CMailAnalysis::Clear()
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 BOOL StringProcess(const CString& csSrc, CString& csDest)
 {
-	int nOffset(0), nEnd(0);
+	int nOffset(0), nEnd(0),nPos(0),nLast(0);
 	if (csSrc.IsEmpty())
 		return FALSE;
-	CString csTemp(csSrc);
+	CString csTemp(csSrc),csTemp2,csDecode;
 	csDest = csSrc;
+	if (csTemp.Find(_T("\t")) == 0)
+	{
+		csTemp = csTemp.Mid(1);
+	}
 	nOffset = csTemp.Find(_T("\""));
 	if (nOffset == 0)
 	{
@@ -1504,6 +1509,7 @@ BOOL StringProcess(const CString& csSrc, CString& csDest)
 		if (nOffset >= 0 && nOffset == nEnd)
 		{
 			csDest = csTemp.Mid(0, nEnd);
+			csTemp = csDest;
 		}
 	}
 	nOffset = csTemp.Find(_T("<"));
@@ -1515,22 +1521,52 @@ BOOL StringProcess(const CString& csSrc, CString& csDest)
 		if (nOffset >= 0 && nOffset == nEnd)
 		{
 			csDest = csTemp.Mid(0, nEnd);
+			csTemp = csDest;
 		}
 	}
-	//else csDest = csSrc;
 	//=? ?=
+	csTemp2.Empty();
 	nOffset = csTemp.Find(_T("=?"));
 	if (nOffset == 0)
 	{
-		csTemp = csTemp.Right(csTemp.GetLength() - nOffset - 2);
-		//nOffset = csTemp.Find(_T("?="));
-		nEnd = csTemp.ReverseFind(_T('?'));
-		nOffset = csTemp.ReverseFind(_T('='));
-		if (nEnd >= 0 && (nOffset - nEnd == 1))
+/////////////////////////////////////////////////////////////////////////////////////////////////////////
+		do 
 		{
-			csDest = csTemp.Mid(0, nEnd);
-			return TRUE;
-		}
+			nPos = csTemp.Find(_T("?=\t=?"), nLast);
+			if (nPos<0)
+			{
+				nPos = csTemp.Find(_T("?= =?"), nLast);
+				if (nPos<0)
+				{
+					//nPos = csTemp.Find(_T("?="), nLast);
+					nEnd = csTemp.ReverseFind(_T('?'));
+					nOffset = csTemp.ReverseFind(_T('='));
+					if (nEnd>0 && (nOffset - nEnd == 1))
+					{
+						csTemp2 = csTemp.Mid(nLast + 2, nEnd - nLast - 2);
+						nLast = nPos + 2;
+						csDecode.AppendFormat(_T("%s"), StringEncode(csTemp2));
+					}
+				}
+				else
+				{
+					csTemp2=csTemp.Mid(nLast+2, nPos - nLast-2);
+					nLast = nPos + 3;
+					csDecode.AppendFormat(_T("%s"),StringEncode(csTemp2));
+				}
+			}
+			else
+			{
+				csTemp2 = csTemp.Mid(nLast + 2, nEnd - nLast - 2);
+				csTemp2 = csTemp.Mid(nLast, nPos - nLast);
+				nLast = nPos + 3;
+				csDecode.AppendFormat(_T("%s"), StringEncode(csTemp2));
+			}
+		} while (nPos>0);
+		if (!csDecode.IsEmpty())
+			csDest = csDecode;
+		else csDest = csTemp;
+/////////////////////////////////////////////////////////////////////////////////////////////////////////
 	}
 	//= =
 	else
@@ -1548,13 +1584,18 @@ BOOL StringProcess(const CString& csSrc, CString& csDest)
 		}
 		//else csDest = csSrc;
 	}
-	return FALSE;
+	//return FALSE;
+	return TRUE;
 }
 
 void StringProcess(const CString& csSrc, CString& csDest, CString& csExtra, int nFlag)
 {
 	if (csSrc.IsEmpty())
+	{
+		csDest.Empty();
+		csExtra.Empty();
 		return;
+	}
 	CString csTemp(csSrc);
 	csDest = csTemp;
 	int nOffset(0), nEnd(0), nTemp(0);
@@ -1746,10 +1787,8 @@ CString StringEncode(const CString& csSrc)
 {
 	int nOffset(0), nEnd(0), nStart(0), nCharset(-1), nCodetype(-1);
 	CString csRet, csTemp, csTemp2(csSrc);
-	StringProcess(csSrc, csRet);
-	csTemp = csRet;
+	csTemp = csRet = csSrc;
 	csTemp.MakeLower();
-
 	do 
 	{
 		nOffset = csTemp.Find(_T("gb2312?"));

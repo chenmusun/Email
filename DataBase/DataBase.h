@@ -39,6 +39,7 @@ public:
 	long SaveFileToMongoDB(string& remotename,string& strPath,string& strRtr);
 	BOOL DelUIDL(const string& strUIDL,const string& strName);
 	BOOL GetFileFromMongoDB(const string& strFileName,const string&strSavePath,string& strErr);
+	BOOL DelUIDL(const string& strUIDL);
 private:
 	DBClientConnection connect;//MongoÁ¬½ÓÊµÀý
 	MongoDBInfo m_dbinfo;

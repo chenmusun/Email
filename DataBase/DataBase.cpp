@@ -224,10 +224,10 @@ BOOL CDataBase::DelUIDL(const string& strUIDL, const string& strName)
 	strIndexName.append(".");
 	strIndexName.append(m_dbinfo.chTable);
 	BSONObj cmd, obj = BSON("UIDL" << strUIDL << "TO" << strName)
-		, bsoReturnValue, bsoQuery = BSON("UIDL" << strUIDL), bsoValue;
+		, bsoReturnValue, bsoValue;
 	if (connect.isStillConnected() && m_bConnect)
 	{
-		bsoReturnValue = connect.findAndRemove(strIndexName, bsoQuery);
+		bsoReturnValue = connect.findAndRemove(strIndexName, obj);
 		if (bsoReturnValue.isEmpty())
 			return FALSE;
 		else
@@ -275,4 +275,24 @@ BOOL CDataBase::GetFileFromMongoDB(const string& strFileName,const string&strSav
 		}
 	}
 	return bRet;
+}
+
+BOOL CDataBase::DelUIDL(const string& strUIDL)
+{
+	if (strUIDL.length() <= 0)
+		return FALSE;
+	string strIndexName(m_dbinfo.chDBName), strValue;
+	strIndexName.append(".");
+	strIndexName.append(m_dbinfo.chTable);
+	BSONObj cmd, bsoReturnValue, bsoQuery = BSON("UIDL" << strUIDL), bsoValue;
+	if (connect.isStillConnected() && m_bConnect)
+	{
+		bsoReturnValue = connect.findAndRemove(strIndexName, bsoQuery);
+		if (bsoReturnValue.isEmpty())
+			return FALSE;
+		else
+			strValue = bsoReturnValue.toString();
+	}
+	else return FALSE;
+	return TRUE;
 }
