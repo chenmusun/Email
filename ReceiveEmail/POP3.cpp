@@ -28,6 +28,7 @@ long POP3::Login(LPCTSTR lpServer, long lPort, LPCTSTR lpUser, LPCTSTR lpPasswd)
 	nValue=m_Socket.InitSocket(lpServer, lPort);
 	if(nValue != SUCCESS)
 		return nValue;
+	m_bFailed = FALSE;
 	WideCharToMultiByte(CP_ACP, 0, lpUser, 64, chUserName, 64, NULL, NULL);
 	sprintf_s(chCommand, 128, "USER %s\r\n",chUserName);
 	nValue = m_Socket.SendData(chCommand, strlen(chCommand));
@@ -253,12 +254,13 @@ long POP3::GetEMLFile(long lCurrPos,const string& strUIDL)
 			else if (n<=0)
 			{
 				CString csLog;
+				GetErrorMessage(WSAGetLastError(), chError, 128);
 				if (n == 0)
 				{
-					csLog.Format(_T("Connection closed![%s]\n"), WSAGetLastError());
+					csLog.Format(_T("Connection closed![%s]\n"), chError);
 					m_log.Log(csLog, csLog.GetLength());
 				}
-				else csLog.Format(_T("GetLastError=%d\n"), WSAGetLastError());
+				else csLog.Format(_T("GetLastError=%s\n"), chError);
 				if (nFailedCount>5)//重试五次，否则中断接收
 				{
 					m_log.Log(csLog, csLog.GetLength());
@@ -267,6 +269,7 @@ long POP3::GetEMLFile(long lCurrPos,const string& strUIDL)
 				}
 				if (lRecSize < lTotalSize)
 				{
+					OutputDebugStringA("*************Received Faild!*************\r\n");
 					nFailedCount++;
 					Sleep(500);
 					continue;
@@ -291,12 +294,16 @@ long POP3::GetEMLFile(long lCurrPos,const string& strUIDL)
 	else
 		Sleep(50);
 	char chDebug[256] = { 0 };
-	sprintf_s(chDebug, 256, "Receive [%s] Complete!", strUIDL.c_str());
+	if (m_bFailed)
+	{
+		sprintf_s(chDebug, 256, "Receive [%s] Failed!\t[%d-%d]", strUIDL.c_str(), lSize, lTotalSize);
+		m_log.Log(chDebug, strlen(chDebug));
+	}
+	else
+		sprintf_s(chDebug, 256, "Receive [%s] Complete!", strUIDL.c_str());
 	//m_log.Log(chDebug, strlen(chDebug));
-//#ifdef _DEBUG
 	OutputDebugStringA(chDebug);
 	OutputDebugStringA("\r\n");
-//#endif
 	if (m_bFailed)
 		return RETURN_FAIL;
 	return SUCCESS;

@@ -3413,4 +3413,143 @@ BOOL CSQLServer::DeleteFromSQL(EMAIL_ITEM& email)
 
 	return bValue;
 }
+
+long CSQLServer::SaveToDBOld(EMAIL_ITEM& email, BOOL bCheck)
+{
+	BOOL bFailed = FALSE;
+	if (bCheck && IsExist(email))
+		return 0;
+	DWORD size = 0;
+	COleDateTime oledt = COleDateTime::GetCurrentTime();
+	CString csTemp, csPath, csLog;
+	try
+	{
+		if (m_db.IsOpen())
+		{
+			m_db.BeginTransaction();
+			CADOCommand * pEMCmd = new CADOCommand(&m_db);
+			if (pEMCmd == NULL)
+				return -1;
+
+			TCHAR szCmdText[512] = _T("INSERT INTO [ReportEmailDB].[dbo].[T_REPORT_EMAIL](EmailUIDL, EmailSubject,EmailFrom, EmailTo , EmailDate,ContentType) VALUES(?, ?, ?, ?, ?, ?)");
+			auto pos = email.csUIDL.Find(_T("\\"));
+			if (pos > 0)
+				email.csUIDL = email.csUIDL.Mid(pos + 1);
+			pEMCmd->AddParameter(_T("EmailUIDL"), adVarChar, CADOParameter::paramInput, email.csUIDL.GetLength()*sizeof(TCHAR), _bstr_t(email.csUIDL.GetBuffer(0)));
+			if (email.csSubject.IsEmpty())
+				email.csSubject.Format(_T("ÎÞÖ÷Ìâ"));
+			pEMCmd->AddParameter(_T("EmailSubject"), adVarWChar, CADOParameter::paramInput, email.csSubject.GetLength()*sizeof(TCHAR), _bstr_t(email.csSubject.GetBuffer(0)));
+
+			if (email.csFrom.IsEmpty())
+				email.csFrom.Format(_T("unknow"));
+			pEMCmd->AddParameter(_T("EmailFrom"), adVarChar, CADOParameter::paramInput, email.csFrom.GetLength()*sizeof(TCHAR), _bstr_t(email.csFrom.GetBuffer(0)));
+			if (email.csTo.IsEmpty())
+				email.csTo.Format(_T("unknow"));
+			pEMCmd->AddParameter(_T("EmailTo"), adVarWChar, CADOParameter::paramInput, email.csTo.GetLength()*sizeof(TCHAR), _bstr_t(email.csTo.GetBuffer(0)));
+
+			TCHAR szDate[32] = { 0 };
+			TCHAR szTime[32] = { 0 };
+			oledt.ParseDateTime(email.csDate);
+			wsprintf(szDate, _T("%04d-%02d-%02d %02d:%02d:%02d"), oledt.GetYear(), oledt.GetMonth(), oledt.GetDay()
+				, oledt.GetHour(), oledt.GetMinute(), oledt.GetSecond());
+			pEMCmd->AddParameter(_T("EmailDate"), adVarChar, CADOParameter::paramInput, lstrlen(szDate), _bstr_t(szDate));
+			if (email.csContentType.IsEmpty())
+				email.csContentType.Format(_T("unknow"));
+			pEMCmd->AddParameter(_T("ContentType"), adVarWChar, CADOParameter::paramInput, email.csContentType.GetLength()*sizeof(TCHAR), _bstr_t(email.csContentType.GetBuffer(0)));
+			pEMCmd->SetText(szCmdText);
+			if (pEMCmd->Execute(adCmdText))
+			{
+#ifdef _DEBUG
+				OutputDebugString(_T("Insert to SQL Success!\r\n"));
+#endif
+			}
+			else
+			{
+				csLog.Format(_T("[%s]Insert to SQL Failed!\r\n%s\r\n"), email.csUIDL, pEMCmd->GetLastError());
+				Log(csLog, csLog.GetLength());
+				csLog.Append(_T("\r\n"));
+				OutputDebugString(csLog);
+				delete pEMCmd;
+				return -1;
+			}
+			delete pEMCmd;
+			TCHAR szQuerySQL[512] = { 0 };
+			swprintf_s(szQuerySQL,
+				_T("SELECT EMailID, ContentType, EmailContent FROM [ReportEmailDB].[dbo].[T_REPORT_EMAIL] WHERE EMailUidl COLLATE Latin1_General_CS_AS ='%s' AND EMailTo='%s' AND EMailDate=CONVERT(datetime,'%s',121)"),
+				email.csUIDL, email.csTo, szDate);
+			if (m_pEMRs->Open(szQuerySQL, CADORecordset::openQuery))
+			{
+				m_pEMRs->Edit();
+				CFile file;
+				char * pContentData = NULL;
+				csPath = email.csEmailContent;
+				if (csPath.IsEmpty())
+					csPath.Format(_T("%s"), email.csEmailContentHTML);
+				if (!csPath.IsEmpty())
+				{
+					size = 0;
+					if (file.Open(csPath, CFile::modeRead))
+					{
+						size = file.GetLength();
+						pContentData = new char[size + 1];
+						memset(pContentData, 0, size + 1);
+						for (DWORD index = 0; index < size; index)
+						{
+							index += file.Read(pContentData + index, size - index);
+						}
+						file.Close();
+						if (pContentData != NULL && size > 0)
+							m_pEMRs->AppendChunk(_T("EmailContent"), pContentData, size);
+					}
+				}
+				if (pContentData != NULL&& size > 0)
+				{
+					delete  pContentData;
+					pContentData = NULL;
+				}
+				m_pEMRs->Update();
+				m_pEMRs->GetFieldValue(_T("EMailID"), email.lSn);
+#ifdef _DEBUG
+				CString csDebug;
+				csDebug.Format(_T("EMailID = %d\r\n"), email.lSn);
+				OutputDebugString(csDebug);
+#endif
+			}
+			vector<ATTACH_FILE>::iterator ite = email.vecAttachFiles.begin();
+			while (ite != email.vecAttachFiles.end())
+			{
+				if ((*ite).lType == 0)
+				{
+					ite++;
+					continue;
+				}
+				if (SaveAttachment((*ite), email.lSn) < 0)
+				{
+					bFailed = TRUE;
+					break;
+				}
+				ite++;
+			}
+			m_db.CommitTransaction();
+		}
+		else
+		{
+			csLog.Format(_T("DataBase is closed!"));
+			Log(csLog, csLog.GetLength());
+			csLog.Append(_T("\r\n"));
+			OutputDebugString(csLog);
+		}
+	}
+	catch (_com_error& e)
+	{
+		m_db.RollbackTransaction();
+		csLog.Format(_T("SaveToDB\r\n%s\r\n%s"), (TCHAR*)e.Description(), (TCHAR*)e.ErrorMessage());
+		Log(csLog, csLog.GetLength());
+		csLog.Append(_T("\r\n"));
+		OutputDebugString(csLog);
+	}
+	if (bFailed)
+		return -1;
+	return 0;
+}
 ///////////////////////////////////////////////////////

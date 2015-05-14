@@ -719,6 +719,7 @@ public:
 	BOOL CloseDB();
 	void SetLogPath(const char*pPath);
 	BOOL DeleteFromSQL(EMAIL_ITEM& email);
+	long SaveToDBOld(EMAIL_ITEM& email, BOOL bCheck = TRUE);
 private:
 	CString m_csServer;
 	CString m_csDatabase;

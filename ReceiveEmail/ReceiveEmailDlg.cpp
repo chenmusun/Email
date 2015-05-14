@@ -1451,9 +1451,20 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 								OutputDebugString(csDebug);
 								dwTime = GetTickCount64();
 								if (pop3.GetStatus())
+								{
+									OutputDebugStringA("*************Failed Exit!!!!!!!*************\r\n");
+									pDlg->GetMailBoxInfo(csUserName, info, 0);
+									pop3.QuitDataBase();
+									sql.CloseDB();
+									pop3.Close();
 									break;
+								}
 								strUDIL.clear();
 								strUDIL = pop3.GetUIDL(i);
+#ifdef _DEBUG
+								OutputDebugStringA(strUDIL.c_str());
+								OutputDebugStringA("\r\n");
+#endif
 								if (strUDIL.length()>0)
 								{
 									lReturnvalue = pop3.CheckUIDL(strUDIL, strName,info.lSaveDay);
@@ -1490,6 +1501,11 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 //#ifdef _DEBUG
 										OutputDebugString(_T("Can't get UIDL!\r\n"));
 //#endif
+										pDlg->GetMailBoxInfo(csUserName, info, 0);
+										pop3.QuitDataBase();
+										sql.CloseDB();
+										pop3.Close();
+										break;
 									}
 								}
 //#ifdef _DEBUG
