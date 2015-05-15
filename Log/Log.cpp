@@ -31,14 +31,20 @@ CLog::~CLog()
 
 void CLog::SetPath(LPCTSTR lpPath,long lLen)
 {
-	if (lpPath && lLen>0)
+	if (lpPath && lLen > 0)
+	{
+		memset(m_chLogPath, 0, MAX_PATH);
 		WideCharToMultiByte(CP_ACP, 0, lpPath, lLen, m_chLogPath, MAX_PATH, NULL, NULL);
+	}
 }
 
-void CLog::SetPath(const char*pPath)
+void CLog::SetPath(const char*pPath,long lLen)
 {
-	if (pPath && pPath[0] != '\0')
+	if ((pPath && lLen > 0) && lLen < MAX_PATH)
+	{
+		memset(m_chLogPath, 0, MAX_PATH);
 		sprintf_s(m_chLogPath, MAX_PATH, "%s", pPath);
+	}
 }
 
 void CLog::Log(LPCTSTR lpText, size_t lLen)

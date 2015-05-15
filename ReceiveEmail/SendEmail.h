@@ -21,7 +21,7 @@ public:
 	void SetReceiver(const char*pStr);//设置邮件接收人
 	void AddAttachFileName(const string& strName,long lType=0);//添加附件,0默认eml文件
 	inline void SetCurrPath(const char*pPath){if(pPath) sprintf_s(m_chCurrPath, MAX_PATH, "%s", pPath); }//设置当前读取路径
-	void SetLogPath(const char*pPath);//设置Log日志路径
+	void SetLogPath(const char*pPath,long lLen);//设置Log日志路径
 	BOOL DeleteEMLFile();
 	void InitSMTPPro();
 private:

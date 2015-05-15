@@ -1802,11 +1802,11 @@ CString StringEncode(const CString& csSrc)
 	return csRet;
 }
 
-void CMailAnalysis::SetLogPath(const char*pPath)
+void CMailAnalysis::SetLogPath(const char*pPath,long lLen)
 {
-	if (pPath && pPath[0] != '\0')
+	if (pPath && lLen>0)
 	{
-		m_log.SetPath(pPath);
+		m_log.SetPath(pPath,lLen);
 	}
 }
 

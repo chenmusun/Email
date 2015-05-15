@@ -22,7 +22,7 @@ public:
 	~CLog();
 	// TODO:  在此添加您的方法。
 	void SetPath(LPCTSTR lpPath,long lLen);//设置Log日志路径
-	void SetPath(const char*pPath);
+	void SetPath(const char*pPath,long lLen);
 	void Log(LPCTSTR lpText, size_t lLen);//写日志
 	void Log(LPCSTR lpText, size_t lLen);
 	void Log(long lCode);

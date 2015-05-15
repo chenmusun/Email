@@ -43,7 +43,7 @@ public:
 	inline vector<ATTACH>& GetAttach(){ return m_stAttachMent; }
 	vector<ATTACH> AnalysisBody(const CString& csBody, const CString& csBoundry);//Ω‚Œˆ” º˛ÃÂ
 	void Clear();
-	void SetLogPath(const char*pPath);
+	void SetLogPath(const char*pPath,long lLen);
 	inline void SetAbbreviation(LPCTSTR lpAbb){ m_csAbbreviation.Format(_T("%s"), lpAbb); }
 	inline EMAIL_ITEM& GetEmailItem(){ return m_stEmail; }
 	friend void SaveAttachMent(CMailAnalysis* pana, ATTACH_FILE& attachfile, BOUNDARY_HEAD& stBouHead, vector<ATTACH>::iterator& ite);

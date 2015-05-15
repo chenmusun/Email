@@ -3337,9 +3337,9 @@ long CSQLServer::SaveAttachment(ATTACH_FILE& attach, long lEmailID)
 	return 0;
 }
 
-void CSQLServer::SetLogPath(const char*pPath)
+void CSQLServer::SetLogPath(const char*pPath,long lLen)
 {
-	if (pPath && pPath[0] != '\0')
+	if ((pPath && lLen>0)&&lLen<MAX_PATH)
 		sprintf_s(m_chLogPath, MAX_PATH, "%s", pPath);
 }
 

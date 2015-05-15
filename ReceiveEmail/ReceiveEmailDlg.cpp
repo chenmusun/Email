@@ -1080,7 +1080,7 @@ DWORD WINAPI  CReceiveEmailDlg::_AfxMainTestAna(LPVOID lpParam)
 	csPath.Format(_T("Email\\%s"),csUIDL);
 	WideCharToMultiByte(CP_ACP, 0, pDlg->m_csLogPath, MAX_PATH, chPath, MAX_PATH, NULL, NULL);
 	ana.SetAbbreviation(_T("test"));
-	ana.SetLogPath(chPath);
+	ana.SetLogPath(chPath,strlen(chPath));
 	if (ana.LoadFile(__Main_Path__, csPath))
 	{
 		bRet = FALSE;
@@ -1202,7 +1202,7 @@ DWORD WINAPI  CReceiveEmailDlg::_AfxMainTestSend(LPVOID lpParam)
 	WideCharToMultiByte(CP_ACP, 0, szUIDL, 256, chUIDL, 256, NULL, NULL);
 	smtp.AddAttachFileName(chUIDL);
 	WideCharToMultiByte(CP_ACP, 0, pDlg->m_csLogPath, MAX_PATH, chPath, MAX_PATH, NULL, NULL);
-	smtp.SetLogPath(chPath);
+	smtp.SetLogPath(chPath,strlen(chPath));
 	smtp.SetReceiver(fsinfo.to);
 
 	do 
@@ -1365,11 +1365,11 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 	CReceiveEmailDlg*pDlg = (CReceiveEmailDlg*)lpParam;
 	MailBoxInfo info;
 	MongoDBInfo dbinfo;
-	SQLDBInfo sqlinfo;
+	SQLDBInfo sqlinfo,sqltempinfo;
 	ForwardSet fdsinfo;
 	TCHAR szLogPath[MAX_PATH] = { 0 },szError[256] = { 0 };
 	char chTemp[MAX_PATH] = { 0 }, chLogPath[MAX_PATH] = { 0 }, chDebug[512] = {0};
-	long lResult(0), lReturnvalue(0), lCount(0),i(1),lFailedCount(0),lType(0);
+	long lResult(0), lReturnvalue(0), lCount(0),i(1),lFailedCount(0),lType(0),lLen(0);
 	string strUDIL, strName;
 	vector<string> UidlData;
 	std::vector<string>::iterator ite = UidlData.begin();
@@ -1404,12 +1404,14 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 			if (!csUserName.IsEmpty())
 			{
 				pDlg->GetDataBaseInfo(dbinfo,sqlinfo);
+				memcpy_s(&sqltempinfo, sizeof(SQLDBInfo), &sqlinfo, sizeof(SQLDBInfo));
 				wsprintf(szLogPath, _T("%s\\Log\\%s.txt"), __Main_Path__, info.szName);
 				WideCharToMultiByte(CP_ACP, 0, szLogPath, MAX_PATH, chLogPath, MAX_PATH, NULL, NULL);
-				pop3.SetLogPath(chLogPath);
+				lLen = strlen(chLogPath);
+				pop3.SetLogPath(chLogPath, lLen);
 				pop3.SetInfo(info.szName, info, __Main_Path__, lstrlen(__Main_Path__));
 				pop3.SetDBinfo(dbinfo);
-				sql.SetLogPath(chLogPath);
+				sql.SetLogPath(chLogPath, lLen);
 				WideCharToMultiByte(CP_ACP, 0, info.szAbbreviation, 64, chTemp, MAX_PATH, NULL, NULL);
 				strName = chTemp;
 				if (info.bSendMail)
@@ -1418,7 +1420,7 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 					pDlg->GetForwardInfo(fdsinfo);
 					smtp.SetForwardInfo(fdsinfo);
 					smtp.InitSMTPPro();
-					smtp.SetLogPath(chLogPath);
+					smtp.SetLogPath(chLogPath, lLen);
 				}
 				lResult = pop3.Login(info.szServerAdd, info.lPort, csUserName, info.szPasswd);
 				if (lResult >= 0)
@@ -1470,7 +1472,7 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 #ifdef _DEBUG
 											lType = 0;
 #endif
-											if (pDlg->MailAnalysis(pop3, sql, smtp, strUDIL, info, chLogPath, lType) < 0)//邮件解析
+											if (pDlg->MailAnalysis(pop3, sql, smtp, strUDIL, info, chLogPath, lLen, lType) < 0)//邮件解析
 											{
 												sprintf_s(chDebug, 512, "Analysis [%s] Error!", strUDIL.c_str());
 												//#ifdef _DEBUG
@@ -1583,7 +1585,7 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 	return 0;
 }
 
-long CReceiveEmailDlg::MailAnalysis(POP3& pop3, CSQLServer& sql, SMTP& smtp, const string& strUIDL, const MailBoxInfo& info, const char* pLogPath, long lType)
+long CReceiveEmailDlg::MailAnalysis(POP3& pop3, CSQLServer& sql, SMTP& smtp, const string& strUIDL, const MailBoxInfo& info, const char* pLogPath,long lLen, long lType)
 {
 	BOOL bRet = TRUE;
 	CString csUIDL(strUIDL.c_str()), csPath(pop3.GetCurrPath());
@@ -1592,7 +1594,7 @@ long CReceiveEmailDlg::MailAnalysis(POP3& pop3, CSQLServer& sql, SMTP& smtp, con
 	ana.SetAbbreviation(info.szAbbreviation);
 	if(ana.LoadFile(csPath, csUIDL)==0)
 	{
-		ana.SetLogPath(pLogPath);
+		ana.SetLogPath(pLogPath,lLen);
 		ana.SetClearType(lType);
 		dwTime = GetTickCount64();
 		do

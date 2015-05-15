@@ -22,7 +22,7 @@ public:
 	void SetInfo(CString csName, const MailBoxInfo& info,LPCTSTR lpPath, long lLen);
 	long DelEmail(long lCurrPos,const string& strUIDL);
 	inline char* GetCurrPath(){ return m_CurrPath; }
-	void SetLogPath(const char*pPath);
+	void SetLogPath(const char*pPath,long lLen);
 	inline BOOL GetStatus(){ return m_bFailed; }
 	long CheckUIDL(const string& strUIDL,const string& strName,long lSaveDay=14);//检测UIDL是否已存在MongoDB，若存在不进行接收跳过
 	BOOL SaveFileToDB(EMAIL_ITEM& email);

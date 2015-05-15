@@ -147,7 +147,14 @@ void CDataBase::DisConnectDataBase()
 void CDataBase::SetDBInfo(const MongoDBInfo&dbinfo)
 {
 	memset(&m_dbinfo, 0, sizeof(MongoDBInfo));
-	memcpy_s(&m_dbinfo, sizeof(MongoDBInfo), &dbinfo, sizeof(MongoDBInfo));
+	//memcpy_s(&m_dbinfo, sizeof(MongoDBInfo), &dbinfo, sizeof(MongoDBInfo));
+	sprintf_s(m_dbinfo.chDBAdd, 32, "%s", dbinfo.chDBAdd);
+	sprintf_s(m_dbinfo.chDBName, 32, "%s", dbinfo.chDBName);
+	sprintf_s(m_dbinfo.chTable, 32, "%s", dbinfo.chTable);
+	sprintf_s(m_dbinfo.chUserName, 32, "%s", dbinfo.chUserName);
+	sprintf_s(m_dbinfo.chPasswd, 32, "%s", dbinfo.chPasswd);
+	m_dbinfo.nUseDB = dbinfo.nUseDB;
+
 }
 
 void CDataBase::GetCurrTime(string& strDate)
