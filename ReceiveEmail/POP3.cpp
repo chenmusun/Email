@@ -189,6 +189,7 @@ BOOL POP3::ConnectDataBase()
 long POP3::GetEMLFile(long lCurrPos,const string& strUIDL)
 {
 //#ifdef _DEBUG
+	DWORD dwTime(GetTickCount64());
 	CString csDebug;
 //#endif
 	FILE *pFile;
@@ -246,10 +247,10 @@ long POP3::GetEMLFile(long lCurrPos,const string& strUIDL)
 				memset(chTemp, 0, 65536);
 				lRecSize += n;
 				lLastDataSize = n;
-//#ifdef DEBUG
+#ifdef DEBUG
 				csDebug.Format(_T("Bytes received: %d----Recv:%d----Total:%d\n"), n, lRecSize, lTotalSize);
 				OutputDebugString(csDebug);
-//#endif
+#endif
 			}
 			else if (n<=0)
 			{
@@ -296,11 +297,14 @@ long POP3::GetEMLFile(long lCurrPos,const string& strUIDL)
 	char chDebug[256] = { 0 };
 	if (m_bFailed)
 	{
-		sprintf_s(chDebug, 256, "Receive [%s] Failed!\t[%d-%d]", strUIDL.c_str(), lSize, lTotalSize);
+		sprintf_s(chDebug, 256, "Receive Time = %d\tReceive [%s] Failed!\t[%d-%d]", dwTime / 1000, strUIDL.c_str(), lSize, lTotalSize);
 		m_log.Log(chDebug, strlen(chDebug));
 	}
 	else
-		sprintf_s(chDebug, 256, "Receive [%s] Complete!", strUIDL.c_str());
+	{
+		dwTime = GetTickCount64() - dwTime;
+		sprintf_s(chDebug, 256, "Receive Time = %d\tReceive [%s] Complete!", dwTime / 1000, strUIDL.c_str());
+	}
 	//m_log.Log(chDebug, strlen(chDebug));
 	OutputDebugStringA(chDebug);
 	OutputDebugStringA("\r\n");

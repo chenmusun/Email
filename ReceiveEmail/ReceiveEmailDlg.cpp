@@ -1367,14 +1367,13 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 	MongoDBInfo dbinfo;
 	SQLDBInfo sqlinfo;
 	ForwardSet fdsinfo;
-	TCHAR szLogPath[MAX_PATH] = { 0 };
-	char chTemp[MAX_PATH] = { 0 }, chLogPath[MAX_PATH] = { 0 };
+	TCHAR szLogPath[MAX_PATH] = { 0 },szError[256] = { 0 };
+	char chTemp[MAX_PATH] = { 0 }, chLogPath[MAX_PATH] = { 0 }, chDebug[512] = {0};
 	long lResult(0), lReturnvalue(0), lCount(0),i(1),lFailedCount(0),lType(0);
 	string strUDIL, strName;
 	vector<string> UidlData;
 	std::vector<string>::iterator ite = UidlData.begin();
 	CString csUserName;
-	char chDebug[512] = { 0 };
 	CString csDebug;
 	try
 	{
@@ -1457,13 +1456,10 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 								}
 								strUDIL.clear();
 								strUDIL = pop3.GetUIDL(i);
-#ifdef _DEBUG
-								string strDebug;
-								strDebug.append("UIDL:[");
-								strDebug += strUDIL;
-								strDebug.append("]\r\n");
-								OutputDebugStringA(strDebug.c_str());
-#endif
+//#ifdef _DEBUG
+								sprintf_s(chDebug, 512, "UIDL: [%s]\r\n", strUDIL.c_str());
+								OutputDebugStringA(chDebug);
+//#endif
 								if (strUDIL.length()>0)
 								{
 									lReturnvalue = pop3.CheckUIDL(strUDIL, strName,info.lSaveDay);
@@ -1557,13 +1553,11 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 				}
 				else
 				{
-					TCHAR szError[256] = { 0 };
 					GetErrorMessage(lResult, szError);
-					csDebug.Format(_T("登陆 %s 出现问题[%s]\r\nThread [0x%x] will wait 5 sec!\r\n"), 
+					csDebug.Format(_T("登陆 %s 出现问题[%s]\r\nThread [0x%x] will wait 5sec!\r\n"), 
 						info.szName, szError, GetCurrentThreadId());
 					pop3.QuitDataBase();
 					OutputDebugString(csDebug);
-					OutputDebugString(_T("\r\n"));
 					if (WaitForSingleObject(__HEVENT_MAIN_EXIT__, 5000L) == WAIT_OBJECT_0)
 						break;
 					pDlg->GetMailBoxInfo(csUserName, info, 0);
@@ -1573,7 +1567,10 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 			else
 			{
 				csDebug.Format(_T("Thread [0x%x] will wait 5sec!\r\n"), GetCurrentThreadId());
+#ifdef _DEBUG
 				OutputDebugString(csDebug);
+#endif
+				
 				WaitForSingleObject(__HEVENT_MAIN_EXIT__, 5000L);
 			}// end of else
 		}// end of while
