@@ -545,7 +545,7 @@ BOOL CReceiveEmailDlg::GetMailBoxInfo(CString&csUserName, MailBoxInfo& info, lon
 		{
 			if (lCount > 1)
 				break;
-			if (ite->second.lStatus == 0 && lCurrPos >= m_lLastPos)
+			if (ite->second.lStatus == 0 && lCurrPos > m_lLastPos)
 			{
 				csUserName = ite->first;
 				wsprintf(info.szName, ite->second.szName);
@@ -576,10 +576,6 @@ BOOL CReceiveEmailDlg::GetMailBoxInfo(CString&csUserName, MailBoxInfo& info, lon
 		if (ite != m_mailList.end())
 		{
 			ite->second.lStatus = 0;
-		}
-		else
-		{
-			int a = 0;
 		}
 	}
 		break;
@@ -1462,8 +1458,11 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 								strUDIL.clear();
 								strUDIL = pop3.GetUIDL(i);
 #ifdef _DEBUG
-								OutputDebugStringA(strUDIL.c_str());
-								OutputDebugStringA("\r\n");
+								string strDebug;
+								strDebug.append("UIDL:[");
+								strDebug += strUDIL;
+								strDebug.append("]\r\n");
+								OutputDebugStringA(strDebug.c_str());
 #endif
 								if (strUDIL.length()>0)
 								{
