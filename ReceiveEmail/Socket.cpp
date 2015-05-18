@@ -46,7 +46,7 @@ long MailSocket::InitSocket(LPCTSTR lpAddr, UINT nHostPort)
 	{
 		return SOCKETINIT_ERROR;
 	}
-	//设置接收超时3秒
+	//设置接收超时5秒
 	if (::setsockopt(m_MySocket, SOL_SOCKET, SO_RCVTIMEO, (char *)&TimeOut, sizeof(TimeOut)) == SOCKET_ERROR)
 	{
 		return SOCKETINIT_ERROR;
@@ -175,7 +175,7 @@ long MailSocket::InitSocket(LPCTSTR lpAddr, UINT nHostPort)
 long MailSocket::SendData(const void *Buf, size_t lBufLen)
 {
 	int nSendSize(0);
-	if (Buf)
+	if (Buf && lBufLen>0)
 	{
 		nSendSize = ::send(m_MySocket, (char*)Buf, (int)lBufLen, 0);
 		if (nSendSize < 0)
@@ -188,13 +188,16 @@ long MailSocket::SendData(const void *Buf, size_t lBufLen)
 #endif
 		}
 	}
+#ifdef _DEBUG
+	OutputDebugStringA((char*)Buf);
+#endif
 	return nSendSize;
 }
 
 long MailSocket::ReceiveData(void * Buf, size_t lBufLen)
 {
 	int nRecvSize(0);
-	if (Buf)
+	if (Buf&& lBufLen>0)
 	{
 		nRecvSize = ::recv(m_MySocket, (char*)Buf, (int)lBufLen, 0);
 		if (nRecvSize < 0)
@@ -207,6 +210,9 @@ long MailSocket::ReceiveData(void * Buf, size_t lBufLen)
 #endif
 		}
 	}
+#ifdef _DEBUG
+	OutputDebugStringA((char*)Buf);
+#endif
 	return nRecvSize;
 }
 
@@ -280,4 +286,57 @@ BOOL StringProcess(const char* const pStr, long& lValue)
 		else lValue = -1;
 	}
 	return TRUE;
+}
+
+BOOL StringProcess(const string& strSrc, string& strData1, string& strData2)
+{
+	string strTemp;
+	strData1.empty();
+	strData2.empty();
+	if (strSrc.length()>0)
+	{
+		do
+		{
+			auto pos = strSrc.find("+OK");
+			if (pos < 0) break;
+			if (pos == strSrc.npos) break;
+			pos = strSrc.find_first_of(" ", pos + 1);
+			if (pos >= 0 && pos != strSrc.npos)
+			{
+				auto pos1 = strSrc.find_first_of(" ", pos + 1);
+				if (pos1>pos && pos1 != strSrc.npos)
+				{
+					strData1 = strSrc.substr(pos + 1, pos1 - pos - 1);
+					strData2 = strSrc.substr(pos1 + 1, strSrc.length() - pos1);
+					auto pos2 = strData2.find("\r\n");
+					if (pos2 >= 0 && pos2 != strData2.npos)
+						strData2.replace(pos2, 4, "");
+				}
+				else
+				{
+					strData1 = strSrc.substr(pos, strSrc.length() - pos);
+				}
+			}
+			return TRUE;
+		} while (0);
+	}
+	return FALSE;
+}
+
+BOOL StringProcess(const string& strSrc, long& lValye, string& strData)
+{
+	auto pos = strSrc.find(" ");
+	string strTemp;
+	strTemp = strSrc.substr(0, pos);
+	if (strTemp.length() > 0)
+		lValye = atoi(strTemp.c_str());
+	strData = strSrc.substr(pos + 1);
+	if (strData.length() > 0 && lValye > 0)
+		return TRUE;
+	else
+	{
+		lValye = 0;
+		strData.clear();
+	}
+	return FALSE;
 }

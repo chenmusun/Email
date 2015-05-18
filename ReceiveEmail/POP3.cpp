@@ -9,10 +9,12 @@ POP3::POP3() :m_bConnect(FALSE), m_bFailed(FALSE)
 	memset(m_CurrPath, 0, MAX_PATH);
 	memset(m_chName, 0, 64);
 	memset(&m_Info, 0, sizeof(MailBoxInfo));
+	m_mapUIDLdata.clear();
 }
 
 POP3::~POP3()
 {
+	m_mapUIDLdata.clear();
 	m_Socket.CloseMySocket();
 }
 
@@ -108,19 +110,18 @@ BOOL POP3::Close()
 	return FALSE;
 }
 
-
 string POP3::GetUIDL(long lCurrPos)
 {
 	DWORD nCount = 0;
 	int nValue(0), nError(0);
 	char chCommand[128] = { 0 }, chResult[128] = { 0 }, chError[128] = {0};
-	string strNum,strUIDL;
+	string strNum,strUIDL,strData;
 	long lMailCount(0);
 	sprintf_s(chCommand, 128, "UIDL %d\r\n",lCurrPos);
 	nValue = m_Socket.SendData(chCommand, strlen(chCommand));
 	if (nValue < 0)
 	{
-		strUIDL.empty();
+		strUIDL.clear();
 		return strUIDL;
 	}
 	nValue = m_Socket.ReceiveData(chResult, sizeof(chResult));
@@ -130,9 +131,23 @@ string POP3::GetUIDL(long lCurrPos)
 		GetErrorMessage(nError, chError, 128);
 		m_log.Log(chError, strlen(chError));
 		m_log.Log(chResult, strlen(chResult));
+		strUIDL.clear();
+		return strUIDL;
 	}
-	StringProcess(chResult, strNum, strUIDL);
-	auto pos = strUIDL.find(":");
+	strData=chResult;
+	auto pos = strData.find("\r\n+OK");
+	if (pos > 0 && pos != strData.npos)
+	{
+		strData = strData.substr(pos + 2);
+	}
+	StringProcess(strData, strNum, strUIDL);
+	nValue = atoi(strNum.c_str());
+	if (nValue != lCurrPos)
+	{
+		strUIDL.clear();
+		return strUIDL;
+	}
+	pos = strUIDL.find(":");
 	while (pos != strUIDL.npos)
 	{
 		strUIDL.replace(pos, 1, "");
@@ -146,14 +161,14 @@ long POP3::CheckUIDL(const string& strUIDL, const string& strName, long lSaveDay
 	long lFound = MONGO_NOT_FOUND;
 	if (strUIDL.length() <= 0)
 		return MONGO_FOUND;
-		string strErr;
-		if (lSaveDay == 0)
+	string strErr;
+	if (lSaveDay == 0)
 		lSaveDay = 14;
-		lFound = m_db.CheckUIDLInMongoDB(strUIDL, strErr, strName, lSaveDay);
-		if (strErr.length() > 0)
-		{
+	lFound = m_db.CheckUIDLInMongoDB(strUIDL, strErr, strName, lSaveDay);
+	if (strErr.length() > 0)
+	{
 		m_log.Log(strErr.c_str(), strErr.length());
-		}
+	}
 	return lFound;
 }
 
@@ -219,6 +234,7 @@ long POP3::GetEMLFile(long lCurrPos,const string& strUIDL)
 	}
 	lTotalSize = atoi(strSize.c_str());
 	if (lTotalSize <= 0) return RECEIVE_ERROR;
+	strEMail.reserve(lTotalSize);
 	sprintf_s(chPath, MAX_PATH, "%s\\%s.eml", m_CurrPath, strUIDL.c_str());
 	errno_t error = fopen_s(&pFile, chPath, "rb");
 	if (error == 0)
@@ -248,7 +264,7 @@ long POP3::GetEMLFile(long lCurrPos,const string& strUIDL)
 				lRecSize += n;
 				lLastDataSize = n;
 #ifdef DEBUG
-				csDebug.Format(_T("Bytes received: %d----Recv:%d----Total:%d\n"), n, lRecSize, lTotalSize);
+				csDebug.Format(_T("\nBytes received: %d----Recv:%d----Total:%d\n"), n, lRecSize, lTotalSize);
 				OutputDebugString(csDebug);
 #endif
 			}
@@ -422,5 +438,47 @@ void POP3::SetDBinfo(const MongoDBInfo& dbinfo)
 BOOL POP3::DeleteFromDB(const string& strUIDL)
 {
 	return m_db.DelUIDL(strUIDL);
+}
+
+BOOL POP3::GetUDILs(long lTotal)
+{
+	string strUIDLs,strTemp,strUIDL;
+	long lSn(0);
+	int nValue(0),n(0),nStart(0);
+	char chCommand[128] = { 0 }, chResult[256] = { 0 }, chBuffer[65536] = { 0 };
+	sprintf_s(chCommand, 128, "UIDL\r\n");
+	nValue = m_Socket.SendData(chCommand, strlen(chCommand));
+	if (nValue <= 0)
+	{
+		return FALSE;
+	}
+	do 
+	{
+		n = m_Socket.ReceiveData(chBuffer, 65535);
+		if (n > 0)
+		{
+			strUIDLs.append(chBuffer);
+			memset(chBuffer, 0, 65536);
+		}
+	} while (n>0);
+	auto pos = strUIDLs.find("+OK\r\n");
+	if (pos>= 0 && pos != strUIDLs.npos)
+	{
+		strUIDLs = strUIDLs.substr(pos + 5);
+		do 
+		{
+			pos = strUIDLs.find("\r\n", nStart);
+			if (pos >= 0 && pos != strUIDLs.npos)
+			{
+				strTemp = strUIDLs.substr(nStart, pos - nStart);
+				nStart = pos + 2;
+				if (StringProcess(strTemp, lSn, strUIDL))
+					m_mapUIDLdata.insert(make_pair(lSn, strUIDL));
+			}
+			else break;
+		} while (1);
+		return TRUE;
+	}
+	return FALSE;
 }
 /////////////////////////////////////////////////////////////////////

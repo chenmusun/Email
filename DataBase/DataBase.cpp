@@ -16,9 +16,8 @@ DATABASE_API int fnDataBase(void)
 
 // 这是已导出类的构造函数。
 // 有关类定义的信息，请参阅 DataBase.h
-CDataBase::CDataBase(void) :m_bConnect(FALSE)
+CDataBase::CDataBase(void) :m_bConnect(FALSE), m_nUseDB(1)
 {
-	memset(&m_dbinfo, 0, sizeof(MongoDBInfo));
 	return;
 }
 
@@ -29,11 +28,12 @@ CDataBase::~CDataBase()
 
 BOOL CDataBase::ConnectDataBase(string& strErr)
 {
-	string strWhat, strDBAdd(m_dbinfo.chDBAdd), strDBname(m_dbinfo.chDBName), strUser(m_dbinfo.chUserName), strPass(m_dbinfo.chPasswd);
+	string strWhat, strDBAdd("192.168.0.110:27017"), strDBname("gg_report")
+		, strUser("report_email"), strPass("report_email.123");
 	strErr.empty();//将错误信息清空
-	if (m_dbinfo.nUseDB != 1)
+	if (m_nUseDB != 1)
 		return TRUE;
-	if (m_dbinfo.chDBAdd && m_dbinfo.chDBAdd[0] != '\0')
+	if (m_strDBAdd.length()>0)
 	{
 		try
 		{
@@ -84,14 +84,14 @@ long CDataBase::CheckUIDLInMongoDB(const string& strUIDL, string& strErr, const 
 	//COleDateTime date;
 	strErr.empty();
 	long lFound = MONGO_FOUND;
-	if (m_dbinfo.nUseDB != 1)
+	if (m_nUseDB != 1)
 	{
 		lFound = MONGO_NOT_FOUND;
 		return lFound;
 	}
-	string strIndexName(m_dbinfo.chDBName);
+	string strIndexName(m_strDBName);
 	strIndexName.append(".");
-	strIndexName.append(m_dbinfo.chTable);
+	strIndexName.append(m_strTable);
 	if (connect.isStillConnected() && m_bConnect)
 	{
 		BSONObj cmd, obj = BSON("UIDL" << strUIDL << "DATE" << DATENOW<<"TO"<<strName)
@@ -136,24 +136,22 @@ long CDataBase::CheckUIDLInMongoDB(const string& strUIDL, string& strErr, const 
 void CDataBase::DisConnectDataBase()
 {
 	BSONObj info;
-	if (m_dbinfo.nUseDB != 1) return;
+	if (m_nUseDB != 1) return;
 	if (connect.isStillConnected() && m_bConnect)
 	{
-		connect.logout(m_dbinfo.chDBName, info);
+		connect.logout(m_strDBName, info);
 		m_bConnect = FALSE;
 	}
 }
 
 void CDataBase::SetDBInfo(const MongoDBInfo&dbinfo)
 {
-	memset(&m_dbinfo, 0, sizeof(MongoDBInfo));
-	//memcpy_s(&m_dbinfo, sizeof(MongoDBInfo), &dbinfo, sizeof(MongoDBInfo));
-	sprintf_s(m_dbinfo.chDBAdd, 32, "%s", dbinfo.chDBAdd);
-	sprintf_s(m_dbinfo.chDBName, 32, "%s", dbinfo.chDBName);
-	sprintf_s(m_dbinfo.chTable, 32, "%s", dbinfo.chTable);
-	sprintf_s(m_dbinfo.chUserName, 32, "%s", dbinfo.chUserName);
-	sprintf_s(m_dbinfo.chPasswd, 32, "%s", dbinfo.chPasswd);
-	m_dbinfo.nUseDB = dbinfo.nUseDB;
+	m_strDBAdd= dbinfo.chDBAdd;
+	m_strDBName= dbinfo.chDBName;
+	m_strTable= dbinfo.chTable;
+	m_strUserName= dbinfo.chUserName;
+	m_strPasswd =dbinfo.chPasswd;
+	m_nUseDB = dbinfo.nUseDB;
 
 }
 
@@ -184,7 +182,7 @@ long CDataBase::SaveFileToMongoDB(string& remotename, string& strPath, string& s
 	storeFile函数用来上传指定路径的文件，参数一：文件路径，参数二：数据库存储名称
 	write函数下载文件，参数：文件保存路径
 	*/
-	if (m_dbinfo.nUseDB != 1)
+	if (m_nUseDB != 1)
 	{
 		strRtr = "No use Database!";
 		return 0;
@@ -204,7 +202,7 @@ long CDataBase::SaveFileToMongoDB(string& remotename, string& strPath, string& s
 		string strerr;
 		if (connect.isStillConnected() && m_bConnect)
 		{
-			GridFS fs(connect, m_dbinfo.chDBName);
+			GridFS fs(connect, m_strDBName);
 			//fs.storeFile(strPath, remotename);
 			BSONObj obj = fs.storeFile(strPath, remotename);
 			if (!obj.isEmpty())
@@ -227,9 +225,9 @@ BOOL CDataBase::DelUIDL(const string& strUIDL, const string& strName)
 {
 	if (strUIDL.length() <= 0)
 		return FALSE;
-	string strIndexName(m_dbinfo.chDBName),strValue;
+	string strIndexName(m_strDBName), strValue;
 	strIndexName.append(".");
-	strIndexName.append(m_dbinfo.chTable);
+	strIndexName.append(m_strTable);
 	BSONObj cmd, obj = BSON("UIDL" << strUIDL << "TO" << strName)
 		, bsoReturnValue, bsoValue;
 	if (connect.isStillConnected() && m_bConnect)
@@ -256,7 +254,7 @@ BOOL CDataBase::GetFileFromMongoDB(const string& strFileName,const string&strSav
 	
 	if (connect.isStillConnected() && m_bConnect)
 	{
-		GridFS fs(connect, m_dbinfo.chDBName);
+		GridFS fs(connect, m_strDBName);
 		auto pos = strFileName.find(";", nStart);
 		while ((pos > 0) && (pos != strFileName.npos))
 		{
@@ -288,9 +286,9 @@ BOOL CDataBase::DelUIDL(const string& strUIDL)
 {
 	if (strUIDL.length() <= 0)
 		return FALSE;
-	string strIndexName(m_dbinfo.chDBName), strValue;
+	string strIndexName(m_strDBName), strValue;
 	strIndexName.append(".");
-	strIndexName.append(m_dbinfo.chTable);
+	strIndexName.append(m_strTable);
 	BSONObj cmd, bsoReturnValue, bsoQuery = BSON("UIDL" << strUIDL), bsoValue;
 	if (connect.isStillConnected() && m_bConnect)
 	{

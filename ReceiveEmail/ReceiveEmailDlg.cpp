@@ -1365,7 +1365,7 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 	CReceiveEmailDlg*pDlg = (CReceiveEmailDlg*)lpParam;
 	MailBoxInfo info;
 	MongoDBInfo dbinfo;
-	SQLDBInfo sqlinfo,sqltempinfo;
+	SQLDBInfo sqlinfo;
 	ForwardSet fdsinfo;
 	TCHAR szLogPath[MAX_PATH] = { 0 },szError[256] = { 0 };
 	char chTemp[MAX_PATH] = { 0 }, chLogPath[MAX_PATH] = { 0 }, chDebug[512] = {0};
@@ -1404,7 +1404,6 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 			if (!csUserName.IsEmpty())
 			{
 				pDlg->GetDataBaseInfo(dbinfo,sqlinfo);
-				memcpy_s(&sqltempinfo, sizeof(SQLDBInfo), &sqlinfo, sizeof(SQLDBInfo));
 				wsprintf(szLogPath, _T("%s\\Log\\%s.txt"), __Main_Path__, info.szName);
 				WideCharToMultiByte(CP_ACP, 0, szLogPath, MAX_PATH, chLogPath, MAX_PATH, NULL, NULL);
 				lLen = strlen(chLogPath);
@@ -1428,6 +1427,7 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 					if (pop3.ConnectDataBase() && sql.Connect(sqlinfo))
 					{
 						lResult = pop3.GetMailCount();
+						pop3.GetUDILs(lResult);
 						if (lResult > 0)
 						{
 							pDlg->m_showinfo[dwID].lTotal = lResult;
@@ -1493,7 +1493,8 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 								else
 								{
 									lFailedCount++;
-									if (lFailedCount > 10)
+									--i;
+									if (lFailedCount > 5)
 									{
 //#ifdef _DEBUG
 										OutputDebugString(_T("Can't get UIDL!\r\n"));

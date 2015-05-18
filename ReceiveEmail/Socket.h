@@ -17,3 +17,5 @@ private:
 BOOL StringProcess(const char * const pStr, string& strData1, string& strData2);//返回字符串处理(按照空格将返回字符串拆分)
 BOOL StringProcess(const char * const pStr);//返回字符串处理(只处理OK、ERROR)
 BOOL StringProcess(const char* const pStr, long& lValue);
+BOOL StringProcess(const string& strSrc, string& strData1, string& strData2);
+BOOL StringProcess(const string& strSrc, long& lValue, string& strData);

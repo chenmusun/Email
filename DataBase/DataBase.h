@@ -32,18 +32,24 @@ public:
 	long CheckUIDLInMongoDB(const string& strUIDL, string& strErr,const string& strName,long lDay=14);//检查UIDL是否存在，若不存在插入一条新数据
 	void DisConnectDataBase();//断开数据库连接（目前使用MongoAPI中的Logout）
 	void SetDBInfo(const MongoDBInfo&dbinfo);//设置数据库相关信息
-	inline string GetDBName(){ string strName(m_dbinfo.chDBName); return strName; }
+	inline string GetDBName(){ return m_strDBName; }
 	void GetCurrTime(string& strDate);
 	long long GetTimeStamp();
-	inline int GetUseDB(){ return m_dbinfo.nUseDB; }
+	inline int GetUseDB(){ return m_nUseDB; }
 	long SaveFileToMongoDB(string& remotename,string& strPath,string& strRtr);
 	BOOL DelUIDL(const string& strUIDL,const string& strName);
 	BOOL GetFileFromMongoDB(const string& strFileName,const string&strSavePath,string& strErr);
 	BOOL DelUIDL(const string& strUIDL);
 private:
 	DBClientConnection connect;//Mongo连接实例
-	MongoDBInfo m_dbinfo;
 	BOOL m_bConnect;
+
+	string m_strDBAdd;
+	string m_strDBName;
+	string m_strTable;
+	string m_strUserName;
+	string m_strPasswd;
+	int m_nUseDB;
 private:
 protected:
 };
