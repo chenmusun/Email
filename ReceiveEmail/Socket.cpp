@@ -188,9 +188,9 @@ long MailSocket::SendData(const void *Buf, size_t lBufLen)
 #endif
 		}
 	}
-#ifdef _DEBUG
-	OutputDebugStringA((char*)Buf);
-#endif
+//#ifdef _DEBUG
+//	OutputDebugStringA((char*)Buf);
+//#endif
 	return nSendSize;
 }
 
@@ -210,9 +210,9 @@ long MailSocket::ReceiveData(void * Buf, size_t lBufLen)
 #endif
 		}
 	}
-#ifdef _DEBUG
-	OutputDebugStringA((char*)Buf);
-#endif
+//#ifdef _DEBUG
+//	OutputDebugStringA((char*)Buf);
+//#endif
 	return nRecvSize;
 }
 
@@ -331,6 +331,12 @@ BOOL StringProcess(const string& strSrc, long& lValye, string& strData)
 	if (strTemp.length() > 0)
 		lValye = atoi(strTemp.c_str());
 	strData = strSrc.substr(pos + 1);
+	pos = strData.find(":");
+	while (pos != strData.npos)
+	{
+		strData.replace(pos, 1, "");
+		pos = strData.find(":", pos);
+	}
 	if (strData.length() > 0 && lValye > 0)
 		return TRUE;
 	else

@@ -2818,7 +2818,7 @@ long CSQLServer::SaveToDB(EMAIL_ITEM& email,BOOL bCheck)
 {
 	BOOL bFailed = FALSE;
 	if (bCheck && IsExist(email))
-		return 0;
+		return 1;
 	DWORD size = 0;
 	COleDateTime oledt = COleDateTime::GetCurrentTime();
 	CString csTemp, csPath,csLog;

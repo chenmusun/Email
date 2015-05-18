@@ -17,7 +17,7 @@ public:
 	long GetMailCount();//获取邮件总数
 	BOOL Close();//推出邮件服务器
 	string GetUIDL(long lCurrPos);//获取邮件唯一编号
-	BOOL GetUDILs(long lTotal=0);
+	BOOL GetUDILs(map<long,string>& mapUIDLs,long lTotal=0);
 	long GetEMLFile(long lCurrPos,const string& strUIDL);//获取邮件文件
 	//设置邮件接收信息
 	void SetInfo(CString csName, const MailBoxInfo& info,LPCTSTR lpPath, long lLen);
@@ -42,6 +42,5 @@ private:
 	CLog m_log;
 	BOOL m_bFailed;
 	CDataBase m_db;
-	map<long, string> m_mapUIDLdata;
 protected:
 };

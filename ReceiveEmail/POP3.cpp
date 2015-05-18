@@ -9,12 +9,10 @@ POP3::POP3() :m_bConnect(FALSE), m_bFailed(FALSE)
 	memset(m_CurrPath, 0, MAX_PATH);
 	memset(m_chName, 0, 64);
 	memset(&m_Info, 0, sizeof(MailBoxInfo));
-	m_mapUIDLdata.clear();
 }
 
 POP3::~POP3()
 {
-	m_mapUIDLdata.clear();
 	m_Socket.CloseMySocket();
 }
 
@@ -264,7 +262,7 @@ long POP3::GetEMLFile(long lCurrPos,const string& strUIDL)
 				lRecSize += n;
 				lLastDataSize = n;
 #ifdef DEBUG
-				csDebug.Format(_T("\nBytes received: %d----Recv:%d----Total:%d\n"), n, lRecSize, lTotalSize);
+				csDebug.Format(_T("Bytes received: %d----Recv:%d----Total:%d\n"), n, lRecSize, lTotalSize);
 				OutputDebugString(csDebug);
 #endif
 			}
@@ -440,7 +438,7 @@ BOOL POP3::DeleteFromDB(const string& strUIDL)
 	return m_db.DelUIDL(strUIDL);
 }
 
-BOOL POP3::GetUDILs(long lTotal)
+BOOL POP3::GetUDILs(map<long, string>& mapUIDLs, long lTotal)
 {
 	string strUIDLs,strTemp,strUIDL;
 	long lSn(0);
@@ -467,13 +465,17 @@ BOOL POP3::GetUDILs(long lTotal)
 		strUIDLs = strUIDLs.substr(pos + 5);
 		do 
 		{
+			strTemp.clear();
+			strUIDL.clear();
 			pos = strUIDLs.find("\r\n", nStart);
 			if (pos >= 0 && pos != strUIDLs.npos)
 			{
 				strTemp = strUIDLs.substr(nStart, pos - nStart);
 				nStart = pos + 2;
 				if (StringProcess(strTemp, lSn, strUIDL))
-					m_mapUIDLdata.insert(make_pair(lSn, strUIDL));
+				{
+					mapUIDLs.insert(make_pair(lSn, strUIDL));
+				}
 			}
 			else break;
 		} while (1);
