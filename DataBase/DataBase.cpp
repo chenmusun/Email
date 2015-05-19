@@ -103,7 +103,7 @@ long CDataBase::CheckUIDLInMongoDB(const string& strUIDL, string& strErr, const 
 			{
 #ifdef _DEBUG
 				char chDebugInfo[256] = { 0 };
-				sprintf_s(chDebugInfo, 256, "InsertCount = %d\r\n", lCount++);
+				sprintf_s(chDebugInfo, 256, "MongoDB InsertCount = %d\r\n", lCount++);
 				OutputDebugStringA(chDebugInfo);
 #endif
 				connect.insert(strIndexName, obj);

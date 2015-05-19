@@ -215,21 +215,46 @@ long POP3::GetEMLFile(long lCurrPos,const string& strUIDL)
 	if (strUIDL.length() <= 0)
 		return RETURN_FAIL;
 	sprintf_s(chCommand, 128, "LIST %d\r\n", lCurrPos);
-	nValue = m_Socket.SendData(chCommand, strlen(chCommand));
-	if (nValue <= 0)
+
+	do 
 	{
-		return SEND_ERROR;
-	}
-	memset(chResult, 0, 256);
-	m_Socket.ReceiveData(chResult, 256);
-	if (!StringProcess(chResult, strCurrPos, strSize))
-	{
+		nValue = m_Socket.SendData(chCommand, strlen(chCommand));
+		if (nValue>0)
+			break;
+		nFailedCount++;
 		nError = WSAGetLastError();
+		memset(chError, 0, 128);
 		GetErrorMessage(nError, chError, 128);
 		m_log.Log(chError, strlen(chError));
 		m_log.Log(chResult, strlen(chResult));
+	} while (nFailedCount<2);
+	if (nFailedCount>1)
+	{
+		m_bFailed = TRUE;
+		return SEND_ERROR;
+	}
+
+	nFailedCount = 0;
+	do 
+	{
+		memset(chResult, 0, 256);
+		m_Socket.ReceiveData(chResult, 256);
+		if (StringProcess(chResult, strCurrPos, strSize))
+			break;
+		nFailedCount++;
+		nError = WSAGetLastError();
+		memset(chError, 0, 128);
+		GetErrorMessage(nError, chError, 128);
+		m_log.Log(chError, strlen(chError));
+		m_log.Log(chResult, strlen(chResult));
+	} while (nFailedCount<2);
+	if (nFailedCount>1)
+	{
+		m_bFailed = TRUE;
 		return RETURN_FAIL;
 	}
+
+	nFailedCount = 0;
 	lTotalSize = atoi(strSize.c_str());
 	if (lTotalSize <= 0) return RECEIVE_ERROR;
 	strEMail.reserve(lTotalSize);
@@ -242,21 +267,26 @@ long POP3::GetEMLFile(long lCurrPos,const string& strUIDL)
 		fclose(pFile);
 	}
 	else lSize = 0;
-	if ((lSize<lTotalSize) || (GetFileAttributesA(chPath) == 0xFFFFFFFF))
+	if ((lSize < lTotalSize) || (GetFileAttributesA(chPath) == 0xFFFFFFFF))
 	{
 		memset(chCommand, 0, 128);
 		sprintf_s(chCommand, 128, "RETR %d\r\n", lCurrPos);
-		nValue = m_Socket.SendData(chCommand, strlen(chCommand));
-		if (nValue < 0)
+
+		do
 		{
+			nValue = m_Socket.SendData(chCommand, strlen(chCommand));
+			if (nValue>0)
+				break;
+			m_bFailed = TRUE;
 			return SEND_ERROR;
-		}
+		} while (nFailedCount < 2);
 		do
 		{
 			n = 0;
 			n = m_Socket.ReceiveData(chTemp, 65535);
 			if (n > 0)
 			{
+				nFailedCount = 0;
 				strEMail.append(chTemp);
 				memset(chTemp, 0, 65536);
 				lRecSize += n;
@@ -266,7 +296,7 @@ long POP3::GetEMLFile(long lCurrPos,const string& strUIDL)
 				OutputDebugString(csDebug);
 #endif
 			}
-			else if (n<=0)
+			else if (n <= 0)
 			{
 				CString csLog;
 				GetErrorMessage(WSAGetLastError(), chError, 128);
@@ -276,7 +306,7 @@ long POP3::GetEMLFile(long lCurrPos,const string& strUIDL)
 					m_log.Log(csLog, csLog.GetLength());
 				}
 				else csLog.Format(_T("GetLastError=%s\n"), chError);
-				if (nFailedCount>5)//重试五次，否则中断接收
+				if (nFailedCount > 5)//重试五次，否则中断接收
 				{
 					m_log.Log(csLog, csLog.GetLength());
 					m_bFailed = TRUE;
@@ -294,7 +324,7 @@ long POP3::GetEMLFile(long lCurrPos,const string& strUIDL)
 			Sleep(10);
 		} while (1);
 
-		if (strEMail.length()>0 && !m_bFailed)
+		if (strEMail.length() > 0 && !m_bFailed)
 		{
 			error = fopen_s(&pFile, chPath, "w+b");
 			if (error == 0)

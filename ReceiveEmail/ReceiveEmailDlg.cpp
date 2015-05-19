@@ -1335,7 +1335,7 @@ void CReceiveEmailDlg::StopMain()
 	{
 		if (m_hProcess[i])
 		{
-			if (WaitForSingleObject(m_hProcess[i], INFINITE) != WAIT_OBJECT_0)
+			if (WaitForSingleObject(m_hProcess[i], 10000L) != WAIT_OBJECT_0)
 			{
 				TerminateThread(m_hProcess[i], 0);
 			}
@@ -1454,10 +1454,8 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 								if (pop3.GetStatus())
 								{
 									OutputDebugStringA("*************Failed Exit!!!!!!!*************\r\n");
-									pDlg->GetMailBoxInfo(csUserName, info, 0);
 									pop3.QuitDataBase();
 									sql.CloseDB();
-									pop3.Close();
 									break;
 								}
 								strUDIL.clear();
