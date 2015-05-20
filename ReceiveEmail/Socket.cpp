@@ -78,7 +78,8 @@ long MailSocket::InitSocket(LPCTSTR lpAddr, UINT nHostPort)
 		case AF_INET:
 			memcpy_s(&addr_sev, sizeof(sockaddr_in), (struct sockaddr_in *) ptr->ai_addr, sizeof(sockaddr_in));
 #ifdef _DEBUG
-			sprintf_s(chResult, 256, "\tIP Address #%d: %s\n", i, inet_ntoa(addr_sev.sin_addr));
+			inet_ntop(AF_INET, (void *)&addr_sev.sin_addr, chSrvAdd, 64);
+			sprintf_s(chResult, 256, "\tIP Address #%d: %s\n", i, chSrvAdd);
 #endif
 			bFound = TRUE;
 			break;
