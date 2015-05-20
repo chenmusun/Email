@@ -214,7 +214,7 @@ void CSettingDlg::OnBnClickedMfcbuttonMotest()
 		{
 			db.DisConnectDataBase();
 			char chDebug[512] = { 0 };
-			sprintf_s(chDebug, 512, "Connect [%s]-[%s] Success!", m_pMoInfo->chDBAdd, m_pMoInfo->chDBName);
+			sprintf_s(chDebug, 512, "Connect [%s]-[%s] Success!", moinfo.chDBAdd, moinfo.chDBName);
 			csDebug = chDebug;
 		}
 		else
@@ -242,7 +242,7 @@ void CSettingDlg::OnBnClickedMfcbuttonSqltest()
 	if (sql.Connect(sqlinfo))
 	{
 		sql.CloseDB();
-		csDebug.Format(_T("Connect [%s]-[%s] Success!"),m_pSqlInfo->szDBAdd,m_pSqlInfo->szDBName);
+		csDebug.Format(_T("Connect [%s]-[%s] Success!"), sqlinfo.szDBAdd, sqlinfo.szDBName);
 	}
 	else
 	{

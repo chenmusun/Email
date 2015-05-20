@@ -46,21 +46,13 @@ long MailSocket::InitSocket(LPCTSTR lpAddr, UINT nHostPort)
 	{
 		return SOCKETINIT_ERROR;
 	}
-	//设置接收超时5秒
+	//设置接收超时3秒
 	if (::setsockopt(m_MySocket, SOL_SOCKET, SO_RCVTIMEO, (char *)&TimeOut, sizeof(TimeOut)) == SOCKET_ERROR)
 	{
 		return SOCKETINIT_ERROR;
 	}
 	WideCharToMultiByte(CP_ACP, 0, lpAddr, 64, chSrvAdd, 64, NULL, NULL);
-	/*sockaddr_in addr_sev;
-	memset(&addr_sev,0,sizeof(sockaddr_in));
-	addr_sev.sin_family = AF_INET;
-	addr_sev.sin_addr.s_addr = inet_addr(chSrvAdd);
-	inet_pton(AF_INET, chSrvAdd, (PVOID)addr_sev.sin_addr.s_addr);
-	addr_sev.sin_port = htons(nHostPort);
-	struct hostent *remoteHost=NULL;
-	remoteHost = gethostbyname(chSrvAdd);*/
-	
+		
 	DWORD dwRetval(0);
 	struct sockaddr_in  addr_sev;
 	memset(&addr_sev, 0, sizeof(sockaddr_in));
@@ -101,15 +93,6 @@ long MailSocket::InitSocket(LPCTSTR lpAddr, UINT nHostPort)
 	}
 	freeaddrinfo(result);
 
-	/*i = 0;
-	if (remoteHost && remoteHost->h_addrtype == AF_INET)
-	{
-		while (remoteHost->h_addr_list[i] != 0) {
-			addr_sev.sin_addr.s_addr = *(u_long *)remoteHost->h_addr_list[i++];
-			sprintf_s(chResult, 256, "\tIP Address #%d: %s\n", i, inet_ntoa(addr_sev.sin_addr));
-		}
-	}
-	else return NO_INTERNET;*/
 	u_long iMode = 1;
 	iResult = ::ioctlsocket(m_MySocket, FIONBIO, &iMode);//设置成非阻塞模式
 	if (iResult != NO_ERROR)

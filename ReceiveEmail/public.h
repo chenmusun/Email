@@ -42,6 +42,7 @@ struct SQLDBInfo
 	TCHAR szDBName[32];
 	TCHAR szUserName[32];
 	TCHAR szPasswd[32];
+	long lDBType;
 };
 
 
@@ -56,6 +57,7 @@ struct MailBoxInfo
 	TCHAR szMailAdd[128];		//Ω” ’” œ‰
 	long lStatus;
 	long lSaveDay;
+	char chUIDL[64];
 };
 
 enum RETURN_VALUE

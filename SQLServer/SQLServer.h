@@ -720,6 +720,8 @@ public:
 	void SetLogPath(const char*pPath,long lLen);
 	BOOL DeleteFromSQL(EMAIL_ITEM& email);
 	long SaveToDBOld(EMAIL_ITEM& email, BOOL bCheck = TRUE);
+	long GetSQLDBType();
+	BOOL DeleteFromSQLOld(EMAIL_ITEM& email);
 private:
 	CString m_csServer;
 	CString m_csDatabase;
@@ -732,6 +734,7 @@ private:
 	CADORecordset *	m_pSubjectRs;
 	char m_chLogPath[MAX_PATH];
 	FILE *m_fp;
+	long m_lDBType;
 private:
 	void GetGUID(CString &guid);
 	BOOL IsConnect();
@@ -739,6 +742,7 @@ private:
 	BOOL SQLExec(LPCTSTR lpSql);
 	BOOL IsExist(EMAIL_ITEM& email);
 	long SaveAttachment(ATTACH_FILE& attach, long lEmailID);
+	long SaveAttachmentOld(ATTACH_FILE& attach, long lEmailID);
 	void Log(LPCTSTR lpText, int nLen);
 	void GetCurrTime(char* pTime, long lLen);
 public:

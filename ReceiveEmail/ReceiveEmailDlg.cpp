@@ -33,6 +33,8 @@ HANDLE __HEVENT_EXIT__ = NULL;
 HANDLE __HEVENT_TEST_EXIT__ = NULL;
 HANDLE __HEVENT_MAIN_EXIT__ = NULL;
 
+vector<CString> g_OldDataBase;
+
 
 DWORD WINAPI  CReceiveEmailDlg::_AfxMain(LPVOID lpParam)
 {
@@ -255,7 +257,8 @@ BOOL CReceiveEmailDlg::OnInitDialog()
 	m_listMailBox.InsertColumn(0, _T("–Ú∫≈"), LVCFMT_CENTER,50);
 	m_listMailBox.InsertColumn(1, _T("” œ‰√˚≥∆"), LVCFMT_LEFT, rt.right - 50);
 
-
+	g_OldDataBase.push_back(_T("192.168.1.150"));
+	g_OldDataBase.push_back(_T("192.168.0.6"));
 	if (LoadFromConfig())
 	{
 		InitMailList();
@@ -492,6 +495,12 @@ BOOL CReceiveEmailDlg::LoadFromConfig()
 	sprintf_s(m_dbinfo.chPasswd, 32, "%s", chTemp);
 	memset(&m_sqldbinfo, 0, sizeof(SQLDBInfo));
 	GetPrivateProfileString(_T("DataBase"), _T("sql_dbadd"), _T("OFFICE-PC\\SQLSERVER"), m_sqldbinfo.szDBAdd, 32, szConfigPath);
+	vector<CString>::iterator ite= g_OldDataBase.begin();
+	ite = find(g_OldDataBase.begin(), g_OldDataBase.end(), m_sqldbinfo.szDBAdd);
+	if (ite!=g_OldDataBase.end())
+	{
+		m_sqldbinfo.lDBType = 1;
+	}
 	GetPrivateProfileString(_T("DataBase"), _T("sql_db"), _T("ReportEmailDB"), m_sqldbinfo.szDBName, 32, szConfigPath);
 	GetPrivateProfileString(_T("DataBase"), _T("sql_username"), _T("sa"), m_sqldbinfo.szUserName, 32, szConfigPath);
 	GetPrivateProfileString(_T("DataBase"), _T("sql_passwd"), _T("test.123"), m_sqldbinfo.szPasswd, 32, szConfigPath);
@@ -535,12 +544,12 @@ BOOL CReceiveEmailDlg::GetMailBoxInfo(CString&csUserName, MailBoxInfo& info, lon
 	if (m_lLastPos > m_mailList.size()-1)
 		m_lLastPos = 0;
 	long lCurrPos(0),lCount(0);
-	memset(&info, 0, sizeof(MailBoxInfo));
 	MAILLIST_ITE ite = m_mailList.begin();
 	switch (lStatus)
 	{
 	case 1:
 	{
+		memset(&info, 0, sizeof(MailBoxInfo));
 		while (TRUE)
 		{
 			if (lCount > 1)
@@ -556,6 +565,8 @@ BOOL CReceiveEmailDlg::GetMailBoxInfo(CString&csUserName, MailBoxInfo& info, lon
 				info.bSendMail = ite->second.bSendMail;
 				wsprintf(info.szMailAdd, ite->second.szMailAdd);
 				info.lSaveDay = ite->second.lSaveDay;
+				memset(info.chUIDL, 0, 64);
+				sprintf_s(info.chUIDL,64,"%s",ite->second.chUIDL);
 				m_lLastPos++;
 				ite->second.lStatus = 1;
 				break;
@@ -576,6 +587,8 @@ BOOL CReceiveEmailDlg::GetMailBoxInfo(CString&csUserName, MailBoxInfo& info, lon
 		if (ite != m_mailList.end())
 		{
 			ite->second.lStatus = 0;
+			memset(ite->second.chUIDL, 0, 64);
+			sprintf_s(ite->second.chUIDL, 64, "%s", info.chUIDL);
 		}
 	}
 		break;
@@ -1434,14 +1447,29 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 						lResult = mapUIDLs.size();
 						if (lResult > 0)
 						{
-							iteuidl = mapUIDLs.begin();
 							pDlg->m_showinfo[dwID].lTotal = lResult;
 							pDlg->m_showinfo[dwID].lStatus = 0;
-
+							strUDIL.clear();
+							strUDIL = info.chUIDL;
+							if (strUDIL.length() > 0)
+							{
+								iteuidl = mapUIDLs.begin();
+								while (iteuidl != mapUIDLs.end())
+								{
+									if (iteuidl->second == strUDIL)
+									{
+										pDlg->m_showinfo[dwID].lCurr = iteuidl->first;
+										break;
+									}
+									iteuidl++;
+								}
+							}
+							else iteuidl = mapUIDLs.begin();
 							while (iteuidl!=mapUIDLs.end())
 							{
 								if (WaitForSingleObject(__HEVENT_MAIN_EXIT__, 10L) == WAIT_OBJECT_0)
 								{
+									sprintf_s(info.chUIDL, 64, "%s", iteuidl->second.c_str());
 									pDlg->GetMailBoxInfo(csUserName, info, 0);
 									pop3.QuitDataBase();
 									sql.CloseDB();
@@ -1451,13 +1479,6 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 								csDebug.Format(_T("%s Count = %d\tTotal = %d\r\n"), info.szName, iteuidl->first, lResult);
 								OutputDebugString(csDebug);
 								dwTime = GetTickCount64();
-								if (pop3.GetStatus())
-								{
-									OutputDebugStringA("*************Failed Exit!!!!!!!*************\r\n");
-									pop3.QuitDataBase();
-									sql.CloseDB();
-									break;
-								}
 								strUDIL.clear();
 								strUDIL = iteuidl->second;
 								sprintf_s(chDebug, 512, "UIDL: [%s]\r\n", strUDIL.c_str());
@@ -1481,6 +1502,7 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 										}
 										else
 										{
+											sprintf_s(info.chUIDL, 64, "%s", iteuidl->second.c_str());
 											//TODO: Delete mongo uidl data
 											if (pop3.DeleteFromDB(strUDIL))
 											{
@@ -1488,6 +1510,10 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 												OutputDebugStringA(chDebug);
 												OutputDebugStringA("\r\n");
 											}
+											OutputDebugStringA("*************Failed Exit!!!!!!!*************\r\n");
+											pop3.QuitDataBase();
+											sql.CloseDB();
+											break;
 										}
 									}
 									else if (lReturnvalue == MONGO_DELETE)
@@ -1506,6 +1532,8 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 								OutputDebugString(csDebug);
 								pDlg->m_showinfo[dwID].lCurr = iteuidl->first;
 								iteuidl++;
+								if (iteuidl == mapUIDLs.end())
+									memset(info.chUIDL, 0, 64);
 							}//end of while
 							sql.CloseDB();
 							lCount = mapDelUIDLs.size();
@@ -1574,6 +1602,7 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 
 long CReceiveEmailDlg::MailAnalysis(POP3& pop3, CSQLServer& sql, SMTP& smtp, const string& strUIDL, const MailBoxInfo& info, const char* pLogPath,long lLen, long lType)
 {
+	char chTemp[MAX_PATH] = { 0 };
 	long lValue(0);
 	BOOL bRet = TRUE;
 	CString csUIDL(strUIDL.c_str()), csPath(pop3.GetCurrPath());
@@ -1606,16 +1635,28 @@ long CReceiveEmailDlg::MailAnalysis(POP3& pop3, CSQLServer& sql, SMTP& smtp, con
 				bRet = FALSE;
 				break;
 			}
-			lValue = sql.SaveToDB(ana.GetEmailItem());
-			if (lValue == 0)
+			if (sql.GetSQLDBType() == 0)
 			{
-				pop3.SaveFileToDB(ana.GetEmailItem());
+				lValue = sql.SaveToDB(ana.GetEmailItem());
+				if (lValue == 0)
+				{
+					pop3.SaveFileToDB(ana.GetEmailItem());
+				}
+				else
+				{
+					pop3.DeleteFromDB(ana.GetEmailItem());
+					sql.DeleteFromSQL(ana.GetEmailItem());
+					ana.SetClearType(0);
+				}
 			}
 			else
 			{
-				pop3.DeleteFromDB(ana.GetEmailItem());
-				sql.DeleteFromSQL(ana.GetEmailItem());
-				ana.SetClearType(0);
+				lValue = sql.SaveToDBOld(ana.GetEmailItem());
+				if (lValue != 0)
+				{
+					sql.DeleteFromSQLOld(ana.GetEmailItem());
+					ana.SetClearType(0);
+				}
 			}
 		} while (0);
 		if (info.bSendMail)

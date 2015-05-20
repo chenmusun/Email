@@ -239,6 +239,7 @@ BOOL CDataBase::DelUIDL(const string& strUIDL, const string& strName)
 			strValue = bsoReturnValue.toString();
 	}
 	else return FALSE;
+	--lCount;
 	return TRUE;
 }
 
@@ -299,5 +300,6 @@ BOOL CDataBase::DelUIDL(const string& strUIDL)
 			strValue = bsoReturnValue.toString();
 	}
 	else return FALSE;
+	--lCount;
 	return TRUE;
 }
