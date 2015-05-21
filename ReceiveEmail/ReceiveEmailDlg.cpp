@@ -1397,8 +1397,6 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 		DWORD dwTime(0);
 		while (true)
 		{
-			pop3.Close();
-			sql.CloseDB();
 			memset(&szLogPath, 0, MAX_PATH);
 			memset(&chLogPath, 0, MAX_PATH);
 			memset(&info, 0, sizeof(MailBoxInfo));
@@ -1441,130 +1439,143 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 					if (pop3.ConnectDataBase() && sql.Connect(sqlinfo))
 					{
 						swprintf_s(pDlg->m_showinfo[dwID].szAbbreviation, 64, _T("%s"), info.szAbbreviation);
-						swprintf_s(pDlg->m_showinfo[dwID].szName, 128, _T("%s"), info.szName);
+						swprintf_s(pDlg->m_showinfo[dwID].szName, 128, _T("%s-获取UDIL..."), info.szName);
 						lResult = pop3.GetMailCount();
-						pop3.GetUDILs(mapUIDLs,lResult);
-						lResult = mapUIDLs.size();
-						if (lResult > 0)
+						if (pop3.GetUDILs(mapUIDLs, lResult))
 						{
-							pDlg->m_showinfo[dwID].lTotal = lResult;
-							pDlg->m_showinfo[dwID].lStatus = 0;
-							strUDIL.clear();
-							strUDIL = info.chUIDL;
-							if (strUDIL.length() > 0)
+							lResult = mapUIDLs.size();
+							if (lResult > 0)
 							{
-								iteuidl = mapUIDLs.begin();
-								while (iteuidl != mapUIDLs.end())
-								{
-									if (iteuidl->second == strUDIL)
-									{
-										pDlg->m_showinfo[dwID].lCurr = iteuidl->first;
-										break;
-									}
-									iteuidl++;
-								}
-							}
-							else iteuidl = mapUIDLs.begin();
-							while (iteuidl!=mapUIDLs.end())
-							{
-								if (WaitForSingleObject(__HEVENT_MAIN_EXIT__, 10L) == WAIT_OBJECT_0)
-								{
-									sprintf_s(info.chUIDL, 64, "%s", iteuidl->second.c_str());
-									pDlg->GetMailBoxInfo(csUserName, info, 0);
-									pop3.QuitDataBase();
-									sql.CloseDB();
-									pop3.Close();
-									break;
-								}
-								csDebug.Format(_T("%s Count = %d\tTotal = %d\r\n"), info.szName, iteuidl->first, lResult);
-								OutputDebugString(csDebug);
-								dwTime = GetTickCount64();
+								swprintf_s(pDlg->m_showinfo[dwID].szName, 128, _T("%s-接收中..."), info.szName);
+								pDlg->m_showinfo[dwID].lTotal = lResult;
+								pDlg->m_showinfo[dwID].lStatus = 0;
 								strUDIL.clear();
-								strUDIL = iteuidl->second;
-								sprintf_s(chDebug, 512, "UIDL: [%s]\r\n", strUDIL.c_str());
-								OutputDebugStringA(chDebug);
+								strUDIL = info.chUIDL;
 								if (strUDIL.length() > 0)
 								{
-									lReturnvalue = pop3.CheckUIDL(strUDIL, strName, info.lSaveDay);
-									if (lReturnvalue == MONGO_NOT_FOUND)
+									iteuidl = mapUIDLs.begin();
+									while (iteuidl != mapUIDLs.end())
 									{
-										if (pop3.GetEMLFile(iteuidl->first, strUDIL) == 0)
+										if (iteuidl->second == strUDIL)
 										{
-#ifdef _DEBUG
-											lType = 0;
-#endif
-											if (pDlg->MailAnalysis(pop3, sql, smtp, strUDIL, info, chLogPath, lLen, lType) < 0)//邮件解析
-											{
-												sprintf_s(chDebug, 512, "Analysis [%s] Error!", strUDIL.c_str());
-												OutputDebugStringA(chDebug);
-												OutputDebugStringA("\r\n");
-											}
-										}
-										else
-										{
-											sprintf_s(info.chUIDL, 64, "%s", iteuidl->second.c_str());
-											//TODO: Delete mongo uidl data
-											if (pop3.DeleteFromDB(strUDIL))
-											{
-												sprintf_s(chDebug, 512, "Delete [%s] From MongoDB-UIDL!", strUDIL.c_str());
-												OutputDebugStringA(chDebug);
-												OutputDebugStringA("\r\n");
-											}
-											OutputDebugStringA("*************Failed Exit!!!!!!!*************\r\n");
-											pop3.QuitDataBase();
-											sql.CloseDB();
+											pDlg->m_showinfo[dwID].lCurr = iteuidl->first;
 											break;
 										}
+										iteuidl++;
 									}
-									else if (lReturnvalue == MONGO_DELETE)
-										mapDelUIDLs.insert(make_pair(iteuidl->first, iteuidl->second));
 								}
-								else
-								{
-									OutputDebugString(_T("Can't get UIDL!\r\n"));
-									pDlg->GetMailBoxInfo(csUserName, info, 0);
-									pop3.QuitDataBase();
-									sql.CloseDB();
-									break;
-								}
-								dwTime = GetTickCount64() - dwTime;
-								csDebug.Format(_T("Process Time = %d\r\n"), dwTime / 1000);
-								OutputDebugString(csDebug);
-								pDlg->m_showinfo[dwID].lCurr = iteuidl->first;
-								iteuidl++;
-								if (iteuidl == mapUIDLs.end())
-									memset(info.chUIDL, 0, 64);
-							}//end of while
-							sql.CloseDB();
-							lCount = mapDelUIDLs.size();
-							if (lCount>0)
-							{
-								itedel = mapDelUIDLs.begin();
-								pDlg->m_showinfo[dwID].lStatus =i= 1;
-								pDlg->m_showinfo[dwID].lTotal = lCount;
-
-								while (itedel!=mapDelUIDLs.end())
+								else iteuidl = mapUIDLs.begin();
+								while (iteuidl != mapUIDLs.end())
 								{
 									if (WaitForSingleObject(__HEVENT_MAIN_EXIT__, 10L) == WAIT_OBJECT_0)
 									{
+										sprintf_s(info.chUIDL, 64, "%s", iteuidl->second.c_str());
 										pDlg->GetMailBoxInfo(csUserName, info, 0);
 										pop3.QuitDataBase();
 										sql.CloseDB();
 										pop3.Close();
 										break;
 									}
-									if (pop3.DelEmail(itedel->first, itedel->second) == SUCCESS)
+									csDebug.Format(_T("%s Count = %d\tTotal = %d\r\n"), info.szName, iteuidl->first, lResult);
+									OutputDebugString(csDebug);
+									dwTime = GetTickCount64();
+									strUDIL.clear();
+									strUDIL = iteuidl->second;
+									sprintf_s(chDebug, 512, "UIDL: [%s]\r\n", strUDIL.c_str());
+									OutputDebugStringA(chDebug);
+									if (strUDIL.length() > 0)
 									{
-										csDebug.Format(_T("%s Del-Count = %d\tTotal = %d\r\n"), info.szName, i++,lCount);
-										OutputDebugString(csDebug);
+										lReturnvalue = pop3.CheckUIDL(strUDIL, strName, info.lSaveDay);
+										if (lReturnvalue == MONGO_NOT_FOUND)
+										{
+											if (pop3.GetEMLFile(iteuidl->first, strUDIL) == 0)
+											{
+#ifdef _DEBUG
+												lType = 0;
+#endif
+												if (pDlg->MailAnalysis(pop3, sql, smtp, strUDIL, info, chLogPath, lLen, lType) < 0)//邮件解析
+												{
+													sprintf_s(chDebug, 512, "Analysis [%s] Error!", strUDIL.c_str());
+													OutputDebugStringA(chDebug);
+													OutputDebugStringA("\r\n");
+												}
+											}
+											else
+											{
+												swprintf_s(pDlg->m_showinfo[dwID].szName, 128, _T("%s-接收[%s]失败！"), info.szName, iteuidl->second.c_str());
+												sprintf_s(info.chUIDL, 64, "%s", iteuidl->second.c_str());
+												//TODO: Delete mongo uidl data
+												if (pop3.DeleteFromDB(strUDIL))
+												{
+													sprintf_s(chDebug, 512, "Delete [%s] From MongoDB-UIDL!", strUDIL.c_str());
+													OutputDebugStringA(chDebug);
+													OutputDebugStringA("\r\n");
+												}
+												OutputDebugStringA("*************Failed Exit!!!!!!!*************\r\n");
+												pop3.QuitDataBase();
+												sql.CloseDB();
+												break;
+											}
+										}
+										else if (lReturnvalue == MONGO_DELETE)
+											mapDelUIDLs.insert(make_pair(iteuidl->first, iteuidl->second));
 									}
-									pDlg->m_showinfo[dwID].lCurr = j++;
-									itedel++;
+									else
+									{
+										OutputDebugString(_T("Can't get UIDL!\r\n"));
+										pDlg->GetMailBoxInfo(csUserName, info, 0);
+										pop3.QuitDataBase();
+										sql.CloseDB();
+										break;
+									}
+									dwTime = GetTickCount64() - dwTime;
+									csDebug.Format(_T("Process Time = %d\r\n"), dwTime / 1000);
+									OutputDebugString(csDebug);
+									pDlg->m_showinfo[dwID].lCurr = iteuidl->first;
+									iteuidl++;
+									if (iteuidl == mapUIDLs.end())
+										memset(info.chUIDL, 0, 64);
+								}//end of while
+								sql.CloseDB();
+								lCount = mapDelUIDLs.size();
+								if (lCount > 0)
+								{
+									itedel = mapDelUIDLs.begin();
+									pDlg->m_showinfo[dwID].lStatus = i = 1;
+									pDlg->m_showinfo[dwID].lTotal = lCount;
+
+									while (itedel != mapDelUIDLs.end())
+									{
+										if (WaitForSingleObject(__HEVENT_MAIN_EXIT__, 10L) == WAIT_OBJECT_0)
+										{
+											pDlg->GetMailBoxInfo(csUserName, info, 0);
+											pop3.QuitDataBase();
+											sql.CloseDB();
+											pop3.Close();
+											break;
+										}
+										if (pop3.DelEmail(itedel->first, itedel->second) == SUCCESS)
+										{
+											csDebug.Format(_T("%s Del-Count = %d\tTotal = %d\r\n"), info.szName, i++, lCount);
+											OutputDebugString(csDebug);
+										}
+										pDlg->m_showinfo[dwID].lCurr = j++;
+										itedel++;
+									}
 								}
+								pop3.QuitDataBase();
+								memset(&pDlg->m_showinfo[dwID], 0, sizeof(ShowInfo));
+								swprintf_s(pDlg->m_showinfo[dwID].szName, 128, _T("%s-接收完成！"), info.szName);
+								pDlg->GetMailBoxInfo(csUserName, info, 0);
+								WaitForSingleObject(__HEVENT_MAIN_EXIT__, 500L);
 							}
-							pop3.QuitDataBase();
-							pDlg->GetMailBoxInfo(csUserName, info,0);
-							memset(&pDlg->m_showinfo[dwID], 0, sizeof(ShowInfo));
+						}
+						else
+						{
+							swprintf_s(pDlg->m_showinfo[dwID].szName, 128, _T("%s-获取UDIL失败"), info.szName);
+							WaitForSingleObject(__HEVENT_MAIN_EXIT__, 500L);
+							pDlg->GetMailBoxInfo(csUserName, info, 0);
+							break;
 						}
 					}// end of if
 				}

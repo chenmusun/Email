@@ -472,7 +472,7 @@ BOOL POP3::GetUDILs(map<long, string>& mapUIDLs, long lTotal)
 {
 	string strUIDLs,strTemp,strUIDL;
 	long lSn(0);
-	int nValue(0),n(0),nStart(0);
+	int nValue(0), n(0), nStart(0), nFailedCount(0);
 	char chCommand[128] = { 0 }, chResult[256] = { 0 }, chBuffer[65536] = { 0 };
 	sprintf_s(chCommand, 128, "UIDL\r\n");
 	nValue = m_Socket.SendData(chCommand, strlen(chCommand));
@@ -486,8 +486,22 @@ BOOL POP3::GetUDILs(map<long, string>& mapUIDLs, long lTotal)
 		if (n > 0)
 		{
 			strUIDLs.append(chBuffer);
+#ifdef _DEBUG
+			OutputDebugStringA(chBuffer);
+#endif
 			memset(chBuffer, 0, 65536);
 		}
+		else if (n <= 0)
+		{
+			if (nFailedCount > 5)//重试五次，否则中断接收
+			{
+				break;
+			}
+			nFailedCount++;
+			Sleep(500);
+			continue;
+		}
+		Sleep(10);
 	} while (n>0);
 	auto pos = strUIDLs.find("+OK\r\n");
 	if (pos>= 0 && pos != strUIDLs.npos)
