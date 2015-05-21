@@ -2782,7 +2782,7 @@ void UTF_8ToGB2312(string &pOut, char *pText, int pLen)
 }
 
 ///////////////////////////////////////////////////////
-CSQLServer::CSQLServer() :m_nType(0), m_pEMRs(NULL), m_pGuidRs(NULL), m_pSubjectRs(NULL), m_lDBType(0)
+CSQLServer::CSQLServer() :m_nType(0), m_pEMRs(NULL), m_pGuidRs(NULL), m_pSubjectRs(NULL), m_lDBType(0), m_lUseDB(1)
 {
 	m_pEMRs = new CADORecordset(&m_db);
 	m_pGuidRs = new CADORecordset(&m_db);
@@ -2816,6 +2816,8 @@ CSQLServer::~CSQLServer()
 
 long CSQLServer::SaveToDB(EMAIL_ITEM& email,BOOL bCheck)
 {
+	if (m_lUseDB != 1)
+		return 0;
 	BOOL bFailed = FALSE;
 	if (bCheck && IsExist(email))
 		return 1;
@@ -2966,6 +2968,10 @@ void CSQLServer::GetGUID(CString &guid)
 
 BOOL CSQLServer::Connect(SQLDBInfo& sqlinfo, int nType)
 {
+	if (m_lUseDB != 1)
+	{
+		return TRUE;
+	}
 	::CoInitialize(NULL);
 	CString csCommand,csLog;
 	m_csServer.Empty();
@@ -3030,6 +3036,8 @@ BOOL CSQLServer::Connect(SQLDBInfo& sqlinfo, int nType)
 
 BOOL CSQLServer::IsConnect()
 {
+	if (m_lUseDB != 1)
+		return TRUE;
 	try
 	{
 		if (m_db.IsOpen() == FALSE)
@@ -3056,6 +3064,8 @@ BOOL CSQLServer::IsConnect()
 
 BOOL CSQLServer::ReConnect()
 {
+	if (m_lUseDB != 1)
+		return TRUE;
 	CString csCommand;
 	if (m_csServer.IsEmpty() || m_csDatabase.IsEmpty() || m_csUser.IsEmpty())
 		return FALSE;
@@ -3100,6 +3110,8 @@ BOOL CSQLServer::ReConnect()
 
 BOOL CSQLServer::SQLExec(LPCTSTR lpSql)
 {
+	if (m_lUseDB != 1)
+		return TRUE;
 	CString csCmd(lpSql);
 	if (csCmd.IsEmpty())
 		return FALSE;
@@ -3125,6 +3137,8 @@ BOOL CSQLServer::SQLExec(LPCTSTR lpSql)
 
 BOOL CSQLServer::CloseDB()
 {
+	if (m_lUseDB != 1)
+		return TRUE;
 	::CoUninitialize();
 	if (m_db.IsOpen())
 	{
@@ -3387,6 +3401,8 @@ void CSQLServer::Log(LPCTSTR lpText, int nLen)
 BOOL CSQLServer::DeleteFromSQL(EMAIL_ITEM& email)
 {
 	BOOL bValue(TRUE);
+	if (m_lUseDB != 1)
+		return bValue;
 	CADOCommand * pCmd = new CADOCommand(&m_db);
 	CString csSql;
 	do 
@@ -3417,6 +3433,8 @@ BOOL CSQLServer::DeleteFromSQL(EMAIL_ITEM& email)
 
 long CSQLServer::SaveToDBOld(EMAIL_ITEM& email, BOOL bCheck)
 {
+	if (m_lUseDB != 1)
+		return TRUE;
 	BOOL bFailed = FALSE;
 	if (bCheck && IsExist(email))
 		return 0;
@@ -3715,6 +3733,8 @@ long CSQLServer::SaveAttachmentOld(ATTACH_FILE& attach, long lEmailID)
 BOOL CSQLServer::DeleteFromSQLOld(EMAIL_ITEM& email)
 {
 	BOOL bValue(TRUE);
+	if (m_lUseDB != 1)
+		return bValue;
 	CADOCommand * pCmd = new CADOCommand(&m_db);
 	CString csSql;
 	do

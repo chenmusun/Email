@@ -33,8 +33,6 @@ public:
 	void DisConnectDataBase();//断开数据库连接（目前使用MongoAPI中的Logout）
 	void SetDBInfo(const MongoDBInfo&dbinfo);//设置数据库相关信息
 	inline string GetDBName(){ return m_strDBName; }
-	void GetCurrTime(string& strDate);
-	long long GetTimeStamp();
 	inline int GetUseDB(){ return m_nUseDB; }
 	long SaveFileToMongoDB(string& remotename,string& strPath,string& strRtr);
 	BOOL DelUIDL(const string& strUIDL,const string& strName);
@@ -43,7 +41,6 @@ public:
 private:
 	DBClientConnection connect;//Mongo连接实例
 	BOOL m_bConnect;
-
 	string m_strDBAdd;
 	string m_strDBName;
 	string m_strTable;
@@ -51,6 +48,8 @@ private:
 	string m_strPasswd;
 	int m_nUseDB;
 private:
+	void GetCurrTime(string& strDate);
+	long long GetTimeStamp();
 protected:
 };
 

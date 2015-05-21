@@ -223,6 +223,8 @@ long CDataBase::SaveFileToMongoDB(string& remotename, string& strPath, string& s
 
 BOOL CDataBase::DelUIDL(const string& strUIDL, const string& strName)
 {
+	if (m_nUseDB != 1)
+		return TRUE;
 	if (strUIDL.length() <= 0)
 		return FALSE;
 	string strIndexName(m_strDBName), strValue;
@@ -285,6 +287,8 @@ BOOL CDataBase::GetFileFromMongoDB(const string& strFileName,const string&strSav
 
 BOOL CDataBase::DelUIDL(const string& strUIDL)
 {
+	if (m_nUseDB != 1)
+		return TRUE;
 	if (strUIDL.length() <= 0)
 		return FALSE;
 	string strIndexName(m_strDBName), strValue;

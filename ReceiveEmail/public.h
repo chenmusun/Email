@@ -42,7 +42,8 @@ struct SQLDBInfo
 	TCHAR szDBName[32];
 	TCHAR szUserName[32];
 	TCHAR szPasswd[32];
-	long lDBType;
+	long lDBType;//0-new;1-old
+	long lUseDB;
 };
 
 

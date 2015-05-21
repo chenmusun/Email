@@ -85,7 +85,10 @@ public:
 	virtual ~CADODatabase()
 	{
 		Close();
-		m_pConnection.Release();
+		if (m_pConnection)
+		{
+			m_pConnection.Release();
+		}
 		m_pConnection = NULL;
 		m_dwTransStatus = transactionStatusUnknown;
 		m_strConnection = _T("");
@@ -714,8 +717,8 @@ public:
 	CSQLServer(void);
 	~CSQLServer();
 	// TODO:  在此添加您的方法。
-	long SaveToDB(EMAIL_ITEM& email,BOOL bCheck=TRUE);
 	BOOL Connect(SQLDBInfo& sqlinfo, int nType = 0);//0:混合验证；1:Windows验证
+	long SaveToDB(EMAIL_ITEM& email, BOOL bCheck = TRUE);
 	BOOL CloseDB();
 	void SetLogPath(const char*pPath,long lLen);
 	BOOL DeleteFromSQL(EMAIL_ITEM& email);
@@ -735,6 +738,7 @@ private:
 	char m_chLogPath[MAX_PATH];
 	FILE *m_fp;
 	long m_lDBType;
+	long m_lUseDB;
 private:
 	void GetGUID(CString &guid);
 	BOOL IsConnect();

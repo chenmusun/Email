@@ -494,6 +494,11 @@ BOOL CReceiveEmailDlg::LoadFromConfig()
 	GetPrivateProfileStringA("DataBase", "passwd", "123456", chTemp, 512, chConfigPath);
 	sprintf_s(m_dbinfo.chPasswd, 32, "%s", chTemp);
 	memset(&m_sqldbinfo, 0, sizeof(SQLDBInfo));
+	GetPrivateProfileString(_T("DataBase"), _T("sqlusedb"), _T("yes"), szName, 64, szConfigPath);
+	csTemp.Format(_T("%s"), szName);
+	if (csTemp.CompareNoCase(_T("yes")) >= 0)
+		m_sqldbinfo.lUseDB = 1;
+	else m_sqldbinfo.lUseDB = 0;
 	GetPrivateProfileString(_T("DataBase"), _T("sql_dbadd"), _T("OFFICE-PC\\SQLSERVER"), m_sqldbinfo.szDBAdd, 32, szConfigPath);
 	vector<CString>::iterator ite= g_OldDataBase.begin();
 	ite = find(g_OldDataBase.begin(), g_OldDataBase.end(), m_sqldbinfo.szDBAdd);
@@ -1020,6 +1025,11 @@ void CReceiveEmailDlg::WriteToConfig()
 	csTemp = m_dbinfo.chPasswd;
 	WritePrivateProfileString(_T("DataBase"), _T("passwd"), csTemp, szConfigPath);
 
+	if (m_sqldbinfo.lUseDB == 1)
+		csTemp.Format(_T("yes"));
+	else
+		csTemp.Format(_T("no"));
+	WritePrivateProfileString(_T("DataBase"), _T("sqlusedb"), csTemp, szConfigPath);
 	csTemp = m_sqldbinfo.szDBAdd;
 	WritePrivateProfileString(_T("DataBase"), _T("sql_dbadd"), csTemp, szConfigPath);
 	csTemp = m_sqldbinfo.szDBName;
@@ -1590,6 +1600,7 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 						break;
 					pDlg->GetMailBoxInfo(csUserName, info, 0);
 				}
+				memset(pDlg->m_showinfo[dwID].szName, 0, 128);
 				pop3.Close();
 			}
 			else

@@ -51,4 +51,10 @@ public:
 	virtual BOOL OnInitDialog();
 	afx_msg void OnBnClickedMfcbuttonMotest();
 	afx_msg void OnBnClickedMfcbuttonSqltest();
+	BOOL m_bUseDB2;
+	CEdit m_editSQLAdd;
+	CEdit m_editSQLDBName;
+	CEdit m_editSQLUsername;
+	CEdit m_editSQLPass;
+	afx_msg void OnBnClickedCheckUsedb2();
 };

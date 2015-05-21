@@ -32,6 +32,7 @@ CSettingDlg::CSettingDlg(CWnd* pParent /*=NULL*/)
 	, m_pMoInfo(NULL)
 	, m_pSqlInfo(NULL)
 	,m_pFoInfo(NULL)
+	, m_bUseDB2(FALSE)
 {
 }
 
@@ -61,6 +62,11 @@ void CSettingDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_EDIT_TABNAME, m_editTab);
 	DDX_Control(pDX, IDC_EDIT_USRNAM, m_editUsrnam);
 	DDX_Control(pDX, IDC_EDIT_PASSWD, m_editPass);
+	DDX_Check(pDX, IDC_CHECK_USEDB2, m_bUseDB2);
+	DDX_Control(pDX, IDC_EDIT_SRVADD2, m_editSQLAdd);
+	DDX_Control(pDX, IDC_EDIT_DBNAME2, m_editSQLDBName);
+	DDX_Control(pDX, IDC_EDIT_USRNAM2, m_editSQLUsername);
+	DDX_Control(pDX, IDC_EDIT_PASSWD2, m_editSQLPass);
 }
 
 
@@ -68,6 +74,7 @@ BEGIN_MESSAGE_MAP(CSettingDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_CHECK_USEDB, &CSettingDlg::OnBnClickedCheckUsedb)
 	ON_BN_CLICKED(IDC_MFCBUTTON_MOTEST, &CSettingDlg::OnBnClickedMfcbuttonMotest)
 	ON_BN_CLICKED(IDC_MFCBUTTON_SQLTEST, &CSettingDlg::OnBnClickedMfcbuttonSqltest)
+	ON_BN_CLICKED(IDC_CHECK_USEDB2, &CSettingDlg::OnBnClickedCheckUsedb2)
 END_MESSAGE_MAP()
 
 
@@ -86,6 +93,8 @@ void CSettingDlg::SetInfo(MongoDBInfo* moinf, SQLDBInfo* sqlinf, ForwardSet* fsi
 	m_csmousrnam = moinf->chUserName;
 	m_csmopasswd = moinf->chPasswd;
 	
+	if (sqlinf->lUseDB == 1)
+		m_bUseDB2 = TRUE;
 	m_cssqlsrvadd = sqlinf->szDBAdd;
 	m_cssqldbnam = sqlinf->szDBName;
 	m_cssqlusrnam = sqlinf->szUserName;
@@ -119,6 +128,7 @@ void CSettingDlg::OnOK()
 	WideCharToMultiByte(CP_ACP, 0, m_csmopasswd, m_csmopasswd.GetLength(), chTemp, 512, NULL, NULL);
 	sprintf_s(m_pMoInfo->chPasswd, 32, "%s", chTemp);
 
+	m_pSqlInfo->lUseDB = m_bUseDB2 ? 1 : 0;
 	wsprintf(m_pSqlInfo->szDBAdd, m_cssqlsrvadd);
 	wsprintf(m_pSqlInfo->szDBName, m_cssqldbnam);
 	wsprintf(m_pSqlInfo->szPasswd, m_cssqlpasswd);
@@ -177,6 +187,14 @@ BOOL CSettingDlg::OnInitDialog()
 		m_editUsrnam.EnableWindow(FALSE);
 	}
 
+	if (!m_bUseDB2)
+	{
+		m_editSQLAdd.EnableWindow(FALSE);
+		m_editSQLDBName.EnableWindow(FALSE);
+		m_editSQLUsername.EnableWindow(FALSE);
+		m_editSQLPass.EnableWindow(FALSE);
+	}
+
 	return TRUE;  // return TRUE unless you set the focus to a control
 	// 异常:  OCX 属性页应返回 FALSE
 }
@@ -233,20 +251,45 @@ void CSettingDlg::OnBnClickedMfcbuttonSqltest()
 	UpdateData(TRUE);
 	SQLDBInfo sqlinfo;
 	memset(&sqlinfo, 0, sizeof(SQLDBInfo));
+	sqlinfo.lUseDB = m_bUseDB2 ? 1 : 0;
 	wsprintf(sqlinfo.szDBAdd, m_cssqlsrvadd);
 	wsprintf(sqlinfo.szDBName, m_cssqldbnam);
 	wsprintf(sqlinfo.szPasswd, m_cssqlpasswd);
 	wsprintf(sqlinfo.szUserName, m_cssqlusrnam);
-	CSQLServer sql;
-	CString csDebug;
-	if (sql.Connect(sqlinfo))
+	if (sqlinfo.lUseDB ==1)
 	{
-		sql.CloseDB();
-		csDebug.Format(_T("Connect [%s]-[%s] Success!"), sqlinfo.szDBAdd, sqlinfo.szDBName);
+		CSQLServer sql;
+		CString csDebug;
+		if (sql.Connect(sqlinfo))
+		{
+			sql.CloseDB();
+			csDebug.Format(_T("Connect [%s]-[%s] Success!"), sqlinfo.szDBAdd, sqlinfo.szDBName);
+		}
+		else
+		{
+			csDebug.Format(_T("Conncet failed! "));
+		}
+		AfxMessageBox(csDebug);
+	}
+}
+
+
+void CSettingDlg::OnBnClickedCheckUsedb2()
+{
+	// TODO:  在此添加控件通知处理程序代码
+	UpdateData(TRUE);
+	if (!m_bUseDB2)
+	{
+		m_editSQLAdd.EnableWindow(FALSE);
+		m_editSQLDBName.EnableWindow(FALSE);
+		m_editSQLUsername.EnableWindow(FALSE);
+		m_editSQLPass.EnableWindow(FALSE);
 	}
 	else
 	{
-		csDebug.Format(_T("Conncet failed! "));
+		m_editSQLAdd.EnableWindow(TRUE);
+		m_editSQLDBName.EnableWindow(TRUE);
+		m_editSQLUsername.EnableWindow(TRUE);
+		m_editSQLPass.EnableWindow(TRUE);
 	}
-	AfxMessageBox(csDebug);
 }
