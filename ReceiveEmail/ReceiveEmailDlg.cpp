@@ -1574,16 +1574,18 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 									}
 								}
 								pop3.QuitDataBase();
-								memset(&pDlg->m_showinfo[dwID], 0, sizeof(ShowInfo));
 								swprintf_s(pDlg->m_showinfo[dwID].szName, 128, _T("%s-接收完成！"), info.szName);
 								pDlg->GetMailBoxInfo(csUserName, info, 0);
-								WaitForSingleObject(__HEVENT_MAIN_EXIT__, 500L);
+								if(WaitForSingleObject(__HEVENT_MAIN_EXIT__, 500L)==WAIT_OBJECT_0)
+									break;
+								memset(&pDlg->m_showinfo[dwID], 0, sizeof(ShowInfo));
 							}
 						}
 						else
 						{
 							swprintf_s(pDlg->m_showinfo[dwID].szName, 128, _T("%s-获取UDIL失败"), info.szName);
-							WaitForSingleObject(__HEVENT_MAIN_EXIT__, 500L);
+							if(WaitForSingleObject(__HEVENT_MAIN_EXIT__, 500L)==WAIT_OBJECT_0)
+									break;
 							pDlg->GetMailBoxInfo(csUserName, info, 0);
 							break;
 						}
@@ -1613,6 +1615,7 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 				WaitForSingleObject(__HEVENT_MAIN_EXIT__, 5000L);
 			}// end of else
 		}// end of while
+		memset(&pDlg->m_showinfo[dwID], 0, sizeof(ShowInfo));
 	}// end of tyr
 	catch (...)
 	{
