@@ -1155,7 +1155,9 @@ DWORD WINAPI  CReceiveEmailDlg::_AfxMainTestAna(LPVOID lpParam)
 			OutputDebugString(csLog);
 			break;
 		}
-		sql.SaveToDB(ana.GetEmailItem(),FALSE);
+		if (sql.GetSQLDBType() == 0)
+			sql.SaveToDB(ana.GetEmailItem(),FALSE);
+		else sql.SaveToDBOld(ana.GetEmailItem(), FALSE);
 		ana.Clear();
 		sql.CloseDB();
 //#ifdef _DEBUG

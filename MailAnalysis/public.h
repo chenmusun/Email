@@ -50,7 +50,7 @@ struct ATTACH_FILE
 	long lSize;			//附件大小
 	CString csMD5;		//附件MD5
 	CString csGUID;		//附件GUID
-	long lType;			//0：正文；1：附件
+	long lType;			//0：正文；1：附件；3：原始附件
 	CString csAffixType;
 	CString csRemoteName;
 	CString csLocalFileName;

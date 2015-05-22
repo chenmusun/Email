@@ -2920,7 +2920,7 @@ long CSQLServer::SaveToDB(EMAIL_ITEM& email,BOOL bCheck)
 			vector<ATTACH_FILE>::iterator ite = email.vecAttachFiles.begin();
 			while (ite != email.vecAttachFiles.end())
 			{
-				if ((*ite).lType == 0)
+				if ((*ite).lType == 0 || (*ite).lType == 3)
 				{
 					ite++;
 					continue;
@@ -2928,7 +2928,6 @@ long CSQLServer::SaveToDB(EMAIL_ITEM& email,BOOL bCheck)
 				if (SaveAttachment((*ite), email.lSn) < 0)
 				{
 					bFailed = TRUE;
-					//break;
 				}
 				ite++;
 			}
