@@ -28,8 +28,7 @@ CDataBase::~CDataBase()
 
 BOOL CDataBase::ConnectDataBase(string& strErr)
 {
-	string strWhat, strDBAdd("192.168.0.110:27017"), strDBname("gg_report")
-		, strUser("report_email"), strPass("report_email.123");
+	string strWhat;
 	strErr.empty();//将错误信息清空
 	if (m_nUseDB != 1)
 		return TRUE;
@@ -38,10 +37,10 @@ BOOL CDataBase::ConnectDataBase(string& strErr)
 		try
 		{
 			mongo::client::initialize();
-			if (connect.connect(strDBAdd, strErr))
+			if (connect.connect(m_strDBAdd, strErr))
 			{
 				connect.setSoTimeout(1000);
-				if (!connect.auth(strDBname, strUser, strPass, strErr))//登陆数据库验证
+				if (!connect.auth(m_strDBName, m_strUserName, m_strPasswd, strErr))//登陆数据库验证
 				{
 #ifdef _DEBUG
 					OutputDebugStringA(strErr.c_str());
