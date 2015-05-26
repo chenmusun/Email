@@ -626,8 +626,6 @@ void CReceiveEmailDlg::OnBnClickedButtonStop()
 	// TODO:  在此添加控件通知处理程序代码
 	Stop();
 	StopMain();
-	if (m_showinfo.size()>0)
-		m_showinfo.clear();
 	m_btnStop.EnableWindow(FALSE);
 	m_btnSet.EnableWindow(TRUE);
 	bRun = FALSE;
