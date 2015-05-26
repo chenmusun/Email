@@ -731,7 +731,7 @@ private:
 	CString m_csUser;
 	CString m_csPass;
 	int m_nType;
-	CADODatabase m_db;
+	CADODatabase* m_pdb;
 	CADORecordset *	m_pEMRs;
 	CADORecordset *	m_pGuidRs;
 	CADORecordset *	m_pSubjectRs;

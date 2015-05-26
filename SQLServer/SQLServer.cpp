@@ -121,9 +121,12 @@ void CADODatabase::dump_com_error(_com_error &e)
 
 BOOL CADODatabase::IsOpen()
 {
+	long lStatus(0);
 	if (m_pConnection)
-		return m_pConnection->GetState() != adStateClosed;
-	return FALSE;
+	{
+		lStatus = m_pConnection->GetState();
+	}
+	return lStatus>0?TRUE:FALSE;
 }
 
 void CADODatabase::Close()
@@ -2784,9 +2787,10 @@ void UTF_8ToGB2312(string &pOut, char *pText, int pLen)
 ///////////////////////////////////////////////////////
 CSQLServer::CSQLServer() :m_nType(0), m_pEMRs(NULL), m_pGuidRs(NULL), m_pSubjectRs(NULL), m_lDBType(0), m_lUseDB(1)
 {
-	m_pEMRs = new CADORecordset(&m_db);
-	m_pGuidRs = new CADORecordset(&m_db);
-	m_pSubjectRs = new CADORecordset(&m_db);
+	m_pdb = new CADODatabase;
+	m_pEMRs = new CADORecordset((CADODatabase*)m_pdb);
+	m_pGuidRs = new CADORecordset((CADODatabase*)m_pdb);
+	m_pSubjectRs = new CADORecordset((CADODatabase*)m_pdb);
 }
 
 CSQLServer::~CSQLServer()
@@ -2811,6 +2815,12 @@ CSQLServer::~CSQLServer()
 		delete m_pGuidRs;
 		m_pGuidRs = NULL;
 	}
+	if (m_pdb != NULL)
+	{
+		m_pdb->Close();
+		delete m_pdb;
+		m_pdb = NULL;
+	}
 }
 
 
@@ -2826,10 +2836,10 @@ long CSQLServer::SaveToDB(EMAIL_ITEM& email,BOOL bCheck)
 	CString csTemp, csPath,csLog;
 	try
 	{
-		if (m_db.IsOpen())
+		if (m_pdb->IsOpen())
 		{
-			m_db.BeginTransaction();
-			CADOCommand * pEMCmd = new CADOCommand(&m_db);
+			m_pdb->BeginTransaction();
+			CADOCommand * pEMCmd = new CADOCommand(m_pdb);
 			if (pEMCmd == NULL)
 				return -1;
 
@@ -2931,7 +2941,7 @@ long CSQLServer::SaveToDB(EMAIL_ITEM& email,BOOL bCheck)
 				}
 				ite++;
 			}
-			m_db.CommitTransaction();
+			m_pdb->CommitTransaction();
 		}
 		else
 		{
@@ -2943,7 +2953,7 @@ long CSQLServer::SaveToDB(EMAIL_ITEM& email,BOOL bCheck)
 	}
 	catch (_com_error& e)
 	{
-		m_db.RollbackTransaction();
+		m_pdb->RollbackTransaction();
 		csLog.Format(_T("SaveToDB\r\n%s\r\n%s"), (TCHAR*)e.Description(), (TCHAR*)e.ErrorMessage());
 		Log(csLog, csLog.GetLength());
 		csLog.Append(_T("\r\n"));
@@ -2957,7 +2967,7 @@ long CSQLServer::SaveToDB(EMAIL_ITEM& email,BOOL bCheck)
 void CSQLServer::GetGUID(CString &guid)
 {
 	guid.Empty();
-	if (m_db.IsOpen() && m_pGuidRs)
+	if (m_pdb->IsOpen() && m_pGuidRs)
 	{
 		if (m_pGuidRs->Open(_T("SELECT newid() as GUID")) == FALSE) return;
 		if (m_pGuidRs->GetFieldValue(_T("GUID"), guid) == FALSE) return;
@@ -2978,17 +2988,17 @@ BOOL CSQLServer::Connect(SQLDBInfo& sqlinfo, int nType)
 	m_csUser.Empty();
 	m_csPass.Empty();
 	m_nType = nType;
-	if (m_db.IsOpen() == TRUE)
-		return TRUE;
-	m_csServer.Format(_T("%s"),sqlinfo.szDBAdd);
-	m_csDatabase.Format(_T("%s"), sqlinfo.szDBName);
-	m_csUser.Format(_T("%s"), sqlinfo.szUserName);
-	m_csPass.Format(_T("%s"), sqlinfo.szPasswd);
-	m_lDBType = sqlinfo.lDBType;
-	if (m_csServer.IsEmpty() || m_csDatabase.IsEmpty())
-		return FALSE;
 	try
 	{
+		if (m_pdb->IsOpen() == TRUE)
+			return TRUE;
+		m_csServer.Format(_T("%s"), sqlinfo.szDBAdd);
+		m_csDatabase.Format(_T("%s"), sqlinfo.szDBName);
+		m_csUser.Format(_T("%s"), sqlinfo.szUserName);
+		m_csPass.Format(_T("%s"), sqlinfo.szPasswd);
+		m_lDBType = sqlinfo.lDBType;
+		if (m_csServer.IsEmpty() || m_csDatabase.IsEmpty())
+			return FALSE;
 		switch (m_nType)
 		{
 		case 0://混合验证模式
@@ -3006,8 +3016,8 @@ BOOL CSQLServer::Connect(SQLDBInfo& sqlinfo, int nType)
 		default:
 			break;
 		}
-		m_db.SetConnectionTimeout(180);
-		if (!m_db.Open(csCommand))
+		m_pdb->SetConnectionTimeout(5);
+		if (!m_pdb->Open(csCommand))
 		{
 			csLog.Format(_T("ConnectError:[%s]-[%s]"),m_csServer,m_csDatabase);
 			Log(csLog, csLog.GetLength());
@@ -3039,7 +3049,7 @@ BOOL CSQLServer::IsConnect()
 		return TRUE;
 	try
 	{
-		if (m_db.IsOpen() == FALSE)
+		if (m_pdb->IsOpen() == FALSE)
 			return FALSE;
 		if (m_pEMRs->Open(_T("SELECT 1")) == FALSE)
 			return FALSE;
@@ -3070,8 +3080,8 @@ BOOL CSQLServer::ReConnect()
 		return FALSE;
 	try
 	{
-		if (m_db.IsOpen())
-			m_db.Close();
+		if (m_pdb->IsOpen())
+			m_pdb->Close();
 
 		switch (m_nType)
 		{
@@ -3090,7 +3100,7 @@ BOOL CSQLServer::ReConnect()
 		default:
 			break;
 		}
-		if (!m_db.Open(csCommand))
+		if (!m_pdb->Open(csCommand))
 			return FALSE;
 	}
 	catch (_com_error&e)
@@ -3116,7 +3126,7 @@ BOOL CSQLServer::SQLExec(LPCTSTR lpSql)
 		return FALSE;
 	try
 	{
-		CADOCommand * pEMCmd = new CADOCommand(&m_db);
+		CADOCommand * pEMCmd = new CADOCommand(m_pdb);
 		pEMCmd->SetText(csCmd);
 		pEMCmd->Execute(adCmdText);
 		delete pEMCmd;
@@ -3139,9 +3149,9 @@ BOOL CSQLServer::CloseDB()
 	if (m_lUseDB != 1)
 		return TRUE;
 	::CoUninitialize();
-	if (m_db.IsOpen())
+	if (m_pdb->IsOpen())
 	{
-		m_db.Close();
+		m_pdb->Close();
 		return TRUE;
 	}
 	return FALSE;
@@ -3221,7 +3231,7 @@ long CSQLServer::SaveAttachment(ATTACH_FILE& attach, long lEmailID)
 			attach.csRemoteName.Empty();
 			return -1;
 		}
-		CADOCommand * pEMAttachCmd = new CADOCommand(&m_db);
+		CADOCommand * pEMAttachCmd = new CADOCommand(m_pdb);
 		if (pEMAttachCmd == NULL) throw;
 		TCHAR szAttachCmdText[512] = _T("INSERT INTO [ReportEmailDB].[dbo].[T_REPORT_FILES](GUID, FileName, FileSize,FilePages,AffixType,EmailID,ElapsedTime,KeyValue,RemoteName) VALUES(CONVERT(UNIQUEIDENTIFIER, ?), ?, ?,?,?,?,?,?,?)");
 		pEMAttachCmd->AddParameter(_T("GUID"), adGUID, CADOParameter::paramInput, csGuid.GetLength()*sizeof(TCHAR), _bstr_t(csGuid.GetBuffer(0)));
@@ -3319,7 +3329,7 @@ long CSQLServer::SaveAttachment(ATTACH_FILE& attach, long lEmailID)
 	}
 	try
 	{
-		CADOCommand * pMapCmd = new CADOCommand(&m_db);
+		CADOCommand * pMapCmd = new CADOCommand(m_pdb);
 		if (pMapCmd == NULL) throw;
 		TCHAR szMapCmdText[512] = _T("INSERT INTO [ReportEmailDB].[dbo].[T_FILE_AND_REPORT](GUID, EmailID) VALUES(CONVERT(UNIQUEIDENTIFIER, ?), ?)");
 		pMapCmd->AddParameter(_T("GUID"), adGUID, CADOParameter::paramInput, csGuid.GetLength(), _bstr_t(csGuid.GetBuffer(0)));
@@ -3402,7 +3412,7 @@ BOOL CSQLServer::DeleteFromSQL(EMAIL_ITEM& email)
 	BOOL bValue(TRUE);
 	if (m_lUseDB != 1)
 		return bValue;
-	CADOCommand * pCmd = new CADOCommand(&m_db);
+	CADOCommand * pCmd = new CADOCommand(m_pdb);
 	CString csSql;
 	do 
 	{
@@ -3442,10 +3452,10 @@ long CSQLServer::SaveToDBOld(EMAIL_ITEM& email, BOOL bCheck)
 	CString csTemp, csPath, csLog;
 	try
 	{
-		if (m_db.IsOpen())
+		if (m_pdb->IsOpen())
 		{
-			m_db.BeginTransaction();
-			CADOCommand * pEMCmd = new CADOCommand(&m_db);
+			m_pdb->BeginTransaction();
+			CADOCommand * pEMCmd = new CADOCommand(m_pdb);
 			if (pEMCmd == NULL)
 				return -1;
 
@@ -3573,7 +3583,7 @@ long CSQLServer::SaveToDBOld(EMAIL_ITEM& email, BOOL bCheck)
 				}
 				ite++;
 			}
-			m_db.CommitTransaction();
+			m_pdb->CommitTransaction();
 		}
 		else
 		{
@@ -3585,7 +3595,7 @@ long CSQLServer::SaveToDBOld(EMAIL_ITEM& email, BOOL bCheck)
 	}
 	catch (_com_error& e)
 	{
-		m_db.RollbackTransaction();
+		m_pdb->RollbackTransaction();
 		csLog.Format(_T("SaveToDB\r\n%s\r\n%s"), (TCHAR*)e.Description(), (TCHAR*)e.ErrorMessage());
 		Log(csLog, csLog.GetLength());
 		csLog.Append(_T("\r\n"));
@@ -3636,7 +3646,7 @@ long CSQLServer::SaveAttachmentOld(ATTACH_FILE& attach, long lEmailID)
 			attach.csRemoteName.Empty();
 			return -1;
 		}
-		CADOCommand * pEMAttachCmd = new CADOCommand(&m_db);
+		CADOCommand * pEMAttachCmd = new CADOCommand(m_pdb);
 		if (pEMAttachCmd == NULL) throw;
 		TCHAR szAttachCmdText[512] = _T("INSERT INTO Der_Report_Files(GUID, AffixType, FileName, FileSize, Files) VALUES(CONVERT(UNIQUEIDENTIFIER, ?), ?, ?, ?, ?)");
 		pEMAttachCmd->AddParameter(_T("GUID"), adGUID, CADOParameter::paramInput, csGuid.GetLength()*sizeof(TCHAR), _bstr_t(csGuid.GetBuffer(0)));
@@ -3698,7 +3708,7 @@ long CSQLServer::SaveAttachmentOld(ATTACH_FILE& attach, long lEmailID)
 	}
 	try
 	{
-		CADOCommand * pMapCmd = new CADOCommand(&m_db);
+		CADOCommand * pMapCmd = new CADOCommand(m_pdb);
 		if (pMapCmd == NULL) throw;
 		TCHAR szMapCmdText[512] = _T("INSERT INTO [ReportEmailDB].[dbo].[File_And_Report](GUID, EmailID) VALUES(CONVERT(UNIQUEIDENTIFIER, ?), ?)");
 		pMapCmd->AddParameter(_T("GUID"), adGUID, CADOParameter::paramInput, csGuid.GetLength(), _bstr_t(csGuid.GetBuffer(0)));
@@ -3734,7 +3744,7 @@ BOOL CSQLServer::DeleteFromSQLOld(EMAIL_ITEM& email)
 	BOOL bValue(TRUE);
 	if (m_lUseDB != 1)
 		return bValue;
-	CADOCommand * pCmd = new CADOCommand(&m_db);
+	CADOCommand * pCmd = new CADOCommand(m_pdb);
 	CString csSql;
 	do
 	{
