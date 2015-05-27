@@ -1280,7 +1280,7 @@ void CReceiveEmailDlg::StopMain()
 	{
 		if (m_hProcess[i])
 		{
-			if (WaitForSingleObject(m_hProcess[i], 10000L) != WAIT_OBJECT_0)
+			if (WaitForSingleObject(m_hProcess[i], INFINITE) != WAIT_OBJECT_0)
 			{
 				TerminateThread(m_hProcess[i], 0);
 			}
