@@ -29,7 +29,6 @@
 static BOOL bRun = FALSE;
 
 TCHAR __Main_Path__[MAX_PATH];
-HANDLE __HEVENT_EXIT__ = NULL;
 HANDLE __HEVENT_TEST_EXIT__ = NULL;
 HANDLE __HEVENT_MAIN_EXIT__ = NULL;
 
@@ -51,18 +50,18 @@ DWORD WINAPI  CReceiveEmailDlg::_AfxMain(LPVOID lpParam)
 		while (true)
 		{
 			memset(&szInfo, 0, 128);
-			if (WaitForSingleObject(__HEVENT_EXIT__, 100L) == WAIT_OBJECT_0)
+			if (WaitForSingleObject(__HEVENT_MAIN_EXIT__, 100L) == WAIT_OBJECT_0)
 			{
-				OutputDebugStringA("WAIT2 __HEVENT_EXIT__\r\n");
+				OutputDebugStringA("WAIT2 __HEVENT_MAIN_EXIT__\r\n");
 				break;
 			}
 			lCurrPos = 0;
 			ite = pDlg->m_showinfo.begin();
 			while (ite!=pDlg->m_showinfo.end())
 			{
-				if (WaitForSingleObject(__HEVENT_EXIT__, 0L) == WAIT_OBJECT_0)
+				if (WaitForSingleObject(__HEVENT_MAIN_EXIT__, 0L) == WAIT_OBJECT_0)
 				{
-					OutputDebugStringA("WAIT1 __HEVENT_EXIT__\r\n");
+					OutputDebugStringA("WAIT1 __HEVENT_MAIN_EXIT__\r\n");
 					break;
 				}
 				dValue = ite->second.lTotal<=0?0:(double)ite->second.lCurr / ite->second.lTotal;
@@ -134,7 +133,6 @@ CReceiveEmailDlg::CReceiveEmailDlg(CWnd* pParent /*=NULL*/)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 	m_mailList.clear();
-	memset(m_TextWnd, 0, sizeof(m_TextWnd));
 	::InitializeCriticalSection(&_cs_);
 	memset(&m_dbinfo, 0, sizeof(MongoDBInfo));
 	memset(&m_fsinfo, 0, sizeof(ForwardSet));
@@ -151,11 +149,6 @@ CReceiveEmailDlg::~CReceiveEmailDlg()
 	Stop();
 	StopMain();
 	DeleteCriticalSection(&_cs_);
-	if (__HEVENT_EXIT__)
-	{
-		CloseHandle(__HEVENT_EXIT__);
-		__HEVENT_EXIT__ = NULL;
-	}
 	if (__HEVENT_TEST_EXIT__)
 	{
 		CloseHandle(__HEVENT_TEST_EXIT__);
@@ -285,8 +278,6 @@ BOOL CReceiveEmailDlg::OnInitDialog()
 	if ((GetFileAttributes(szPath) == 0xFFFFFFFF))
 		CreateDirectory(szPath, NULL);
 	InitTextWnd();
-	for (int n = 0; n < 5; n++)
-		m_TextWnd[n] = -1;
 	wsprintf(szPath, _T("%s\\Log\\main.txt"),__Main_Path__);
 	m_csLogPath.Format(_T("%s"),szPath);
 	m_log.SetPath(m_csLogPath,m_csLogPath.GetLength());
@@ -382,8 +373,6 @@ void CReceiveEmailDlg::OnBnClickedMfcbuttonSet()
 			}
 		}
 		m_dwStartTime = m_dwStartTime == 0 ? GetTickCount64() : m_dwStartTime;
-		if (__HEVENT_EXIT__ == NULL)
-			__HEVENT_EXIT__ = CreateEvent(NULL, TRUE, FALSE, NULL);
 		m_hMain = CreateThread(NULL, 0, _AfxMain, (LPVOID)this, 0, &id);
 		m_btnStop.EnableWindow(TRUE);
 		m_btnSet.EnableWindow(FALSE);
@@ -757,11 +746,11 @@ void CReceiveEmailDlg::Stop(long lType)//用于停止工作分配线程
 //#ifdef _DEBUG
 	OutputDebugStringA("STOP FRESH\r\n");
 //#endif
-	if (__HEVENT_EXIT__)
-		SetEvent(__HEVENT_EXIT__);
+	if (__HEVENT_MAIN_EXIT__)
+		SetEvent(__HEVENT_MAIN_EXIT__);
 	if (m_hMain)
 	{
-		if (WaitForSingleObject(m_hMain, INFINITE) != WAIT_OBJECT_0)
+		if (WaitForSingleObject(m_hMain, 500L) != WAIT_OBJECT_0)
 		{
 //#ifdef DEBUG
 			OutputDebugString(_T("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXSTOPXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\n"));
@@ -769,14 +758,6 @@ void CReceiveEmailDlg::Stop(long lType)//用于停止工作分配线程
 			TerminateThread(m_hMain, 0);
 		}
 	}
-	
-	if (__HEVENT_EXIT__)
-	{
-		CloseHandle(__HEVENT_EXIT__);
-		__HEVENT_EXIT__ = NULL;
-	}
-	for (int n = 0; n < 5; n++)
-		m_TextWnd[n] = -1;
 }
 
 void CReceiveEmailDlg::SetShowInfo(long lTextWnd, LPCTSTR lpName, long lProgress)
@@ -843,10 +824,7 @@ BOOL CReceiveEmailDlg::PreTranslateMessage(MSG* pMsg)
 	}
 	if (pMsg->message == __umymessage__kill_hprogress__)
 	{
-		long lTextWnd = 0;
-		lTextWnd = SetTextWnd(1, (long)pMsg->wParam, (long)pMsg->lParam);
-		if (lTextWnd >= 0)
-			SetShowInfo(lTextWnd);
+		
 	}
 	if (pMsg->message == __umymessage_api_netcommand__)
 	{
@@ -924,61 +902,6 @@ BOOL CReceiveEmailDlg::PreTranslateMessage(MSG* pMsg)
 	return __super::PreTranslateMessage(pMsg);
 }
 
-long CReceiveEmailDlg::SetTextWnd(long lType, long lCurrPos,long lStatus)
-{
-	::EnterCriticalSection(&_cs_);
-	long lTextWnd = -1;
-	int n = 0;
-	BOOL bFind = FALSE;
-	switch (lType)
-	{
-	case 0://Get
-	{
-		for (n = 0; n < 5; n++)
-		{
-			if (m_TextWnd[n] == lCurrPos)
-			{
-				lTextWnd = n;
-				break;
-			}
-		}
-	}
-		break;
-	case 1://Set
-	{
-		for (n = 0; n < 5; n++)
-		{
-			if (m_TextWnd[n] == lCurrPos)
-			{
-				bFind = TRUE;
-				lTextWnd = n;
-				if (lStatus < 0)
-				{
-					m_TextWnd[n] = lStatus;
-				}
-				break;
-			}
-		}
-		if (!bFind)
-		{
-			lTextWnd = -1;
-			for (n = 0; n < 5; n++)
-			{
-				if (m_TextWnd[n] == -1)
-				{
-					m_TextWnd[n] = lCurrPos;
-					break;
-				}
-			}
-		}
-	}
-		break;
-	default:
-		break;
-	}
-	::LeaveCriticalSection(&_cs_);
-	return lTextWnd;
-}
 
 void CReceiveEmailDlg::InitTextWnd()
 {

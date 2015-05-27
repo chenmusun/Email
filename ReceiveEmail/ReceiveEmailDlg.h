@@ -60,7 +60,6 @@ private:
 	long m_nJobParamIntValue;
 	long m_nCurJobIndex;
 	HANDLE m_hMain;
-	int m_TextWnd[5];
 	CRITICAL_SECTION _cs_;
 	MongoDBInfo m_dbinfo;
 	HANDLE m_hMainTest;
@@ -112,7 +111,6 @@ public:
 	void Stop(long lType=0);
 	void SetShowInfo(long lTextWnd,LPCTSTR =NULL,long lProgress=0);
 	virtual BOOL PreTranslateMessage(MSG* pMsg);
-	long SetTextWnd(long lType,long lCurrPos,long lStatus=0);
 	void InitTextWnd();
 	void WriteToConfig();
 	afx_msg void OnBnClickedButton1();
