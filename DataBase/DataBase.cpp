@@ -40,7 +40,15 @@ BOOL CDataBase::ConnectDataBase(string& strErr)
 			if (connect.connect(m_strDBAdd, strErr))
 			{
 				connect.setSoTimeout(1000);
-				if (!connect.auth(m_strDBName, m_strUserName, m_strPasswd, strErr))//登陆数据库验证
+				if (connect.auth(m_strDBName, m_strUserName, m_strPasswd, strErr))//登陆数据库验证
+				{
+#ifdef _DEBUG
+					char chDebug[128] = { 0 };
+					sprintf_s(chDebug, 128, "Connect [%s]-[%s] MongoDB Success!\r\n", m_strDBAdd.c_str(), m_strDBName.c_str());
+					OutputDebugStringA(chDebug);
+#endif
+				}
+				else
 				{
 #ifdef _DEBUG
 					OutputDebugStringA(strErr.c_str());

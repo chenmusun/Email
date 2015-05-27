@@ -40,7 +40,7 @@ long POP3::Login(LPCTSTR lpServer, long lPort, LPCTSTR lpUser, LPCTSTR lpPasswd)
 	if (!StringProcess(chResult))
 	{
 		m_log.Log(chResult, strlen(chResult));
-		return LOGIN_ERROR_LOCK;
+		return LOGIN_ERROR;
 	}
 	WideCharToMultiByte(CP_ACP, 0, lpPasswd, 128, chPasswd, 128, NULL, NULL);
 	sprintf_s(chCommand, 128, "PASS %s\r\n",chPasswd);
@@ -184,11 +184,6 @@ BOOL POP3::ConnectDataBase()
 	string strErr;
 	if (m_db.ConnectDataBase(strErr))
 	{
-#ifdef _DEBUG
-		char chDebug[128] = { 0 };
-		sprintf_s(chDebug, 128, "Connect [%s] MongoDB Success!\r\n", m_db.GetDBName().c_str());
-		OutputDebugStringA(chDebug);
-#endif
 		m_bConnect = TRUE;
 		return TRUE;
 	}

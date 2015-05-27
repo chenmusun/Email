@@ -170,7 +170,6 @@ CReceiveEmailDlg::~CReceiveEmailDlg()
 	{
 		m_hProcess[i] = NULL;
 	}
-	//m_showinfo.clear();
 }
 
 void CReceiveEmailDlg::DoDataExchange(CDataExchange* pDX)
@@ -628,6 +627,7 @@ void CReceiveEmailDlg::OnBnClickedButtonStop()
 	StopMain();
 	m_btnStop.EnableWindow(FALSE);
 	m_btnSet.EnableWindow(TRUE);
+	m_showinfo.clear();
 	bRun = FALSE;
 }
 
@@ -777,7 +777,6 @@ void CReceiveEmailDlg::Stop(long lType)//用于停止工作分配线程
 	}
 	for (int n = 0; n < 5; n++)
 		m_TextWnd[n] = -1;
-	m_showinfo.clear();
 }
 
 void CReceiveEmailDlg::SetShowInfo(long lTextWnd, LPCTSTR lpName, long lProgress)
@@ -1612,7 +1611,8 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 				OutputDebugString(csDebug);
 #endif
 				
-				WaitForSingleObject(__HEVENT_MAIN_EXIT__, 5000L);
+				if(WaitForSingleObject(__HEVENT_MAIN_EXIT__, 5000L)==WAIT_OBJECT_0)
+					break;
 			}// end of else
 		}// end of while
 		memset(&pDlg->m_showinfo[dwID], 0, sizeof(ShowInfo));
