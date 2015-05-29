@@ -14,6 +14,11 @@
 #include "DialogInfo.h"
 #include "DialogPDF.h"
 
+#include <boost/property_tree/ptree.hpp>  
+#include <boost/property_tree/xml_parser.hpp>  
+#include <boost/typeof/typeof.hpp>
+using namespace boost::property_tree;
+
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
@@ -146,8 +151,7 @@ CReceiveEmailDlg::CReceiveEmailDlg(CWnd* pParent /*=NULL*/)
 
 CReceiveEmailDlg::~CReceiveEmailDlg()
 {
-	Stop();
-	StopMain();
+	StopEx();
 	DeleteCriticalSection(&_cs_);
 	if (__HEVENT_TEST_EXIT__)
 	{
@@ -347,8 +351,7 @@ HCURSOR CReceiveEmailDlg::OnQueryDragIcon()
 void CReceiveEmailDlg::OnBnClickedMfcbuttonSet()
 {
 	// TODO:  在此添加控件通知处理程序代码
-	StopMain();
-	Stop();
+	StopEx();
 	DWORD dwId[5] = { 0 },id;
 	ShowInfo stShow;
 	memset(&stShow, 0, sizeof(ShowInfo));
@@ -367,7 +370,7 @@ void CReceiveEmailDlg::OnBnClickedMfcbuttonSet()
 				m_showinfo.insert(make_pair(dwId[i], stShow));
 //#ifdef _DEBUG
 				CString csDebug;
-				csDebug.Format(_T("ThreadID = [%d]\r\n"),dwId[i]);
+				csDebug.Format(_T("ThreadID = [0x%x]\r\n"),dwId[i]);
 				OutputDebugString(csDebug);
 //#endif
 			}
@@ -504,6 +507,36 @@ BOOL CReceiveEmailDlg::LoadFromConfig()
 	GetPrivateProfileStringA("ForwardSet", "pass", "", m_fsinfo.pass, 128, chConfigPath);
 	GetPrivateProfileStringA("ForwardSet", "to", "", m_fsinfo.to, 512, chConfigPath);
 	GetPrivateProfileStringA("ForwardSet", "from", "", m_fsinfo.from, 128, chConfigPath);
+	////boost xml test
+	//ptree pt;
+	//string strDebug;
+	//read_xml("conf.xml", pt);
+	//memset(chTemp, 0, 512);
+	//sprintf_s(chTemp, 512, "ID is %d\r\n", pt.get<int>("con.id"));
+	//strDebug = chTemp;
+	//OutputDebugStringA(strDebug.c_str());
+	//memset(chTemp, 0, 512);
+	//sprintf_s(chTemp, 512, "Try Default %d\r\n", pt.get<int>("con.no_prop", 100));
+	//strDebug = chTemp;
+	//OutputDebugStringA(strDebug.c_str());
+	//ptree child = pt.get_child("con");    //取一个子节点  
+	//memset(chTemp, 0, 512);
+	//sprintf_s(chTemp, 512,"name is :%s\r\n", child.get<string>("name").c_str());
+	//strDebug = chTemp;
+	//OutputDebugStringA(strDebug.c_str());
+	//strDebug.clear();
+
+	//child = pt.get_child("con.urls");
+	//for (BOOST_AUTO(pos, child.begin()); pos != child.end(); ++pos)  //boost中的auto  
+	//{
+	//	strDebug += "\n"; 
+	//	strDebug+=pos->second.data();
+	//}
+	//strDebug += "\r\n";
+	//OutputDebugStringA(strDebug.c_str());
+	//pt.put("con.name", "Sword");    //更改某个键值  
+	//pt.add("con.urls.url", "http://www.baidu.com"); //增加某个键值  
+	//write_xml("conf.xml", pt);    //写入XML  
 	return TRUE;
 }
 
@@ -511,10 +544,9 @@ BOOL CReceiveEmailDlg::LoadFromConfig()
 void CReceiveEmailDlg::OnCancel()
 {
 	// TODO:  在此添加专用代码和/或调用基类
-	Stop();
+	StopEx();
 	StopTest();
 	StopTest2();
-	StopMain();
 	WriteToConfig();
 	CDialogEx::OnCancel();
 }
@@ -612,8 +644,7 @@ void CReceiveEmailDlg::GetDataBaseInfo(MongoDBInfo& dbinfo, SQLDBInfo& sqlinfo)
 void CReceiveEmailDlg::OnBnClickedButtonStop()
 {
 	// TODO:  在此添加控件通知处理程序代码
-	Stop();
-	StopMain();
+	StopEx();
 	m_btnStop.EnableWindow(FALSE);
 	m_btnSet.EnableWindow(TRUE);
 	m_showinfo.clear();
@@ -750,7 +781,7 @@ void CReceiveEmailDlg::Stop(long lType)//用于停止工作分配线程
 		SetEvent(__HEVENT_MAIN_EXIT__);
 	if (m_hMain)
 	{
-		if (WaitForSingleObject(m_hMain, 500L) != WAIT_OBJECT_0)
+		if (WaitForSingleObject(m_hMain, INFINITE) != WAIT_OBJECT_0)
 		{
 //#ifdef DEBUG
 			OutputDebugString(_T("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXSTOPXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\n"));
@@ -1274,9 +1305,8 @@ void CReceiveEmailDlg::StopTest2()
 
 void CReceiveEmailDlg::StopMain()
 {
-	if (__HEVENT_MAIN_EXIT__)
-		SetEvent(__HEVENT_MAIN_EXIT__);
-	for (int i = 0; i < sizeof(m_hProcess) / sizeof(m_hProcess[0]);i++)
+	long lSize = sizeof(m_hProcess) / sizeof(m_hProcess[0]);
+	for (int i = 0; i < sizeof(m_hProcess) / sizeof(m_hProcess[0]); i++)
 	{
 		if (m_hProcess[i])
 		{
@@ -1784,4 +1814,10 @@ void CReceiveEmailDlg::OnBnClickedButtonPdf()
 	CDialogPDF pdf;
 	pdf.SetMongoDBInfo(m_dbinfo);
 	pdf.DoModal();
+}
+
+void CReceiveEmailDlg::StopEx()
+{
+	Stop();
+	StopMain();
 }

@@ -127,7 +127,7 @@
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>..\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
-      <DisableSpecificWarnings>4244;4267;4251;4351</DisableSpecificWarnings>
+      <DisableSpecificWarnings>4244;4267;4251;4351;4503</DisableSpecificWarnings>
       <BrowseInformation>true</BrowseInformation>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
     </ClCompile>

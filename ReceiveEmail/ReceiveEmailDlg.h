@@ -133,4 +133,5 @@ public:
 	long SendEmail(SMTP& smtp);
 	CButton m_btnPDF;
 	afx_msg void OnBnClickedButtonPdf();
+	void StopEx();
 };
