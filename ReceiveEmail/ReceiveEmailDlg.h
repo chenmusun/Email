@@ -71,7 +71,9 @@ private:
 	HANDLE m_hProcess[5];
 	long m_lLastPos;
 	map<DWORD, ShowInfo> m_showinfo;
-	DWORD m_dwStartTime;
+	DWORD m_dwStartTime; 
+	CRITICAL_SECTION _check_failed_;
+	map<string, long> m_mapFailedUIDLs;
 public:
 	CMFCButton m_btnSet;//设置按钮
 	CListCtrl m_listMailBox;//表格控件
@@ -134,4 +136,5 @@ public:
 	CButton m_btnPDF;
 	afx_msg void OnBnClickedButtonPdf();
 	void StopEx();
+	BOOL CheckFailedUIDL(const string& strUIDL);//检查UIDL是否需要跳过，返回FALSE不从MongoUIDL数据中删除
 };

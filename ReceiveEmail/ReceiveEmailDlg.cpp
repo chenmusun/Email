@@ -139,6 +139,7 @@ CReceiveEmailDlg::CReceiveEmailDlg(CWnd* pParent /*=NULL*/)
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 	m_mailList.clear();
 	::InitializeCriticalSection(&_cs_);
+	::InitializeCriticalSection(&_check_failed_);
 	memset(&m_dbinfo, 0, sizeof(MongoDBInfo));
 	memset(&m_fsinfo, 0, sizeof(ForwardSet));
 	memset(&m_sqldbinfo, 0, sizeof(SQLDBInfo));
@@ -153,6 +154,7 @@ CReceiveEmailDlg::~CReceiveEmailDlg()
 {
 	StopEx();
 	DeleteCriticalSection(&_cs_);
+	DeleteCriticalSection(&_check_failed_);
 	if (__HEVENT_TEST_EXIT__)
 	{
 		CloseHandle(__HEVENT_TEST_EXIT__);
@@ -1457,6 +1459,8 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 #endif
 												if (pDlg->MailAnalysis(pop3, sql, smtp, strUDIL, info, chLogPath, lLen, lType) < 0)//邮件解析
 												{
+													swprintf_s(pDlg->m_showinfo[dwID].szName, 128, _T("%s-解析[%s]失败！"), info.szName, iteuidl->second.c_str());
+													sprintf_s(info.chUIDL, 64, "%s", iteuidl->second.c_str());
 													sprintf_s(chDebug, 512, "Analysis [%s] Error!", strUDIL.c_str());
 													OutputDebugStringA(chDebug);
 													OutputDebugStringA("\r\n");
@@ -1466,12 +1470,15 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 											{
 												swprintf_s(pDlg->m_showinfo[dwID].szName, 128, _T("%s-接收[%s]失败！"), info.szName, iteuidl->second.c_str());
 												sprintf_s(info.chUIDL, 64, "%s", iteuidl->second.c_str());
-												//TODO: Delete mongo uidl data
-												if (pop3.DeleteFromDB(strUDIL))
+												if (pDlg->CheckFailedUIDL(strUDIL))
 												{
-													sprintf_s(chDebug, 512, "Delete [%s] From MongoDB-UIDL!", strUDIL.c_str());
-													OutputDebugStringA(chDebug);
-													OutputDebugStringA("\r\n");
+													//TODO: Delete mongo uidl data
+													if (pop3.DeleteFromDB(strUDIL))
+													{
+														sprintf_s(chDebug, 512, "Delete [%s] From MongoDB-UIDL!", strUDIL.c_str());
+														OutputDebugStringA(chDebug);
+														OutputDebugStringA("\r\n");
+													}
 												}
 												OutputDebugStringA("*************Failed Exit!!!!!!!*************\r\n");
 												pop3.QuitDataBase();
@@ -1820,4 +1827,27 @@ void CReceiveEmailDlg::StopEx()
 {
 	Stop();
 	StopMain();
+}
+
+BOOL CReceiveEmailDlg::CheckFailedUIDL(const string& strUIDL)
+{
+	BOOL bRet = TRUE;
+	::EnterCriticalSection(&_check_failed_);
+	map<string, long>::iterator ite = m_mapFailedUIDLs.begin();
+	ite = m_mapFailedUIDLs.find(strUIDL);
+	if (ite != m_mapFailedUIDLs.end())
+	{
+		if (ite->second > 3)
+		{
+			bRet = FALSE;
+			m_mapFailedUIDLs.erase(ite);
+		}
+		else ite->second++;
+	}
+	else
+	{
+		m_mapFailedUIDLs.insert(make_pair(strUIDL, 1));
+	}
+	::LeaveCriticalSection(&_check_failed_);
+	return bRet;
 }
