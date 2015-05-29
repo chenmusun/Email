@@ -492,7 +492,7 @@ BOOL CReceiveEmailDlg::LoadFromConfig()
 	if (csTemp.CompareNoCase(_T("yes")) >= 0)
 		m_sqldbinfo.lUseDB = 1;
 	else m_sqldbinfo.lUseDB = 0;
-	GetPrivateProfileString(_T("DataBase"), _T("sql_dbadd"), _T("OFFICE-PC\\SQLSERVER"), m_sqldbinfo.szDBAdd, 32, szConfigPath);
+	GetPrivateProfileString(_T("DataBase"), _T("sql_dbadd"), _T("127.0.0.1"), m_sqldbinfo.szDBAdd, 32, szConfigPath);
 	vector<CString>::iterator ite= g_OldDataBase.begin();
 	ite = find(g_OldDataBase.begin(), g_OldDataBase.end(), m_sqldbinfo.szDBAdd);
 	if (ite!=g_OldDataBase.end())
@@ -1459,7 +1459,7 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 #endif
 												if (pDlg->MailAnalysis(pop3, sql, smtp, strUDIL, info, chLogPath, lLen, lType) < 0)//ÓÊ¼þ½âÎö
 												{
-													swprintf_s(pDlg->m_showinfo[dwID].szName, 128, _T("%s-½âÎö[%s]Ê§°Ü£¡"), info.szName, iteuidl->second.c_str());
+													swprintf_s(pDlg->m_showinfo[dwID].szName, 128, _T("%s-½âÎö[%s]Ê§°Ü£¡"), info.szName, CString(iteuidl->second.c_str()));
 													sprintf_s(info.chUIDL, 64, "%s", iteuidl->second.c_str());
 													sprintf_s(chDebug, 512, "Analysis [%s] Error!", strUDIL.c_str());
 													OutputDebugStringA(chDebug);
@@ -1468,7 +1468,7 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 											}
 											else
 											{
-												swprintf_s(pDlg->m_showinfo[dwID].szName, 128, _T("%s-½ÓÊÕ[%s]Ê§°Ü£¡"), info.szName, iteuidl->second.c_str());
+												swprintf_s(pDlg->m_showinfo[dwID].szName, 128, _T("%s-½ÓÊÕ[%s]Ê§°Ü£¡"), info.szName, CString(iteuidl->second.c_str()));
 												sprintf_s(info.chUIDL, 64, "%s", iteuidl->second.c_str());
 												if (pDlg->CheckFailedUIDL(strUDIL))
 												{
