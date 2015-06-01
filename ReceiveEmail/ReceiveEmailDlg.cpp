@@ -1312,7 +1312,7 @@ void CReceiveEmailDlg::StopMain()
 	{
 		if (m_hProcess[i])
 		{
-			if (WaitForSingleObject(m_hProcess[i], INFINITE) != WAIT_OBJECT_0)
+			if (WaitForSingleObject(m_hProcess[i], 10000L) != WAIT_OBJECT_0)
 			{
 				TerminateThread(m_hProcess[i], 0);
 			}
@@ -1371,7 +1371,7 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 			mapUIDLs.clear();
 			mapDelUIDLs.clear();
 			lFailedCount = 0;
-			if (WaitForSingleObject(__HEVENT_MAIN_EXIT__, 0L) == WAIT_OBJECT_0)
+			if (WaitForSingleObject(__HEVENT_MAIN_EXIT__, 10L) == WAIT_OBJECT_0)
 			{
 				pDlg->GetMailBoxInfo(csUserName, info, 0);
 				break;

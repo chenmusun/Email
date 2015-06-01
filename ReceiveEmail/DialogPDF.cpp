@@ -5,7 +5,7 @@
 #include "ReceiveEmail.h"
 #include "DialogPDF.h"
 #include "afxdialogex.h"
-#include "../DataBase/DataBase.h"
+#include "../MongoDB/MongoDB.h"
 #include "../MailAnalysis/MailAnalysis.h"
 
 extern TCHAR __Main_Path__[MAX_PATH];
@@ -73,7 +73,7 @@ void CDialogPDF::OnBnClickedMfcbuttonGet()
 	WideCharToMultiByte(CP_ACP, 0, m_csSavePath, m_csSavePath.GetLength()*sizeof(TCHAR), chTemp, 512, NULL, NULL);
 	strPath = chTemp;
 	m_modbinfo.nUseDB = 1;
-	CDataBase db;
+	CMongoDB db;
 	db.SetDBInfo(m_modbinfo);
 	if (db.ConnectDataBase(strErr))
 	{

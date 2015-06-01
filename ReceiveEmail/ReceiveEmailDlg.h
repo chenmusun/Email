@@ -17,7 +17,7 @@
 #include "SendEmail.h"
 #include "../MailAnalysis/MailAnalysis.h"
 #include "../SQLServer/SQLServer.h"
-#include "../DataBase/DataBase.h"
+#include "../MongoDB/MongoDB.h"
 
 struct ShowInfo
 {

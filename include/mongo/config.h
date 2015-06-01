@@ -16,7 +16,7 @@
 #pragma once
 
 // Define to 1 if SSL support is enabled
-// #undef MONGO_SSL
+#define MONGO_SSL 1
 
 // Define to 1 if SASL support is enabled
 // #undef MONGO_SASL

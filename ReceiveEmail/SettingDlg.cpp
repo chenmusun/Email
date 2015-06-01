@@ -5,7 +5,7 @@
 #include "ReceiveEmail.h"
 #include "SettingDlg.h"
 #include "afxdialogex.h"
-#include "../DataBase/DataBase.h"
+#include "../MongoDB/MongoDB.h"
 #include "../SQLServer/SQLServer.h"
 
 
@@ -224,7 +224,7 @@ void CSettingDlg::OnBnClickedMfcbuttonMotest()
 	sprintf_s(moinfo.chPasswd, 32, "%s", chTemp);
 	if (moinfo.nUseDB == 1)
 	{
-		CDataBase db;
+		CMongoDB db;
 		CString csDebug;
 		string strErr;
 		db.SetDBInfo(moinfo);

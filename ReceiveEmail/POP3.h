@@ -3,7 +3,7 @@
 #include "../MailAnalysis/public.h"
 #include "Socket.h"
 #include "../Log/Log.h"
-#include "../DataBase/DataBase.h"
+#include "../MongoDB/MongoDB.h"
 
 class POP3
 {
@@ -41,6 +41,6 @@ private:
 	BOOL m_bConnect;
 	CLog m_log;
 	BOOL m_bFailed;
-	CDataBase m_db;
+	CMongoDB m_db;
 protected:
 };

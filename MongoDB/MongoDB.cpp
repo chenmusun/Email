@@ -1,32 +1,32 @@
-// DataBase.cpp : 定义 DLL 应用程序的导出函数。
+// MongoDB.cpp : 定义 DLL 应用程序的导出函数。
 //
 
 #include "stdafx.h"
-#include "DataBase.h"
-
+#include "MongoDB.h"
 static long lCount = 1;
+
 // 这是导出变量的一个示例
-DATABASE_API int nDataBase = 0;
+MONGODB_API int nMongoDB=0;
 
 // 这是导出函数的一个示例。
-DATABASE_API int fnDataBase(void)
+MONGODB_API int fnMongoDB(void)
 {
 	return 42;
 }
 
 // 这是已导出类的构造函数。
-// 有关类定义的信息，请参阅 DataBase.h
-CDataBase::CDataBase(void) :m_bConnect(FALSE), m_nUseDB(1)
+// 有关类定义的信息，请参阅 MongoDB.h
+CMongoDB::CMongoDB() :m_bConnect(FALSE), m_nUseDB(1)
 {
 	return;
 }
 
-CDataBase::~CDataBase()
+CMongoDB::~CMongoDB()
 {
 	//connect.~DBClientConnection();
 }
 
-BOOL CDataBase::ConnectDataBase(string& strErr)
+BOOL CMongoDB::ConnectDataBase(string& strErr)
 {
 	string strWhat;
 	strErr.empty();//将错误信息清空
@@ -86,7 +86,7 @@ BOOL CDataBase::ConnectDataBase(string& strErr)
 	return TRUE;
 }
 
-long CDataBase::CheckUIDLInMongoDB(const string& strUIDL, string& strErr, const string& strName, long lDay)
+long CMongoDB::CheckUIDLInMongoDB(const string& strUIDL, string& strErr, const string& strName, long lDay)
 {
 	//COleDateTime date;
 	strErr.empty();
@@ -101,7 +101,7 @@ long CDataBase::CheckUIDLInMongoDB(const string& strUIDL, string& strErr, const 
 	strIndexName.append(m_strTable);
 	if (connect.isStillConnected() && m_bConnect)
 	{
-		BSONObj cmd, obj = BSON("UIDL" << strUIDL << "DATE" << DATENOW<<"TO"<<strName)
+		BSONObj cmd, obj = BSON("UIDL" << strUIDL << "DATE" << DATENOW << "TO" << strName)
 			, bsoReturnValue, bsoQuery = BSON("UIDL" << strUIDL), bsoValue;
 		try
 		{
@@ -126,7 +126,7 @@ long CDataBase::CheckUIDLInMongoDB(const string& strUIDL, string& strErr, const 
 				lSrvDate = lSrvDate / 1000;
 				lLocalDate = GetTimeStamp();
 				lSaveDay = (lLocalDate - lSrvDate) / 86400;
-				if (lSaveDay>=lDay)
+				if (lSaveDay >= lDay)
 					lFound = MONGO_DELETE;
 			}
 
@@ -140,7 +140,7 @@ long CDataBase::CheckUIDLInMongoDB(const string& strUIDL, string& strErr, const 
 }
 
 
-void CDataBase::DisConnectDataBase()
+void CMongoDB::DisConnectDataBase()
 {
 	BSONObj info;
 	if (m_nUseDB != 1) return;
@@ -151,18 +151,18 @@ void CDataBase::DisConnectDataBase()
 	}
 }
 
-void CDataBase::SetDBInfo(const MongoDBInfo&dbinfo)
+void CMongoDB::SetDBInfo(const MongoDBInfo&dbinfo)
 {
-	m_strDBAdd= dbinfo.chDBAdd;
-	m_strDBName= dbinfo.chDBName;
-	m_strTable= dbinfo.chTable;
-	m_strUserName= dbinfo.chUserName;
-	m_strPasswd =dbinfo.chPasswd;
+	m_strDBAdd = dbinfo.chDBAdd;
+	m_strDBName = dbinfo.chDBName;
+	m_strTable = dbinfo.chTable;
+	m_strUserName = dbinfo.chUserName;
+	m_strPasswd = dbinfo.chPasswd;
 	m_nUseDB = dbinfo.nUseDB;
 
 }
 
-void CDataBase::GetCurrTime(string& strDate)
+void CMongoDB::GetCurrTime(string& strDate)
 {
 	char chDate[128] = { 0 };
 	SYSTEMTIME systm;
@@ -173,7 +173,7 @@ void CDataBase::GetCurrTime(string& strDate)
 	strDate = chDate;
 }
 
-long long CDataBase::GetTimeStamp()
+long long CMongoDB::GetTimeStamp()
 {
 	long long llTime = 0;
 	time_t rawtime;
@@ -182,7 +182,7 @@ long long CDataBase::GetTimeStamp()
 	return llTime;
 }
 
-long CDataBase::SaveFileToMongoDB(string& remotename, string& strPath, string& strRtr)
+long CMongoDB::SaveFileToMongoDB(string& remotename, string& strPath, string& strRtr)
 {
 	/*
 	GfidFS 对象用来存储文件，构造是需要传入DBClientConnection实例，使用数据库名称
@@ -228,7 +228,7 @@ long CDataBase::SaveFileToMongoDB(string& remotename, string& strPath, string& s
 	}
 }
 
-BOOL CDataBase::DelUIDL(const string& strUIDL, const string& strName)
+BOOL CMongoDB::DelUIDL(const string& strUIDL, const string& strName)
 {
 	if (m_nUseDB != 1)
 		return TRUE;
@@ -252,16 +252,16 @@ BOOL CDataBase::DelUIDL(const string& strUIDL, const string& strName)
 	return TRUE;
 }
 
-BOOL CDataBase::GetFileFromMongoDB(const string& strFileName,const string&strSavePath,string& strErr)
+BOOL CMongoDB::GetFileFromMongoDB(const string& strFileName, const string&strSavePath, string& strErr)
 {
 	BOOL bRet = TRUE;
-	string strTemp,strTempPath;
+	string strTemp, strTempPath;
 	int nStart(0);
 	if (strFileName.length() <= 0)
 		strErr = "FileName is empty!";
 	gridfs_offset size(0), afsize(0);
 	string strPath(strSavePath);
-	
+
 	if (connect.isStillConnected() && m_bConnect)
 	{
 		GridFS fs(connect, m_strDBName);
@@ -284,7 +284,7 @@ BOOL CDataBase::GetFileFromMongoDB(const string& strFileName,const string&strSav
 				else strErr = "File not exists!";
 			}
 			if (size > 0 && size == afsize)
-				bRet = bRet?TRUE:FALSE;
+				bRet = bRet ? TRUE : FALSE;
 			else bRet = FALSE;
 			pos = strFileName.find(";", nStart);
 		}
@@ -292,7 +292,7 @@ BOOL CDataBase::GetFileFromMongoDB(const string& strFileName,const string&strSav
 	return bRet;
 }
 
-BOOL CDataBase::DelUIDL(const string& strUIDL)
+BOOL CMongoDB::DelUIDL(const string& strUIDL)
 {
 	if (m_nUseDB != 1)
 		return TRUE;
