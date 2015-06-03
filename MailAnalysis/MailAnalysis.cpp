@@ -6,6 +6,7 @@
 #include "../GGDataAPI/utf8.hpp"
 #include "../ReceiveEmail/public.h"
 #include "CodeConvert.h"
+#include "../PDF/PDF.h"
 
 
 #ifdef _DEBUG
@@ -1937,7 +1938,7 @@ void SaveAttachMent(CMailAnalysis* pana, ATTACH_FILE& attachfile, BOUNDARY_HEAD&
 				WideCharToMultiByte(CP_ACP, 0, pana->m_csSavePath, pana->m_csSavePath.GetLength(), chPath, 512, NULL, NULL);
 				strOutputPath = chPath;
 				strOutputPath.append("\\");
-				if (/*PDF2Text(strInputPath, strOutputPath, strOutPutName, attachfile.nPageNum, attachfile.nTime) == 0*/1)
+				if (PDF2TXT(strInputPath, strOutputPath, strOutPutName, attachfile.nPageNum, attachfile.nTime) == 0)
 				{
 					attachfile.csFileText = strOutPutName.c_str();
 #ifdef _DEBUG

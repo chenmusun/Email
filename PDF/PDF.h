@@ -4,12 +4,16 @@
 // 任何其他项目上不应定义此符号。这样，源文件中包含此文件的任何其他项目都会将
 // PDF_API 函数视为是从 DLL 导入的，而此 DLL 则将用此宏定义的
 // 符号视为是被导出的。
+#pragma once
 #ifdef PDF_EXPORTS
 #define PDF_API __declspec(dllexport)
 #else
 #define PDF_API __declspec(dllimport)
+#pragma	comment(lib,"../output/PDF.lib")
 #endif
 
+#include <string>
+using namespace std;
 // 此类是从 PDF.dll 导出的
 class PDF_API CPDF {
 public:
@@ -21,4 +25,4 @@ public:
 extern PDF_API int nPDF;
 
 PDF_API int fnPDF(void);
-//PDF_API 
+PDF_API int PDF2TXT(string inputFilePath, string outputFilePath, string& outputname, int& nPageNum, int& time);
