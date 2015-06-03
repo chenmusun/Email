@@ -20,3 +20,9 @@ CPDF::CPDF()
 {
 	return;
 }
+
+
+CPDF::~CPDF()
+{
+
+}

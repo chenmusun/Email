@@ -14,9 +14,11 @@
 class PDF_API CPDF {
 public:
 	CPDF(void);
+	virtual ~CPDF();
 	// TODO:  在此添加您的方法。
 };
 
 extern PDF_API int nPDF;
 
 PDF_API int fnPDF(void);
+//PDF_API 
