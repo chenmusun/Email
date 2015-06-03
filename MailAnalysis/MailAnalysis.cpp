@@ -1937,7 +1937,7 @@ void SaveAttachMent(CMailAnalysis* pana, ATTACH_FILE& attachfile, BOUNDARY_HEAD&
 				WideCharToMultiByte(CP_ACP, 0, pana->m_csSavePath, pana->m_csSavePath.GetLength(), chPath, 512, NULL, NULL);
 				strOutputPath = chPath;
 				strOutputPath.append("\\");
-				if (PDF2Text(strInputPath, strOutputPath, strOutPutName, attachfile.nPageNum, attachfile.nTime) == 0)
+				if (/*PDF2Text(strInputPath, strOutputPath, strOutPutName, attachfile.nPageNum, attachfile.nTime) == 0*/1)
 				{
 					attachfile.csFileText = strOutPutName.c_str();
 #ifdef _DEBUG
@@ -1956,9 +1956,4 @@ void SaveAttachMent(CMailAnalysis* pana, ATTACH_FILE& attachfile, BOUNDARY_HEAD&
 			pana->m_stEmail.vecAttachFiles.push_back(attachfile);
 		}
 	}
-}
-
-MAILANALYSIS_API int PDF2TXT(string inputFilePath, string outputFilePath, string& outputname, int& nPageNum, int& time)
-{
-	return PDF2Text(inputFilePath, outputFilePath, outputname, nPageNum, time);
 }

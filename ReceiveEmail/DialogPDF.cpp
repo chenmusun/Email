@@ -123,7 +123,7 @@ void CDialogPDF::OnBnClickedMfcbuttonPdf2txt()
 	int nPageNum(0),nTime(0);
 	if (m_csFilePath.Find(_T(".pdf")) > 0)
 	{
-		WideCharToMultiByte(CP_ACP, 0, m_csFilePath, m_csFilePath.GetLength(), chPath, 512, NULL, NULL);		strInputPath = chPath;		memset(&chPath, 0, 512);		auto pos = m_csFilePath.ReverseFind(_T('\\'));		if (pos > 0)		{			csTemp = m_csFilePath.Left(pos);		}		WideCharToMultiByte(CP_ACP, 0, csTemp, csTemp.GetLength(), chPath, 512, NULL, NULL);		strOutputPath = chPath;		strOutputPath.append("\\");		if (PDF2TXT(strInputPath, strOutputPath, strOutPutName, nPageNum, nTime) == 0)
+		WideCharToMultiByte(CP_ACP, 0, m_csFilePath, m_csFilePath.GetLength(), chPath, 512, NULL, NULL);		strInputPath = chPath;		memset(&chPath, 0, 512);		auto pos = m_csFilePath.ReverseFind(_T('\\'));		if (pos > 0)		{			csTemp = m_csFilePath.Left(pos);		}		WideCharToMultiByte(CP_ACP, 0, csTemp, csTemp.GetLength(), chPath, 512, NULL, NULL);		strOutputPath = chPath;		strOutputPath.append("\\");		if (/*PDF2TXT(strInputPath, strOutputPath, strOutPutName, nPageNum, nTime) == 0*/1)
 		{
 			csTemp.Format(_T("Success!\r\nPagenum=%d\tTime=%d"),nPageNum,nTime);
 			AfxMessageBox(csTemp);

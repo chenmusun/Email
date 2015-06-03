@@ -27,6 +27,12 @@
     <ClInclude Include="PDF.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="pdf2text.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="fgsdk_common.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -36,6 +42,12 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="dllmain.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="pdf2text.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="fgsdk_common.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

@@ -154,9 +154,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CodeConvert.h" />
-    <ClInclude Include="fgsdk_common.h" />
     <ClInclude Include="MailAnalysis.h" />
-    <ClInclude Include="pdf2text.h" />
     <ClInclude Include="public.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="stdafx.h" />
@@ -164,9 +162,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CodeConvert.cpp" />
-    <ClCompile Include="fgsdk_common.cpp" />
     <ClCompile Include="MailAnalysis.cpp" />
-    <ClCompile Include="pdf2text.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
