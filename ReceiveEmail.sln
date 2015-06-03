@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
-VisualStudioVersion = 12.0.21005.1
+VisualStudioVersion = 12.0.31101.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ReceiveEmail", "ReceiveEmail\ReceiveEmail.vcxproj", "{3564EF9C-DB6F-46DB-8CB7-A2B42F48CB83}"
 	ProjectSection(ProjectDependencies) = postProject
@@ -25,6 +25,7 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MailAnalysis", "MailAnalysis\MailAnalysis.vcxproj", "{E4836EAA-F4CF-499D-97A3-465E628DD010}"
 	ProjectSection(ProjectDependencies) = postProject
 		{FDB8D838-15F0-4B14-86E7-A8D0609D7A2F} = {FDB8D838-15F0-4B14-86E7-A8D0609D7A2F}
+		{F6C918E8-04B1-420F-886A-E3F7DC36C9C0} = {F6C918E8-04B1-420F-886A-E3F7DC36C9C0}
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SQLServer", "SQLServer\SQLServer.vcxproj", "{1AEEC494-51EC-446D-8046-2E38F8C9D476}"
@@ -33,6 +34,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SQLServer", "SQLServer\SQLS
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MongoDB", "MongoDB\MongoDB.vcxproj", "{88D0CD30-2F7D-4A93-92DF-69F00465EB99}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PDF", "PDF\PDF.vcxproj", "{F6C918E8-04B1-420F-886A-E3F7DC36C9C0}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -68,6 +71,10 @@ Global
 		{88D0CD30-2F7D-4A93-92DF-69F00465EB99}.Debug|x64.Build.0 = Debug|x64
 		{88D0CD30-2F7D-4A93-92DF-69F00465EB99}.Release|x64.ActiveCfg = Release|x64
 		{88D0CD30-2F7D-4A93-92DF-69F00465EB99}.Release|x64.Build.0 = Release|x64
+		{F6C918E8-04B1-420F-886A-E3F7DC36C9C0}.Debug|x64.ActiveCfg = Debug|x64
+		{F6C918E8-04B1-420F-886A-E3F7DC36C9C0}.Debug|x64.Build.0 = Debug|x64
+		{F6C918E8-04B1-420F-886A-E3F7DC36C9C0}.Release|x64.ActiveCfg = Release|x64
+		{F6C918E8-04B1-420F-886A-E3F7DC36C9C0}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
