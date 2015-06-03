@@ -134,9 +134,8 @@ namespace mongo {
         case mongo::Bool:
             return 40;
         case mongo::Date:
-            return 45;
         case Timestamp:
-            return 47;
+            return 45;
         case RegEx:
             return 50;
         case DBRef:

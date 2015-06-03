@@ -25,15 +25,20 @@
 #include "mongo/bson/bsontypes.h"
 #include "mongo/bson/oid.h"
 #include "mongo/bson/timestamp.h"
+#include "mongo/bson/util/misc.h"
 #include "mongo/client/export_macros.h"
 #include "mongo/platform/cstdint.h"
 #include "mongo/platform/float_utils.h"
-#include "mongo/platform/strnlen.h"
 
 namespace mongo {
     class BSONObj;
     class BSONElement;
     class BSONObjBuilder;
+
+    typedef mongo::BSONElement be;
+    typedef mongo::BSONObj bo;
+    typedef mongo::BSONObjBuilder bob;
+
 
     /* l and r MUST have same type when called: check that first. */
     int compareElementValues(const BSONElement& l, const BSONElement& r);
@@ -155,7 +160,7 @@ namespace mongo {
         }
 
         const StringData fieldNameStringData() const {
-            return StringData(fieldName(), eoo() ? 0 : fieldNameSize() - 1);
+            return StringData(fieldName(), fieldNameSize() - 1);
         }
 
         /** raw data of the element's value (so be careful). */
@@ -386,15 +391,6 @@ namespace mongo {
         */
         int woCompare( const BSONElement &e, bool considerFieldName = true ) const;
 
-        /**
-         * Functor compatible with std::hash for std::unordered_{map,set}
-         * Warning: The hash function is subject to change. Do not use in cases where hashes need
-         *          to be consistent across versions.
-         */
-        struct Hasher {
-            size_t operator() (const BSONElement& elem) const;
-        };
-
         const char * rawdata() const { return data; }
 
         /** 0 == Equality, just not defined yet */
@@ -463,8 +459,8 @@ namespace mongo {
                 totalSize = -1;
                 fieldNameSize_ = -1;
                 if ( maxLen != -1 ) {
-                    size_t size = strnlen( fieldName(), maxLen - 1 );
-                    uassert( 10333 ,  "Invalid field name", size < size_t(maxLen - 1) );
+                    int size = (int) strnlen( fieldName(), maxLen - 1 );
+                    uassert( 10333 ,  "Invalid field name", size != -1 );
                     fieldNameSize_ = size + 1;
                 }
             }
@@ -636,8 +632,8 @@ namespace mongo {
     }
 
     inline BSONElement::BSONElement() {
-        static const char kEooElement[] = "";
-        data = kEooElement;
+        static char z = 0;
+        data = &z;
         fieldNameSize_ = 0;
         totalSize = 1;
     }

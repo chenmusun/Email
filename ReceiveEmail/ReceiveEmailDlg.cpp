@@ -213,6 +213,7 @@ BEGIN_MESSAGE_MAP(CReceiveEmailDlg, CDialogEx)
 	ON_COMMAND(ID_ADDITEM, &CReceiveEmailDlg::OnAdditem)
 	ON_COMMAND(ID_DELITEM, &CReceiveEmailDlg::OnDelitem)
 	ON_BN_CLICKED(IDC_BUTTON_PDF, &CReceiveEmailDlg::OnBnClickedButtonPdf)
+	ON_WM_ERASEBKGND()
 END_MESSAGE_MAP()
 
 
@@ -1850,4 +1851,12 @@ BOOL CReceiveEmailDlg::CheckFailedUIDL(const string& strUIDL)
 	}
 	::LeaveCriticalSection(&_check_failed_);
 	return bRet;
+}
+
+
+BOOL CReceiveEmailDlg::OnEraseBkgnd(CDC* pDC)
+{
+	// TODO:  在此添加消息处理程序代码和/或调用默认值
+	return FALSE;
+	return CDialogEx::OnEraseBkgnd(pDC);
 }

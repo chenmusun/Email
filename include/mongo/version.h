@@ -17,7 +17,7 @@
 
 #define MONGOCLIENT_VERSION_MAJOR 1
 #define MONGOCLIENT_VERSION_MINOR 0
-#define MONGOCLIENT_VERSION_PATCH 1
+#define MONGOCLIENT_VERSION_PATCH 0
 
 #define MONGOCLIENT_VERSION                      \
     ((MONGOCLIENT_VERSION_MAJOR * 10000) +       \
@@ -35,7 +35,7 @@ namespace client {
 
     // The string version of the library.
     // TOOD: should the value of this be here, or buried in a .cpp file as an extern?
-    const char kVersionString[] = "1.0.1";
+    const char kVersionString[] = "1.0.0-pre";
 
     // The stringified SHA1 of the revision from which this binary was built.
     // TODO: should the value of this be here, or buried on a .cpp file as an extern?

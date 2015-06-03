@@ -43,10 +43,6 @@ namespace mongo {
 #pragma warning( disable : 4355 )
 #endif
 
-    inline void checkFieldName(StringData fieldName) {
-        uassert(0, "field name cannot contain null bytes", fieldName.find('\0') == std::string::npos);
-    }
-
     /** Utility for creating a BSONObj.
         See also the BSON() and BSON_ARRAY() macros.
     */
@@ -60,13 +56,10 @@ namespace mongo {
             , _s(this)
             , _tracker(0)
             , _doneCalled(false) {
-            // Skip over space for a holder object at the beginning of the buffer, followed by
+            // Reserve space for a holder object at the beginning of the buffer, followed by
             // space for the object length. The length is filled in by _done.
             _b.skip(sizeof(BSONObj::Holder));
             _b.skip(sizeof(int));
-
-            // Reserve space for the EOO byte. This means _done() can't fail.
-            _b.reserveBytes(1);
         }
 
         /** @param baseBuilder construct a BSONObjBuilder using an existing BufBuilder
@@ -79,13 +72,9 @@ namespace mongo {
             , _s(this)
             , _tracker(0)
             , _doneCalled(false) {
-            // Skip over space for the object length, which is filled in by _done. We don't need a
-            // holder since we are a sub-builder, and some parent builder has already made the
-            // reservation.
+            // Reserve space for the object length, which is filled in by _done. We don't need a holder
+            // since we are a sub-builder, and some parent builder has already made the reservation.
             _b.skip(sizeof(int));
-
-            // Reserve space for the EOO byte. This means _done() can't fail.
-            _b.reserveBytes(1);
         }
 
         BSONObjBuilder( const BSONSizeTracker & tracker )
@@ -98,9 +87,6 @@ namespace mongo {
             // See the comments in the first constructor for details.
             _b.skip(sizeof(BSONObj::Holder));
             _b.skip(sizeof(int));
-
-            // Reserve space for the EOO byte. This means _done() can't fail.
-            _b.reserveBytes(1);
         }
 
         ~BSONObjBuilder() {
@@ -121,7 +107,6 @@ namespace mongo {
 
         /** append element to the object we are building */
         BSONObjBuilder& append( const BSONElement& e) {
-            checkFieldName(e.fieldNameStringData());
             verify( !e.eoo() ); // do not append eoo, that would corrupt us. the builder auto appends when done() is called.
             _b.appendBuf((void*) e.rawdata(), e.size());
             return *this;
@@ -129,7 +114,6 @@ namespace mongo {
 
         /** append an element but with a new name */
         BSONObjBuilder& appendAs(const BSONElement& e, const StringData& fieldName) {
-            checkFieldName(fieldName);
             verify( !e.eoo() ); // do not append eoo, that would corrupt us. the builder auto appends when done() is called.
             _b.appendNum((char) e.type());
             _b.appendStr(fieldName);
@@ -139,7 +123,6 @@ namespace mongo {
 
         /** add a subobject as a member */
         BSONObjBuilder& append(const StringData& fieldName, BSONObj subObj) {
-            checkFieldName(fieldName);
             _b.appendNum((char) Object);
             _b.appendStr(fieldName);
             _b.appendBuf((void *) subObj.objdata(), subObj.objsize());
@@ -148,7 +131,6 @@ namespace mongo {
 
         /** add a subobject as a member */
         BSONObjBuilder& appendObject(const StringData& fieldName, const char * objdata , int size = 0 ) {
-            checkFieldName(fieldName);
             verify( objdata );
             if ( size == 0 ) {
                 size = ConstDataView(objdata).readLE<int>();
@@ -174,7 +156,6 @@ namespace mongo {
          *  // use b and convert to object
          */
         BufBuilder &subobjStart(const StringData& fieldName) {
-            checkFieldName(fieldName);
             _b.appendNum((char) Object);
             _b.appendStr(fieldName);
             return _b;
@@ -184,7 +165,6 @@ namespace mongo {
             style fields in it.
         */
         BSONObjBuilder& appendArray(const StringData& fieldName, const BSONObj &subObj) {
-            checkFieldName(fieldName);
             _b.appendNum((char) Array);
             _b.appendStr(fieldName);
             _b.appendBuf((void *) subObj.objdata(), subObj.objsize());
@@ -197,7 +177,6 @@ namespace mongo {
         /** add header for a new subarray and return bufbuilder for writing to
             the subarray's body */
         BufBuilder &subarrayStart(const StringData& fieldName) {
-            checkFieldName(fieldName);
             _b.appendNum((char) Array);
             _b.appendStr(fieldName);
             return _b;
@@ -205,7 +184,6 @@ namespace mongo {
 
         /** Append a boolean element */
         BSONObjBuilder& appendBool(const StringData& fieldName, int val) {
-            checkFieldName(fieldName);
             _b.appendNum((char) Bool);
             _b.appendStr(fieldName);
             _b.appendNum((char) (val?1:0));
@@ -214,7 +192,6 @@ namespace mongo {
 
         /** Append a boolean element */
         BSONObjBuilder& append(const StringData& fieldName, bool val) {
-            checkFieldName(fieldName);
             _b.appendNum((char) Bool);
             _b.appendStr(fieldName);
             _b.appendNum((char) (val?1:0));
@@ -223,7 +200,6 @@ namespace mongo {
 
         /** Append a 32 bit integer element */
         BSONObjBuilder& append(const StringData& fieldName, int n) {
-            checkFieldName(fieldName);
             _b.appendNum((char) NumberInt);
             _b.appendStr(fieldName);
             _b.appendNum(n);
@@ -237,7 +213,6 @@ namespace mongo {
 
         /** Append a NumberLong */
         BSONObjBuilder& append(const StringData& fieldName, long long n) {
-            checkFieldName(fieldName);
             _b.appendNum((char) NumberLong);
             _b.appendStr(fieldName);
             _b.appendNum(n);
@@ -301,7 +276,6 @@ namespace mongo {
 
         /** Append a double element */
         BSONObjBuilder& append(const StringData& fieldName, double n) {
-            checkFieldName(fieldName);
             _b.appendNum((char) NumberDouble);
             _b.appendStr(fieldName);
             _b.appendNum(n);
@@ -318,7 +292,6 @@ namespace mongo {
             method for this.
         */
         BSONObjBuilder& appendOID(const StringData& fieldName, OID *oid = 0 , bool generateIfBlank = false ) {
-            checkFieldName(fieldName);
             _b.appendNum((char) jstOID);
             _b.appendStr(fieldName);
             if ( oid )
@@ -340,7 +313,6 @@ namespace mongo {
         @returns the builder object
         */
         BSONObjBuilder& append( const StringData& fieldName, OID oid ) {
-            checkFieldName(fieldName);
             _b.appendNum((char) jstOID);
             _b.appendStr(fieldName);
             _b.appendBuf( oid.view().view(), OID::kOIDSize );
@@ -360,7 +332,6 @@ namespace mongo {
             the number of seconds since January 1, 1970, 00:00:00 GMT
         */
         BSONObjBuilder& appendTimeT(const StringData& fieldName, time_t dt) {
-            checkFieldName(fieldName);
             _b.appendNum((char) Date);
             _b.appendStr(fieldName);
             _b.appendNum(static_cast<unsigned long long>(dt) * 1000);
@@ -380,8 +351,6 @@ namespace mongo {
             @param regex options such as "i" or "g"
         */
         BSONObjBuilder& appendRegex(const StringData& fieldName, const StringData& regex, const StringData& options = "") {
-            checkFieldName(fieldName);
-            uassert(0, "regex cannot contain null bytes", regex.find('\0') == std::string::npos);
             _b.appendNum((char) RegEx);
             _b.appendStr(fieldName);
             _b.appendStr(regex);
@@ -394,7 +363,6 @@ namespace mongo {
         }
 
         BSONObjBuilder& appendCode(const StringData& fieldName, const StringData& code) {
-            checkFieldName(fieldName);
             _b.appendNum((char) Code);
             _b.appendStr(fieldName);
             _b.appendNum((int) code.size()+1);
@@ -409,7 +377,6 @@ namespace mongo {
         /** Append a string element.
             @param sz size includes terminating null character */
         BSONObjBuilder& append(const StringData& fieldName, const char *str, int sz) {
-            checkFieldName(fieldName);
             _b.appendNum((char) String);
             _b.appendStr(fieldName);
             _b.appendNum((int)sz);
@@ -426,7 +393,6 @@ namespace mongo {
         }
         /** Append a string element */
         BSONObjBuilder& append(const StringData& fieldName, const StringData& str) {
-            checkFieldName(fieldName);
             _b.appendNum((char) String);
             _b.appendStr(fieldName);
             _b.appendNum((int)str.size()+1);
@@ -435,7 +401,6 @@ namespace mongo {
         }
 
         BSONObjBuilder& appendSymbol(const StringData& fieldName, const StringData& symbol) {
-            checkFieldName(fieldName);
             _b.appendNum((char) Symbol);
             _b.appendStr(fieldName);
             _b.appendNum((int) symbol.size()+1);
@@ -454,7 +419,6 @@ namespace mongo {
 
         /** Append a Null element to the object */
         BSONObjBuilder& appendNull( const StringData& fieldName ) {
-            checkFieldName(fieldName);
             _b.appendNum( (char) jstNULL );
             _b.appendStr( fieldName );
             return *this;
@@ -462,14 +426,12 @@ namespace mongo {
 
         // Append an element that is less than all other keys.
         BSONObjBuilder& appendMinKey( const StringData& fieldName ) {
-            checkFieldName(fieldName);
             _b.appendNum( (char) MinKey );
             _b.appendStr( fieldName );
             return *this;
         }
         // Append an element that is greater than all other keys.
         BSONObjBuilder& appendMaxKey( const StringData& fieldName ) {
-            checkFieldName(fieldName);
             _b.appendNum( (char) MaxKey );
             _b.appendStr( fieldName );
             return *this;
@@ -477,7 +439,6 @@ namespace mongo {
 
         /** Append a Timestamp element to the object */
         BSONObjBuilder& appendTimestamp( const StringData& fieldName , const Timestamp_t& ts = Timestamp_t() ) {
-            checkFieldName(fieldName);
             _b.appendNum( (char) Timestamp );
             _b.appendStr( fieldName );
 
@@ -499,7 +460,6 @@ namespace mongo {
         @deprecated
         */
         BSONObjBuilder& appendDBRef( const StringData& fieldName, const StringData& ns, const OID &oid ) {
-            checkFieldName(fieldName);
             _b.appendNum( (char) DBRef );
             _b.appendStr( fieldName );
             _b.appendNum( (int) ns.size() + 1 );
@@ -520,7 +480,6 @@ namespace mongo {
             @param data the byte array
         */
         BSONObjBuilder& appendBinData( const StringData& fieldName, int len, BinDataType type, const void *data ) {
-            checkFieldName(fieldName);
             _b.appendNum( (char) BinData );
             _b.appendStr( fieldName );
             _b.appendNum( len );
@@ -540,7 +499,6 @@ namespace mongo {
         @param len the length of data
         */
         BSONObjBuilder& appendBinDataArrayDeprecated( const char * fieldName , const void * data , int len ) {
-            checkFieldName(fieldName);
             _b.appendNum( (char) BinData );
             _b.appendStr( fieldName );
             _b.appendNum( len + 4 );
@@ -554,7 +512,6 @@ namespace mongo {
             fragment accompanied by some scope that goes with it.
         */
         BSONObjBuilder& appendCodeWScope( const StringData& fieldName, const StringData& code, const BSONObj &scope ) {
-            checkFieldName(fieldName);
             _b.appendNum( (char) CodeWScope );
             _b.appendStr( fieldName );
             _b.appendNum( ( int )( 4 + 4 + code.size() + 1 + scope.objsize() ) );
@@ -636,7 +593,6 @@ namespace mongo {
         BSONObj asTempObj() {
             BSONObj temp(_done());
             _b.setlen(_b.len()-1); //next append should overwrite the EOO
-            _b.reserveBytes(1); // Rereserve room for the real EOO
             _doneCalled = false;
             return temp;
         }
@@ -718,14 +674,8 @@ namespace mongo {
                 return _b.buf() + _offset;
 
             _doneCalled = true;
-
-            // TODO remove this or find some way to prevent it from failing. Since this is intended
-            // for use with BSON() literal queries, it is less likely to result in oversized BSON.
             _s.endField();
-
-            _b.claimReservedBytes(1); // Prevents adding EOO from failing.
             _b.appendNum((char) EOO);
-
             char *data = _b.buf() + _offset;
             int size = _b.len() - _offset;
             DataView(data).writeLE(size);
@@ -802,7 +752,6 @@ namespace mongo {
         BufBuilder &subarrayStart() { return _b.subarrayStart( num() ); }
 
         BSONArrayBuilder& appendRegex(const StringData& regex, const StringData& options = "") {
-            uassert(0, "regex cannot contain null bytes", regex.find('\0') == std::string::npos);
             _b.appendRegex(num(), regex, options);
             return *this;
         }

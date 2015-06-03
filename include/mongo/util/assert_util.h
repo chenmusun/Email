@@ -17,6 +17,7 @@
 
 #pragma once
 
+#include <iostream>
 #include <typeinfo>
 #include <string>
 
@@ -26,6 +27,7 @@
 #include "mongo/logger/log_severity.h"
 #include "mongo/logger/logger.h"
 #include "mongo/logger/logstream_builder.h"
+#include "mongo/util/concurrency/thread_name.h"
 
 namespace mongo {
 
@@ -143,14 +145,11 @@ namespace mongo {
         virtual void appendPrefix( std::stringstream& ss ) const;
     };
 
-    MONGO_CLIENT_API MONGO_COMPILER_NORETURN void MONGO_CLIENT_FUNC verifyFailed(const char *expr, const char *file, unsigned line);
-    MONGO_CLIENT_API MONGO_COMPILER_NORETURN void MONGO_CLIENT_FUNC invariantFailed(const char *expr, const char *file, unsigned line);
-    MONGO_CLIENT_API MONGO_COMPILER_NORETURN void MONGO_CLIENT_FUNC invariantOKFailed(const char *expr, const Status& status, const char *file, unsigned line);
-    MONGO_CLIENT_API void MONGO_CLIENT_FUNC wasserted(const char *expr, const char *file, unsigned line);
+    MONGO_CLIENT_API MONGO_COMPILER_NORETURN void MONGO_CLIENT_FUNC verifyFailed(const char *msg, const char *file, unsigned line);
+    MONGO_CLIENT_API MONGO_COMPILER_NORETURN void MONGO_CLIENT_FUNC invariantFailed(const char *msg, const char *file, unsigned line);
+    MONGO_CLIENT_API void MONGO_CLIENT_FUNC wasserted(const char *msg, const char *file, unsigned line);
     MONGO_CLIENT_API MONGO_COMPILER_NORETURN void MONGO_CLIENT_FUNC fassertFailed( int msgid );
     MONGO_CLIENT_API MONGO_COMPILER_NORETURN void MONGO_CLIENT_FUNC fassertFailedWithStatus(
-            int msgid, const Status& status);
-    MONGO_CLIENT_API MONGO_COMPILER_NORETURN void MONGO_CLIENT_FUNC fassertFailedWithStatusNoTrace(
             int msgid, const Status& status);
 
     /** a "user assertion".  throws UserAssertion.  logs.  typically used for errors that a user
@@ -183,12 +182,6 @@ namespace mongo {
     MONGO_CLIENT_API inline void MONGO_CLIENT_FUNC fassert(int msgid, const Status& status) {
         if (MONGO_unlikely(!status.isOK())) {
             fassertFailedWithStatus(msgid, status);
-        }
-    }
-
-    MONGO_CLIENT_API inline void fassertNoTrace(int msgid, const Status& status) {
-        if (MONGO_unlikely(!status.isOK())) {
-            fassertFailedWithStatusNoTrace(msgid, status);
         }
     }
 
@@ -232,37 +225,23 @@ namespace mongo {
         }
     }
 
-    MONGO_CLIENT_API inline void massertNoTraceStatusOK(const Status& status) {
-        if (MONGO_unlikely(!status.isOK())) {
-            msgassertedNoTrace((status.location() != 0 ? status.location() : status.code()),
-                        status.reason());
-        }
-    }
 
     /* same as massert except no msgid */
 #define MONGO_verify(_Expression) do {                                  \
-        if (MONGO_unlikely(!(_Expression))) {                           \
+        if (MONGO_unlikely(!(_Expression))) {                               \
             ::mongo::verifyFailed(#_Expression, __FILE__, __LINE__);    \
         }                                                               \
     } while (false)
 
 #define MONGO_invariant(_Expression) do {                               \
-        if (MONGO_unlikely(!(_Expression))) {                           \
+        if (MONGO_unlikely(!(_Expression))) {                               \
             ::mongo::invariantFailed(#_Expression, __FILE__, __LINE__); \
         }                                                               \
     } while (false)
 
-#define MONGO_invariantOK(expression) do {                                                    \
-    const ::mongo::Status _invariantOK_status = expression;                                   \
-        if (MONGO_unlikely(!_invariantOK_status.isOK())) {                                    \
-            ::mongo::invariantOKFailed(#expression, _invariantOK_status, __FILE__, __LINE__); \
-        }                                                                                     \
-    } while (false)
-
 #ifdef MONGO_EXPOSE_MACROS
-# define verify(expression) MONGO_verify(expression)
+# define verify MONGO_verify
 # define invariant MONGO_invariant
-# define invariantOK MONGO_invariantOK
 # define uassert MONGO_uassert
 # define wassert MONGO_wassert
 # define massert MONGO_massert
@@ -274,6 +253,13 @@ namespace mongo {
     // < 10000 UserException
 
     enum { ASSERT_ID_DUPKEY = 11000 };
+
+    /* throws a uassertion with an appropriate msg */
+    MONGO_COMPILER_NORETURN void streamNotGood( int code, const std::string& msg, std::ios& myios );
+
+    inline void assertStreamGood(unsigned msgid, const std::string& msg, std::ios& myios) {
+        if( !myios.good() ) streamNotGood(msgid, msg, myios);
+    }
 
     std::string demangleName( const std::type_info& typeinfo );
 
@@ -307,13 +293,13 @@ namespace mongo {
         expression; \
     } catch ( const std::exception &e ) { \
         ::mongo::logger::LogstreamBuilder(::mongo::logger::globalLogDomain(), \
-                                          std::string(), \
+                                          ::mongo::getThreadName(), \
                                           ::mongo::logger::LogSeverity::Log()) \
             << "caught exception (" << e.what() << ") in destructor (" << __FUNCTION__ \
             << ")" << std::endl; \
     } catch ( ... ) { \
         ::mongo::logger::LogstreamBuilder(::mongo::logger::globalLogDomain(), \
-                                          std::string(), \
+                                          ::mongo::getThreadName(), \
                                           ::mongo::logger::LogSeverity::Log()) \
             << "caught unknown exception in destructor (" << __FUNCTION__ << ")" \
             << std::endl; \

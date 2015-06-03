@@ -34,17 +34,17 @@ namespace logger {
         enum Value {
             kDefault = 0,
             kAccessControl,
-            kCommand,
+            kCommands,
             kControl,
             kGeo,
-            kIndex,
-            kNetwork,
+            kIndexing,
+            kNetworking,
             kQuery,
             kReplication,
             kSharding,
             kStorage,
-            kJournal,
-            kWrite,
+            kJournaling,
+            kWrites,
             kNumLogComponents
         };
 

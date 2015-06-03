@@ -58,11 +58,14 @@ namespace logger {
 
         /**
          * Predicate that answers the question, "Should I, the caller, append to you, the log
-         * domain, componented messages of the given severity?"  True means yes.
+         * domain, componentged messages of the given severity?"  True means yes.
          *
-         * If minimum severity levels are not configured, compare 'severity' against the configured
-         * level for kDefault.
+         * No components provided means to check against kDefault only.
+         *
+         * If a component is specified but minimum severity levels are not configured,
+         * compare 'severity' against the configured level for kDefault.
          */
+        bool shouldLog(LogSeverity severity) const;
         bool shouldLog(LogComponent component, LogSeverity severity) const;
 
     private:

@@ -91,12 +91,9 @@ namespace mongo {
         bool journal() const;
 
         /**
-         * If fsync is set and the server is running without journaling,
-         * the write will only be considered successful when the server has synced
-         * all data files to disk. If the server is running with journaling, this acts
-         * the same as if journal() was set. Cannot be used in combination with journal(true).
+         * If write will only be considered successful when committed to data files.
          *
-         * @return true if the fsync option is set on the write.
+         * @return true if write will block on MongoDB fsync
          */
         bool fsync() const;
 
@@ -116,12 +113,7 @@ namespace mongo {
         /** Sets whether journal is required for write to be successful. */
         WriteConcern& journal(bool j);
 
-        /**
-         * Sets the value of the fsync parameter.
-         *
-         * @note The behavior of this option is dependent on server configuration.
-         * @see The comment on fsync() for details.
-         */
+        /** Sets whether fsync is required for write to be successful. */
         WriteConcern& fsync(bool fsync);
 
         /** Sets timeout to wait for write to be successful. */

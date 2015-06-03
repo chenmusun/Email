@@ -38,7 +38,3 @@
 
 // Define to 1 if std::is_trivially_copyable is supported
 #define MONGO_HAVE_STD_IS_TRIVIALLY_COPYABLE 1
-
-// Define to 1 if this platform provides the strnlen(3) function
-#define MONGO_HAVE_STRNLEN 1
-

@@ -50,10 +50,9 @@ namespace geo {
     }
 
     template<typename TCoordinates>
-    inline BSONObj NEARQUERY(const GeoObj<TCoordinates>& geoObj, double maxDistance) {
-        uassert(0, "$maxDistance param to $near query must be non-negative.", maxDistance >= 0.0);
-        return BSON("$near" << BSON("$geometry" << geoObj.toBSON()
-                                    << "$maxDistance" << maxDistance));
+    inline BSONObj NEARQUERY(const GeoObj<TCoordinates>& geoObj, double distance) {
+        return BSON("$near" << BSON("$geometry" << geoObj.toBSON()) <<
+                    "$maxDistance" << distance);
     }
 
     template<typename TCoordinates>
@@ -62,11 +61,10 @@ namespace geo {
     }
 
     template<typename TCoordinates>
-    inline BSONObj NEARSPHEREQUERY(const GeoObj<TCoordinates>& geoObj, double maxDistance) {
-        uassert(0, "$maxDistance param to $nearSphere query must be non-negative.", maxDistance >= 0.0);
-        return BSON("$nearSphere" << BSON("$geometry" << geoObj.toBSON()
-                                          << "$maxDistance" << maxDistance));
-
+    inline BSONObj NEARSPHEREQUERY(const GeoObj<TCoordinates>& geoObj,
+        double distance) {
+        return BSON("$nearSphere" << BSON("$geometry" << geoObj.toBSON()) <<
+                    "$maxDistance" << distance);
     }
 
 } // namespace geo

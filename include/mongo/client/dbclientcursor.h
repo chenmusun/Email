@@ -30,7 +30,6 @@ namespace mongo {
     class DBClientCursorShim;
     class DBClientCursorShimCursorID;
     class DBClientCursorShimArray;
-    class DBClientCursorShimTransform;
 
     /** for mock purposes only -- do not create variants of DBClientCursor, nor hang code here
         @see DBClientMockCursor
@@ -178,8 +177,6 @@ namespace mongo {
         friend class DBClientConnection;
         friend class DBClientCursorShimCursorID;
         friend class DBClientCursorShimArray;
-        friend class DBClientCursorShimTransform;
-        friend class DBClientWithCommands;
 
         int nextBatchSize();
         void _finishConsInit();

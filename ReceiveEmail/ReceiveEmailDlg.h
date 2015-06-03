@@ -137,4 +137,5 @@ public:
 	afx_msg void OnBnClickedButtonPdf();
 	void StopEx();
 	BOOL CheckFailedUIDL(const string& strUIDL);//检查UIDL是否需要跳过，返回FALSE不从MongoUIDL数据中删除
+	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 };
