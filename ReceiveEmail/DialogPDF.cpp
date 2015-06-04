@@ -42,6 +42,7 @@ BEGIN_MESSAGE_MAP(CDialogPDF, CDialogEx)
 	ON_BN_CLICKED(IDC_MFCBUTTON_GET, &CDialogPDF::OnBnClickedMfcbuttonGet)
 	ON_BN_CLICKED(IDC_MFCBUTTON_PDF2TXT, &CDialogPDF::OnBnClickedMfcbuttonPdf2txt)
 	ON_BN_CLICKED(IDC_MFCBUTTON_OPENFO, &CDialogPDF::OnBnClickedMfcbuttonOpenfo)
+	ON_BN_CLICKED(IDC_BUTTON_TEST, &CDialogPDF::OnBnClickedButtonTest)
 END_MESSAGE_MAP()
 
 
@@ -123,11 +124,11 @@ void CDialogPDF::OnBnClickedMfcbuttonPdf2txt()
 	int nPageNum(0),nTime(0);
 	if (m_csFilePath.Find(_T(".pdf")) > 0)
 	{
-		WideCharToMultiByte(CP_ACP, 0, m_csFilePath, m_csFilePath.GetLength(), chPath, 512, NULL, NULL);		strInputPath = chPath;		memset(&chPath, 0, 512);		auto pos = m_csFilePath.ReverseFind(_T('\\'));		if (pos > 0)		{			csTemp = m_csFilePath.Left(pos);		}		WideCharToMultiByte(CP_ACP, 0, csTemp, csTemp.GetLength(), chPath, 512, NULL, NULL);		strOutputPath = chPath;		strOutputPath.append("\\");		if (PDF2TXT(strInputPath, strOutputPath, strOutPutName, nPageNum, nTime) == 0)
-		{
-			csTemp.Format(_T("Success!\r\nPagenum=%d\tTime=%d"),nPageNum,nTime);
-			AfxMessageBox(csTemp);
-		}
+		WideCharToMultiByte(CP_ACP, 0, m_csFilePath, m_csFilePath.GetLength(), chPath, 512, NULL, NULL);		strInputPath = chPath;		memset(&chPath, 0, 512);		auto pos = m_csFilePath.ReverseFind(_T('\\'));		if (pos > 0)		{			csTemp = m_csFilePath.Left(pos);			WideCharToMultiByte(CP_ACP, 0, csTemp, csTemp.GetLength(), chPath, 512, NULL, NULL);			strOutputPath = chPath;			strOutputPath.append("\\");			if (PDF2TXT(strInputPath, strOutputPath, strOutPutName, nPageNum, nTime) == 0)
+			{
+				csTemp.Format(_T("Success!\r\nPagenum=%d\tTime=%d"), nPageNum, nTime);
+				AfxMessageBox(csTemp);
+			}		}
 	}	
 }
 
@@ -138,4 +139,24 @@ void CDialogPDF::OnBnClickedMfcbuttonOpenfo()
 	UpdateData(TRUE);
 	if (!m_csSavePath.IsEmpty())
 		ShellExecute(NULL, _T("open"), m_csSavePath, NULL, NULL, SW_SHOWNORMAL);
+}
+
+
+void CDialogPDF::OnBnClickedButtonTest()
+{
+	// TODO:  在此添加控件通知处理程序代码
+	UpdateData(TRUE);
+	if (m_csFilePath.IsEmpty())
+	{
+		AfxMessageBox(_T("请输入文件路径!"));
+		return;
+	}
+	CString csTemp(m_csSavePath), csFileName;
+	char chPath[512] = { 0 };
+	string strInputPath, strOutputPath, strOutPutName;
+	if (m_csFilePath.Find(_T(".pdf")) > 0)
+	{
+		WideCharToMultiByte(CP_ACP, 0, m_csFilePath, m_csFilePath.GetLength(), chPath, 512, NULL, NULL);		strInputPath = chPath;		memset(&chPath, 0, 512);		auto pos = m_csFilePath.ReverseFind(_T('\\'));		if (pos > 0)		{			csTemp = m_csFilePath.Left(pos);			csFileName = m_csFilePath.Mid(pos+1 );			memset(chPath, 0, 512);			WideCharToMultiByte(CP_ACP, 0, csTemp, csTemp.GetLength(), chPath, 512, NULL, NULL);			strOutputPath = chPath;			strOutputPath.append("\\No_Permission_");			memset(chPath, 0, 512);			WideCharToMultiByte(CP_ACP, 0, csFileName, csFileName.GetLength(), chPath, 512, NULL, NULL);			strOutputPath += chPath;			int nValue = RemovePasswd(strInputPath, strOutputPath);			csTemp.Format(_T("Success!"));
+			AfxMessageBox(csTemp);		}
+	}
 }

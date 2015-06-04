@@ -13,6 +13,7 @@
 #include "SettingDlg.h"
 #include "DialogInfo.h"
 #include "DialogPDF.h"
+#include "../PDF/PDF.h"
 
 #include <boost/property_tree/ptree.hpp>  
 #include <boost/property_tree/xml_parser.hpp>  
@@ -297,6 +298,8 @@ BOOL CReceiveEmailDlg::OnInitDialog()
 		, m_startdate.GetYear(), m_startdate.GetMonth()
 		, m_startdate.GetDay(), m_startdate.GetHour(), m_startdate.GetMinute(), m_startdate.GetSecond());
 	m_time.SetWindowText(m_csRunTime);
+	if (!InitializeLibrary())
+		return FALSE;
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
 
@@ -551,6 +554,7 @@ void CReceiveEmailDlg::OnCancel()
 	StopTest();
 	StopTest2();
 	WriteToConfig();
+	FinalizeLibrary();
 	CDialogEx::OnCancel();
 }
 
@@ -1857,6 +1861,6 @@ BOOL CReceiveEmailDlg::CheckFailedUIDL(const string& strUIDL)
 BOOL CReceiveEmailDlg::OnEraseBkgnd(CDC* pDC)
 {
 	// TODO:  在此添加消息处理程序代码和/或调用默认值
-	return FALSE;
+	//return FALSE;
 	return CDialogEx::OnEraseBkgnd(pDC);
 }

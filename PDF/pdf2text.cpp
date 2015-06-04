@@ -190,18 +190,18 @@ int PDF2Text(string inputFilePath, string outputFilePath, string& outputname, in
 	logPath += "/log.txt";
 	FSDK_OpenLog(logPath.c_str());
 	FSDK_OutputLog("Foxit PDF SDK example: pdf2text\r\n\r\n");
-	FS_BOOL bRet = FSDK_InitializeLibray(TRUE);
+	/*FS_BOOL bRet = FSDK_InitializeLibray(TRUE);
 	if (!bRet)
 	{
-		FSDK_CloseLog();
-		return -2;
+	FSDK_CloseLog();
+	return -2;
 	}
 	if (!FSDK_PDFModule_Initialize())
 	{
-		FSDK_FinalizeLibrary();
-		FSDK_CloseLog();
-		return -1;
-	}
+	FSDK_FinalizeLibrary();
+	FSDK_CloseLog();
+	return -1;
+	}*/
 	string inputFolder, pdfName;
 
 	if (Pdf2Text.m_strSrcFile != "")
@@ -212,11 +212,11 @@ int PDF2Text(string inputFilePath, string outputFilePath, string& outputname, in
 		FSDK_OutputLog("Output to folder: %s\r\n", Pdf2Text.m_strDestFolder.c_str());
 		nVal = Pdf2Text.PDFToText(pdfName, inputFolder, Pdf2Text.m_strDestFolder, outputname, nPageNum,time);
 	}
-	//Finalize PDF module.
-	FSDK_PDFModule_Finalize();
-	//Finalize SDK library.
-	FSDK_FinalizeLibrary();
-	//Close log file.
+	////Finalize PDF module.
+	//FSDK_PDFModule_Finalize();
+	////Finalize SDK library.
+	//FSDK_FinalizeLibrary();
+	////Close log file.
 	FSDK_CloseLog();
 	return nVal;
 }

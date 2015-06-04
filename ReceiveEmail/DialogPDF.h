@@ -34,4 +34,5 @@ public:
 	CString m_csFilePath;
 	afx_msg void OnBnClickedMfcbuttonPdf2txt();
 	afx_msg void OnBnClickedMfcbuttonOpenfo();
+	afx_msg void OnBnClickedButtonTest();
 };

@@ -26,3 +26,8 @@ extern PDF_API int nPDF;
 
 PDF_API int fnPDF(void);
 PDF_API int PDF2TXT(string inputFilePath, string outputFilePath, string& outputname, int& nPageNum, int& time);
+PDF_API BOOL InitializeLibrary();
+PDF_API void FinalizeLibrary();
+PDF_API int RemovePasswd(string inputPDF, string outputPDF);
+PDF_API int RemoveWaterMark(string inputPDF, string outputPDF);
+PDF_API int PDF2TEXT(string inputPDF, string outputText);
