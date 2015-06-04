@@ -1444,7 +1444,6 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 										pDlg->GetMailBoxInfo(csUserName, info, 0);
 										pop3.QuitDataBase();
 										sql.CloseDB();
-										pop3.Close();
 										break;
 									}
 									csDebug.Format(_T("%s Count = %d\tTotal = %d\r\n"), info.szName, iteuidl->first, lResult);
@@ -1513,6 +1512,7 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 										memset(info.chUIDL, 0, 64);
 								}//end of while
 								sql.CloseDB();
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 								lCount = mapDelUIDLs.size();
 								if (lCount > 0)
 								{
@@ -1529,7 +1529,6 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 											pDlg->GetMailBoxInfo(csUserName, info, 0);
 											pop3.QuitDataBase();
 											sql.CloseDB();
-											pop3.Close();
 											break;
 										}
 										if (pop3.DelEmail(itedel->first, itedel->second) == SUCCESS)
@@ -1549,7 +1548,6 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 									OutputDebugStringA("WAIT6 __HEVENT_MAIN_EXIT__\r\n");
 									break;
 								}
-								memset(&pDlg->m_showinfo[dwID], 0, sizeof(ShowInfo));
 							}
 						}
 						else
@@ -1579,7 +1577,7 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 					}
 					pDlg->GetMailBoxInfo(csUserName, info, 0);
 				}
-				memset(pDlg->m_showinfo[dwID].szName, 0, 128);
+				memset(&pDlg->m_showinfo[dwID], 0, sizeof(ShowInfo));
 				pop3.Close();
 			}
 			else
