@@ -1516,6 +1516,7 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 								lCount = mapDelUIDLs.size();
 								if (lCount > 0)
 								{
+									swprintf_s(pDlg->m_showinfo[dwID].szName, 128, _T("%s-ÇåÀíÖÐ..."), info.szName);
 									itedel = mapDelUIDLs.begin();
 									pDlg->m_showinfo[dwID].lStatus = j =i = 1;
 									pDlg->m_showinfo[dwID].lTotal = lCount;
