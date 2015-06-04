@@ -65,7 +65,7 @@ DWORD WINAPI  CReceiveEmailDlg::_AfxMain(LPVOID lpParam)
 			ite = pDlg->m_showinfo.begin();
 			while (ite!=pDlg->m_showinfo.end())
 			{
-				if (WaitForSingleObject(__HEVENT_MAIN_EXIT__, 0L) == WAIT_OBJECT_0)
+				if (WaitForSingleObject(__HEVENT_MAIN_EXIT__, 10L) == WAIT_OBJECT_0)
 				{
 					OutputDebugStringA("WAIT1 __HEVENT_MAIN_EXIT__\r\n");
 					break;
@@ -651,10 +651,14 @@ void CReceiveEmailDlg::GetDataBaseInfo(MongoDBInfo& dbinfo, SQLDBInfo& sqlinfo)
 void CReceiveEmailDlg::OnBnClickedButtonStop()
 {
 	// TODO:  在此添加控件通知处理程序代码
+	CString csUsername;
+	MailBoxInfo info;
+	memset(&info, 0, sizeof(MailBoxInfo));
 	StopEx();
 	m_btnStop.EnableWindow(FALSE);
 	m_btnSet.EnableWindow(TRUE);
 	m_showinfo.clear();
+	GetMailBoxInfo(csUsername,info,3);
 	bRun = FALSE;
 }
 
@@ -781,18 +785,13 @@ void CReceiveEmailDlg::LayoutDialog(long cx, long cy)
 
 void CReceiveEmailDlg::Stop(long lType)//用于停止工作分配线程
 {
-//#ifdef _DEBUG
 	OutputDebugStringA("STOP FRESH\r\n");
-//#endif
 	if (__HEVENT_MAIN_EXIT__)
 		SetEvent(__HEVENT_MAIN_EXIT__);
 	if (m_hMain)
 	{
 		if (WaitForSingleObject(m_hMain, INFINITE) != WAIT_OBJECT_0)
 		{
-//#ifdef DEBUG
-			OutputDebugString(_T("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXSTOPXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\n"));
-//#endif
 			TerminateThread(m_hMain, 0);
 		}
 	}
@@ -1319,6 +1318,7 @@ void CReceiveEmailDlg::StopMain()
 		{
 			if (WaitForSingleObject(m_hProcess[i], 10000L) != WAIT_OBJECT_0)
 			{
+				OutputDebugString(_T("*************************************TerminateThread*****************************************"));
 				TerminateThread(m_hProcess[i], 0);
 			}
 			CloseHandle(m_hProcess[i]);
@@ -1378,6 +1378,7 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 			lFailedCount = 0;
 			if (WaitForSingleObject(__HEVENT_MAIN_EXIT__, 10L) == WAIT_OBJECT_0)
 			{
+				OutputDebugStringA("WAIT3 __HEVENT_MAIN_EXIT__\r\n");
 				pDlg->GetMailBoxInfo(csUserName, info, 0);
 				break;
 			}
@@ -1438,6 +1439,7 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 								{
 									if (WaitForSingleObject(__HEVENT_MAIN_EXIT__, 10L) == WAIT_OBJECT_0)
 									{
+										OutputDebugStringA("WAIT4 __HEVENT_MAIN_EXIT__\r\n");
 										sprintf_s(info.chUIDL, 64, "%s", iteuidl->second.c_str());
 										pDlg->GetMailBoxInfo(csUserName, info, 0);
 										pop3.QuitDataBase();
@@ -1515,13 +1517,14 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 								if (lCount > 0)
 								{
 									itedel = mapDelUIDLs.begin();
-									pDlg->m_showinfo[dwID].lStatus = i = 1;
+									pDlg->m_showinfo[dwID].lStatus = j =i = 1;
 									pDlg->m_showinfo[dwID].lTotal = lCount;
 
 									while (itedel != mapDelUIDLs.end())
 									{
 										if (WaitForSingleObject(__HEVENT_MAIN_EXIT__, 10L) == WAIT_OBJECT_0)
 										{
+											OutputDebugStringA("WAIT5 __HEVENT_MAIN_EXIT__\r\n");
 											pDlg->GetMailBoxInfo(csUserName, info, 0);
 											pop3.QuitDataBase();
 											sql.CloseDB();
@@ -1540,16 +1543,22 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 								pop3.QuitDataBase();
 								swprintf_s(pDlg->m_showinfo[dwID].szName, 128, _T("%s-接收完成！"), info.szName);
 								pDlg->GetMailBoxInfo(csUserName, info, 0);
-								if(WaitForSingleObject(__HEVENT_MAIN_EXIT__, 500L)==WAIT_OBJECT_0)
+								if (WaitForSingleObject(__HEVENT_MAIN_EXIT__, 500L) == WAIT_OBJECT_0)
+								{
+									OutputDebugStringA("WAIT6 __HEVENT_MAIN_EXIT__\r\n");
 									break;
+								}
 								memset(&pDlg->m_showinfo[dwID], 0, sizeof(ShowInfo));
 							}
 						}
 						else
 						{
 							swprintf_s(pDlg->m_showinfo[dwID].szName, 128, _T("%s-获取UDIL失败"), info.szName);
-							if(WaitForSingleObject(__HEVENT_MAIN_EXIT__, 500L)==WAIT_OBJECT_0)
-									break;
+							if (WaitForSingleObject(__HEVENT_MAIN_EXIT__, 500L) == WAIT_OBJECT_0)
+							{
+								OutputDebugStringA("WAIT7 __HEVENT_MAIN_EXIT__\r\n");
+								break;
+							}
 							pDlg->GetMailBoxInfo(csUserName, info, 0);
 							break;
 						}
@@ -1563,7 +1572,10 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 					pop3.QuitDataBase();
 					OutputDebugString(csDebug);
 					if (WaitForSingleObject(__HEVENT_MAIN_EXIT__, 5000L) == WAIT_OBJECT_0)
+					{
+						OutputDebugStringA("WAIT8 __HEVENT_MAIN_EXIT__\r\n");
 						break;
+					}
 					pDlg->GetMailBoxInfo(csUserName, info, 0);
 				}
 				memset(pDlg->m_showinfo[dwID].szName, 0, 128);
@@ -1576,8 +1588,11 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 				OutputDebugString(csDebug);
 #endif
 				
-				if(WaitForSingleObject(__HEVENT_MAIN_EXIT__, 5000L)==WAIT_OBJECT_0)
+				if (WaitForSingleObject(__HEVENT_MAIN_EXIT__, 5000L) == WAIT_OBJECT_0)
+				{
+					OutputDebugStringA("WAIT9 __HEVENT_MAIN_EXIT__\r\n");
 					break;
+				}
 			}// end of else
 		}// end of while
 		memset(&pDlg->m_showinfo[dwID], 0, sizeof(ShowInfo));
