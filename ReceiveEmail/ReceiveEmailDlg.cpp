@@ -1541,7 +1541,7 @@ DWORD CReceiveEmailDlg::_AfxMainProcess(LPVOID lpParam)
 									}
 								}
 								pop3.QuitDataBase();
-								swprintf_s(pDlg->m_showinfo[dwID].szName, 128, _T("%s-接收完成！"), info.szName);
+								swprintf_s(pDlg->m_showinfo[dwID].szName, 128, _T("%s-处理完成！"), info.szName);
 								pDlg->GetMailBoxInfo(csUserName, info, 0);
 								if (WaitForSingleObject(__HEVENT_MAIN_EXIT__, 500L) == WAIT_OBJECT_0)
 								{

@@ -3,7 +3,6 @@
 
 #include "stdafx.h"
 #include "MongoDB.h"
-static long lCount = 1;
 
 // 这是导出变量的一个示例
 MONGODB_API int nMongoDB=0;
@@ -18,7 +17,6 @@ MONGODB_API int fnMongoDB(void)
 // 有关类定义的信息，请参阅 MongoDB.h
 CMongoDB::CMongoDB() :m_bConnect(FALSE), m_nUseDB(1)
 {
-	return;
 }
 
 CMongoDB::~CMongoDB()
@@ -108,11 +106,6 @@ long CMongoDB::CheckUIDLInMongoDB(const string& strUIDL, string& strErr, const s
 			bsoReturnValue = connect.findOne(strIndexName, bsoQuery, &bsoValue);
 			if (bsoReturnValue.isEmpty())
 			{
-#ifdef _DEBUG
-				char chDebugInfo[256] = { 0 };
-				sprintf_s(chDebugInfo, 256, "MongoDB InsertCount = %d\r\n", lCount++);
-				OutputDebugStringA(chDebugInfo);
-#endif
 				connect.insert(strIndexName, obj);
 				lFound = MONGO_NOT_FOUND;
 			}
@@ -248,7 +241,6 @@ BOOL CMongoDB::DelUIDL(const string& strUIDL, const string& strName)
 			strValue = bsoReturnValue.toString();
 	}
 	else return FALSE;
-	--lCount;
 	return TRUE;
 }
 
@@ -311,6 +303,5 @@ BOOL CMongoDB::DelUIDL(const string& strUIDL)
 			strValue = bsoReturnValue.toString();
 	}
 	else return FALSE;
-	--lCount;
 	return TRUE;
 }

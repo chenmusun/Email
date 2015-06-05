@@ -24,15 +24,13 @@ using namespace mongo;
 class MONGODB_API CMongoDB {
 public:
 	CMongoDB(void);
-	virtual ~CMongoDB();
+	~CMongoDB();
 	// TODO:  在此添加您的方法。
 public:
 	BOOL ConnectDataBase(string& strErr);//连接数据库（格式：数据库IP地址:端口），连接之前需要设定表明、用户名、密码
 	long CheckUIDLInMongoDB(const string& strUIDL, string& strErr, const string& strName, long lDay = 14);//检查UIDL是否存在，若不存在插入一条新数据
 	void DisConnectDataBase();//断开数据库连接（目前使用MongoAPI中的Logout）
 	void SetDBInfo(const MongoDBInfo&dbinfo);//设置数据库相关信息
-	inline string GetDBName(){ return m_strDBName; }
-	inline int GetUseDB(){ return m_nUseDB; }
 	long SaveFileToMongoDB(string& remotename, string& strPath, string& strRtr);
 	BOOL DelUIDL(const string& strUIDL, const string& strName);
 	BOOL GetFileFromMongoDB(const string& strFileName, const string&strSavePath, string& strErr);
