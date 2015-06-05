@@ -36,6 +36,7 @@ public:
 	BOOL GetFileFromMongoDB(const string& strFileName, const string&strSavePath, string& strErr);
 	BOOL DelUIDL(const string& strUIDL);
 private:
+	int m_nProCount;
 	DBClientConnection connect;//MongoÁ¬½ÓÊµÀý
 	BOOL m_bConnect;
 	string m_strDBAdd;

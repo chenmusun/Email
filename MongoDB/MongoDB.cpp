@@ -15,7 +15,7 @@ MONGODB_API int fnMongoDB(void)
 
 // 这是已导出类的构造函数。
 // 有关类定义的信息，请参阅 MongoDB.h
-CMongoDB::CMongoDB() :m_bConnect(FALSE), m_nUseDB(1)
+CMongoDB::CMongoDB() :m_bConnect(FALSE), m_nUseDB(1), m_nProCount(0)
 {
 }
 
@@ -108,6 +108,7 @@ long CMongoDB::CheckUIDLInMongoDB(const string& strUIDL, string& strErr, const s
 			{
 				connect.insert(strIndexName, obj);
 				lFound = MONGO_NOT_FOUND;
+				m_nProCount++;
 			}
 			else
 			{
@@ -241,6 +242,7 @@ BOOL CMongoDB::DelUIDL(const string& strUIDL, const string& strName)
 			strValue = bsoReturnValue.toString();
 	}
 	else return FALSE;
+	--m_nProCount;
 	return TRUE;
 }
 
@@ -303,5 +305,6 @@ BOOL CMongoDB::DelUIDL(const string& strUIDL)
 			strValue = bsoReturnValue.toString();
 	}
 	else return FALSE;
+	--m_nProCount;
 	return TRUE;
 }
