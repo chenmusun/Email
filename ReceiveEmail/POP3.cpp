@@ -13,21 +13,25 @@ POP3::POP3() :m_bConnect(FALSE), m_bFailed(FALSE)
 
 POP3::~POP3()
 {
-	m_Socket.CloseMySocket();
+	string strErr;
+	m_Socket.CloseMySocket(strErr);
 }
 
 long POP3::Login(LPCTSTR lpServer, long lPort, LPCTSTR lpUser, LPCTSTR lpPasswd)
 {
 	char chUserName[64] = { 0 }, chPasswd[128] = { 0 };
 	long nValue(0), nError(0);
-	string strCurrPos, strSize;
+	string strCurrPos, strSize,strErr;
 	DWORD nCount = 0;
 	char chCommand[128] = { 0 }, chResult[256] = { 0 };
 	char *pData = NULL;
 	long lTotalSize(0), lRecSize(0);
-	nValue=m_Socket.InitSocket(lpServer, lPort);
-	if(nValue != SUCCESS)
+	nValue = m_Socket.InitSocket(lpServer, lPort, strErr);
+	if (nValue != SUCCESS)
+	{
+		m_log.Log(strErr.c_str(), strErr.length());
 		return nValue;
+	}
 	m_bFailed = FALSE;
 	WideCharToMultiByte(CP_ACP, 0, lpUser, 64, chUserName, 64, NULL, NULL);
 	sprintf_s(chCommand, 128, "USER %s\r\n",chUserName);
@@ -90,6 +94,7 @@ long POP3::GetMailCount()
 
 BOOL POP3::Close()
 {
+	string strErr;
 	int nValue(0), nError(0);
 	char chCommand[128] = { 0 }, chResult[128] = { 0 };
 	do
@@ -102,9 +107,12 @@ BOOL POP3::Close()
 		if (nValue <= 0)
 			break;
 		if (StringProcess(chResult))
+		{
+			m_Socket.CloseMySocket(strErr);
 			return TRUE;
+		}
 	} while (0);
-	m_Socket.CloseMySocket();
+	m_Socket.CloseMySocket(strErr);
 	return FALSE;
 }
 

@@ -5,8 +5,8 @@ public:
 	MailSocket();
 	~MailSocket();
 public:
-	BOOL CloseMySocket();//关闭套接字
-	long InitSocket(LPCTSTR lpAddr, UINT nHostPort);//初始化套接字连接(阻塞)
+	BOOL CloseMySocket(string&strErr);//关闭套接字
+	long InitSocket(LPCTSTR lpAddr, UINT nHostPort,string& strErr);//初始化套接字连接(阻塞)
 	long SendData(const void* Buf, size_t lBufLen);//发送数据
 	long ReceiveData(void* Buf, size_t lBufLen);//接收数据
 	u_long GetIOCtl();

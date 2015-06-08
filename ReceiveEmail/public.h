@@ -13,7 +13,8 @@ enum ErrorCode
 	LOGIN_ERROR_LOCK = -6,
 	RETURN_FAIL = -7,
 	HOST_UNREACHABLE = -8,
-	GETADDRINFO_ERROR = -9
+	GETADDRINFO_ERROR = -9,
+	SOCKETCONNECT_ERROR=-10
 };
 
 const UINT __umymessage__fres_hprogress__(WM_USER + 0x1001);//跟新进度条消息

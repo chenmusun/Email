@@ -29,7 +29,7 @@ public:
 	BOOL SaveFileToDB(EMAIL_ITEM& email);
 	BOOL DeleteFromDB(EMAIL_ITEM& email);
 	BOOL ConnectDataBase();
-	void POP3::QuitDataBase();
+	void QuitDataBase();
 	void SetDBinfo(const MongoDBInfo& dbinfo);
 	BOOL DeleteFromDB(const string& strUIDL);
 private:

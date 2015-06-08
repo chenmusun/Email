@@ -17,17 +17,24 @@ MailSocket::~MailSocket()
 	}
 }
 
-BOOL MailSocket::CloseMySocket()
+BOOL MailSocket::CloseMySocket(string&strErr)
 {
+	int iResult(0);
+	char chResult[256] = { 0 };
 	if (m_MySocket != INVALID_SOCKET)
 	{
-		closesocket(m_MySocket);
+		iResult = closesocket(m_MySocket);
+		if (iResult == SOCKET_ERROR)
+		{
+			sprintf_s(chResult, 256, "closesocket function failed with error: %ld\n", WSAGetLastError());
+			strErr = chResult;
+		}
 		m_MySocket = INVALID_SOCKET;
 	}
 	return TRUE;
 }
 
-long MailSocket::InitSocket(LPCTSTR lpAddr, UINT nHostPort)
+long MailSocket::InitSocket(LPCTSTR lpAddr, UINT nHostPort, string& strErr)
 {
 	char chSrvAdd[64] = { 0 }, chResult[256] = { 0 }, chPort[32] = {0};
 	int iResult(0), i(0);
@@ -99,7 +106,6 @@ long MailSocket::InitSocket(LPCTSTR lpAddr, UINT nHostPort)
 	if (iResult != NO_ERROR)
 		return SOCKETINIT_ERROR;
 	iResult = ::connect(m_MySocket, (SOCKADDR*)&addr_sev, sizeof(addr_sev));
-
 	timeval timeout;
 	memset(&timeout, 0, sizeof(timeout));
 	timeout.tv_sec = 5;
@@ -110,6 +116,8 @@ long MailSocket::InitSocket(LPCTSTR lpAddr, UINT nHostPort)
 	iResult = ::select(0, &set, NULL, NULL, &timeout);
 	if (iResult == 0)
 	{
+		sprintf_s(chResult, 256, "select timeout! errorcode: %ld\n", WSAGetLastError());
+		strErr = chResult;
 		::closesocket(m_MySocket);
 		m_MySocket = INVALID_SOCKET;
 		return HOST_UNREACHABLE;
@@ -120,17 +128,12 @@ long MailSocket::InitSocket(LPCTSTR lpAddr, UINT nHostPort)
 		iResult = ::ioctlsocket(m_MySocket, FIONBIO, &iMode);//设置成阻塞模式
 		if (iResult != NO_ERROR)
 		{
+			sprintf_s(chResult, 256, "ioctlsocket failed with error%ld\n", WSAGetLastError());
+			strErr = chResult;
 			::closesocket(m_MySocket);
 			m_MySocket = INVALID_SOCKET;
 			return SOCKETINIT_ERROR;
 		}
-	}
-
-	if (iResult == SOCKET_ERROR)
-	{
-		::closesocket(m_MySocket);
-		m_MySocket = INVALID_SOCKET;
-		return SOCKETINIT_ERROR;
 	}
 	memset(chResult, 0, 256);
 	ReceiveData(chResult, 256);
@@ -138,16 +141,16 @@ long MailSocket::InitSocket(LPCTSTR lpAddr, UINT nHostPort)
 	{
 	case 110:
 	{
-				if (!StringProcess(chResult))
-					return RETURN_FAIL;
+		if (!StringProcess(chResult))
+			return RETURN_FAIL;
 	}
 		break;
 	case 25:
 	{
-			   long lVaule(0);
-			   StringProcess(chResult, lVaule);
-			   if (lVaule != 220)
-				   return RETURN_FAIL;
+		long lVaule(0);
+		StringProcess(chResult, lVaule);
+		if (lVaule != 220)
+			return RETURN_FAIL;
 	}
 		break;
 	default:

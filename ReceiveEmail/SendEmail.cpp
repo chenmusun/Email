@@ -63,12 +63,13 @@ SMTP::~SMTP()
 
 long SMTP::Logon()
 {
+	string strErr;
 	SYSTEMTIME st = { 0 };
 	long lValue(0),lCode(0);
 	char chCommand[128] = { 0 }, chResult[256] = { 0 }, chDate[128] = { 0 };
 	TCHAR szSrvadd[128] = { 0 };
 	MultiByteToWideChar(CP_ACP, 0, m_forwardinfo.srvadd, 64, szSrvadd, 128);
-	lValue = m_SendSocket.InitSocket(szSrvadd, 25);
+	lValue = m_SendSocket.InitSocket(szSrvadd, 25, strErr);
 	if (lValue != 0)
 	{
 		m_log.Log(m_forwardinfo.srvadd, strlen(m_forwardinfo.srvadd));
