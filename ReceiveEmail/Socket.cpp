@@ -78,7 +78,7 @@ long MailSocket::InitSocket(LPCTSTR lpAddr, UINT nHostPort, string& strErr)
 	{
 		return GETADDRINFO_ERROR;
 	}
-	for (ptr = result; ptr != NULL; ptr = ptr->ai_next)
+	for (ptr = result,i=0; ptr != NULL; ptr = ptr->ai_next,i++)
 	{
 		switch (ptr->ai_family)
 		{
@@ -87,6 +87,7 @@ long MailSocket::InitSocket(LPCTSTR lpAddr, UINT nHostPort, string& strErr)
 #ifdef _DEBUG
 			inet_ntop(AF_INET, (void *)&addr_sev.sin_addr, chSrvAdd, 64);
 			sprintf_s(chResult, 256, "\tIP Address #%d: %s\n", i, chSrvAdd);
+			OutputDebugStringA(chResult);
 #endif
 			bFound = TRUE;
 			break;
