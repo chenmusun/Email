@@ -8,6 +8,12 @@
 #include "fadk/fadk.h"
 #include "fgsdk/fsdk.h"
 
+typedef int(*FXT_InitLibrary) (const char* key, int screenFlag);
+typedef void(*FXT_DestoryLibrary) ();
+
+typedef char*(*FXT_CallbackFun)(void* userData, int mode, char* msg, bool* isStop);
+typedef int(*FXT_OfficeToPDFRun) (const char* commandline, FXT_CallbackFun callback, void* userData);
+
 std::wstring	utf8_to_unicode(const std::string& str)
 {
 	std::wstring result;
@@ -193,6 +199,42 @@ void GetPathInfo(const string&strSrc, string&stroutputPath,int nType)
 		break;
 	}
 }
+
+//void CPDFConvertDemoDlg::OnBnClickedButtonConvert()
+//{
+//	// TODO: Add your control notification handler code here
+//	char chCommend[512] = { 0 }, chPath[MAX_PATH] = { 0 }, chiPath[MAX_PATH] = { 0 }, choPath[MAX_PATH] = { 0 }, chFileName[MAX_PATH] = { 0 };
+//	CString csFileName, csiPath;
+//	HMODULE hModule = LoadLibrary(_T("pdftools.dll"));
+//
+//	if (NULL == hModule) {
+//		int ret = GetLastError();
+//		return;
+//	}
+//
+//	FXT_InitLibrary fxtInitLibrary = (FXT_InitLibrary)GetProcAddress(hModule, "FXT_InitLibrary");
+//	FXT_DestoryLibrary fxtDestoryLibrary = (FXT_DestoryLibrary)GetProcAddress(hModule, "FXT_DestoryLibrary");
+//	FXT_OfficeToPDFRun fxtOfficeToPDFRun = (FXT_OfficeToPDFRun)GetProcAddress(hModule, "FXT_OfficeToPDFRun");
+//	WideCharToMultiByte(CP_ACP, 0, m_csFilePath, m_csFilePath.GetLength(), chPath, MAX_PATH, NULL, NULL);
+//	auto pos = m_csFilePath.ReverseFind(_T('\\'));
+//	csiPath = m_csFilePath.Left(pos);
+//	WideCharToMultiByte(CP_ACP, 0, csiPath, csiPath.GetLength(), chiPath, MAX_PATH, NULL, NULL);
+//	auto pos2 = m_csFilePath.ReverseFind(_T('.'));
+//	csFileName = m_csFilePath.Mid(pos + 1, pos2 - pos - 1);
+//	WideCharToMultiByte(CP_ACP, 0, csFileName, csFileName.GetLength(), chFileName, MAX_PATH, NULL, NULL);
+//	sprintf_s(choPath, MAX_PATH, "%s\\%s.pdf", chiPath, chFileName);
+//	sprintf_s(chCommend, 512, "-i %s -o %s", chPath, choPath);
+//	if (fxtInitLibrary("E:\\Email\\Office转换_demo20150515\\PDFConvert\\pdftools\\ftlkey.txt", 0) == 0) {
+//
+//		int ret = fxtOfficeToPDFRun(chCommend, NULL, NULL);
+//
+//		fxtDestoryLibrary();
+//		if (ret == 0)
+//			OutputDebugStringA("Success!");
+//	}
+//}
+
+
 ////////////////////////////////////////////////////////////////////////////////////
 // 这是已导出类的构造函数。
 // 有关类定义的信息，请参阅 PDF.h

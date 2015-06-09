@@ -46,6 +46,7 @@ BEGIN_MESSAGE_MAP(CDialogPDF, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON_TEST, &CDialogPDF::OnBnClickedButtonTest)
 	ON_BN_CLICKED(IDC_BUTTON_PER, &CDialogPDF::OnBnClickedButtonPer)
 	ON_BN_CLICKED(IDC_BUTTON_WM, &CDialogPDF::OnBnClickedButtonWm)
+	ON_BN_CLICKED(IDC_BUTTON_CONVERT, &CDialogPDF::OnBnClickedButtonConvert)
 END_MESSAGE_MAP()
 
 
@@ -194,4 +195,10 @@ void CDialogPDF::OnBnClickedButtonWm()
 			AfxMessageBox(csTemp);
 		}
 	}
+}
+
+
+void CDialogPDF::OnBnClickedButtonConvert()
+{
+	// TODO:  在此添加控件通知处理程序代码
 }

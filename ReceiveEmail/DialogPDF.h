@@ -39,4 +39,5 @@ public:
 	afx_msg void OnBnClickedButtonPer();
 	afx_msg void OnBnClickedButtonWm();
 	CButton m_btnTest;
+	afx_msg void OnBnClickedButtonConvert();
 };
