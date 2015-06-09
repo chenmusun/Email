@@ -1447,7 +1447,7 @@ CString CADORecordset::GetString(LPCTSTR lpCols, LPCTSTR lpRows, LPCTSTR lpNull,
 CString IntToStr(int nVal)
 {
 	CString strRet;
-	TCHAR buff[10];
+	TCHAR buff[10] = {0};
 
 #ifdef _UNICODE
 	_itow_s(nVal, buff, lstrlen(buff), 10);
@@ -1462,7 +1462,7 @@ CString IntToStr(int nVal)
 CString LongToStr(long lVal)
 {
 	CString strRet;
-	TCHAR buff[20];
+	TCHAR buff[20] = {0};
 
 #ifdef _UNICODE
 	_ltow_s(lVal, buff, lstrlen(buff), 10);
@@ -1476,7 +1476,7 @@ CString LongToStr(long lVal)
 CString ULongToStr(unsigned long ulVal)
 {
 	CString strRet;
-	TCHAR buff[20];
+	TCHAR buff[20] = {0};
 
 #ifdef _UNICODE
 	_ultow_s(ulVal, buff, lstrlen(buff), 10);
@@ -1492,11 +1492,11 @@ CString ULongToStr(unsigned long ulVal)
 CString DblToStr(double dblVal, int ndigits)
 {
 	CString strRet;
-	char buff[50];
+	char buff[50] = {0};
 	_gcvt_s(buff, 50, dblVal,ndigits);
 	//sprintf_s(buff,50,"%")
 #ifdef _UNICODE
-	::MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, buff, -1, strRet.GetBuffer(0), 50);
+	::MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, buff, 50, strRet.GetBuffer(0), strRet.GetLength());
 #else
 	strRet = buff;
 #endif
@@ -2981,7 +2981,7 @@ BOOL CSQLServer::Connect(SQLDBInfo& sqlinfo, int nType)
 	{
 		return TRUE;
 	}
-	::CoInitialize(NULL);
+	HRESULT hre = ::CoInitialize(NULL);
 	CString csCommand,csLog;
 	m_csServer.Empty();
 	m_csDatabase.Empty();

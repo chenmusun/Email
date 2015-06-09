@@ -35,6 +35,7 @@ void CDialogPDF::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_MFCBUTTON_GET, m_btnGet);
 	DDX_Control(pDX, IDC_MFCEDITBROWSE1, m_Path);
 	DDX_Text(pDX, IDC_MFCEDITBROWSE2, m_csFilePath);
+	DDX_Control(pDX, IDC_BUTTON_TEST, m_btnTest);
 }
 
 
@@ -43,6 +44,8 @@ BEGIN_MESSAGE_MAP(CDialogPDF, CDialogEx)
 	ON_BN_CLICKED(IDC_MFCBUTTON_PDF2TXT, &CDialogPDF::OnBnClickedMfcbuttonPdf2txt)
 	ON_BN_CLICKED(IDC_MFCBUTTON_OPENFO, &CDialogPDF::OnBnClickedMfcbuttonOpenfo)
 	ON_BN_CLICKED(IDC_BUTTON_TEST, &CDialogPDF::OnBnClickedButtonTest)
+	ON_BN_CLICKED(IDC_BUTTON_PER, &CDialogPDF::OnBnClickedButtonPer)
+	ON_BN_CLICKED(IDC_BUTTON_WM, &CDialogPDF::OnBnClickedButtonWm)
 END_MESSAGE_MAP()
 
 
@@ -102,7 +105,9 @@ BOOL CDialogPDF::OnInitDialog()
 	if ((GetFileAttributes(m_csSavePath) == 0xFFFFFFFF))
 		CreateDirectory(m_csSavePath, NULL);
 	m_Path.SetWindowText(m_csSavePath);
-
+#ifndef _DEBUG
+	m_btnTest.ShowWindow(SW_HIDE);
+#endif
 
 	return TRUE;  // return TRUE unless you set the focus to a control
 	// 异常:  OCX 属性页应返回 FALSE
@@ -120,15 +125,14 @@ void CDialogPDF::OnBnClickedMfcbuttonPdf2txt()
 	}
 	CString csTemp(m_csSavePath);
 	char chPath[512] = { 0 };
-	string strInputPath, strOutputPath, strOutPutName;
+	string strInputPath;
 	int nPageNum(0),nTime(0);
 	if (m_csFilePath.Find(_T(".pdf")) > 0)
 	{
-		WideCharToMultiByte(CP_ACP, 0, m_csFilePath, m_csFilePath.GetLength(), chPath, 512, NULL, NULL);		strInputPath = chPath;		memset(&chPath, 0, 512);		auto pos = m_csFilePath.ReverseFind(_T('\\'));		if (pos > 0)		{			csTemp = m_csFilePath.Left(pos);			WideCharToMultiByte(CP_ACP, 0, csTemp, csTemp.GetLength(), chPath, 512, NULL, NULL);			strOutputPath = chPath;			strOutputPath.append("\\");			if (PDF2TXT(strInputPath, strOutputPath, strOutPutName, nPageNum, nTime) == 0)
-			{
-				csTemp.Format(_T("Success!\r\nPagenum=%d\tTime=%d"), nPageNum, nTime);
-				AfxMessageBox(csTemp);
-			}		}
+		WideCharToMultiByte(CP_ACP, 0, m_csFilePath, m_csFilePath.GetLength(), chPath, 512, NULL, NULL);		strInputPath = chPath;		int nValue = PDF2TEXT(strInputPath);		if (nValue == 0)		{
+			csTemp.Format(_T("Success!"));
+			AfxMessageBox(csTemp);
+		}
 	}	
 }
 
@@ -145,6 +149,12 @@ void CDialogPDF::OnBnClickedMfcbuttonOpenfo()
 void CDialogPDF::OnBnClickedButtonTest()
 {
 	// TODO:  在此添加控件通知处理程序代码
+}
+
+
+void CDialogPDF::OnBnClickedButtonPer()
+{
+	// TODO:  在此添加控件通知处理程序代码
 	UpdateData(TRUE);
 	if (m_csFilePath.IsEmpty())
 	{
@@ -156,7 +166,32 @@ void CDialogPDF::OnBnClickedButtonTest()
 	string strInputPath, strOutputPath, strOutPutName;
 	if (m_csFilePath.Find(_T(".pdf")) > 0)
 	{
-		WideCharToMultiByte(CP_ACP, 0, m_csFilePath, m_csFilePath.GetLength(), chPath, 512, NULL, NULL);		strInputPath = chPath;		memset(&chPath, 0, 512);		auto pos = m_csFilePath.ReverseFind(_T('\\'));		if (pos > 0)		{			csTemp = m_csFilePath.Left(pos);			csFileName = m_csFilePath.Mid(pos+1 );			memset(chPath, 0, 512);			WideCharToMultiByte(CP_ACP, 0, csTemp, csTemp.GetLength(), chPath, 512, NULL, NULL);			strOutputPath = chPath;			strOutputPath.append("\\No_Permission_");			memset(chPath, 0, 512);			WideCharToMultiByte(CP_ACP, 0, csFileName, csFileName.GetLength(), chPath, 512, NULL, NULL);			strOutputPath += chPath;			int nValue = RemovePasswd(strInputPath, strOutputPath);			csTemp.Format(_T("Success!"));
-			AfxMessageBox(csTemp);		}
+		WideCharToMultiByte(CP_ACP, 0, m_csFilePath, m_csFilePath.GetLength(), chPath, 512, NULL, NULL);		strInputPath = chPath;		int nValue = RemovePasswd(strInputPath);		if (nValue == 2)		{
+			csTemp.Format(_T("Success!"));
+			AfxMessageBox(csTemp);
+		}
+	}
+}
+
+
+void CDialogPDF::OnBnClickedButtonWm()
+{
+	// TODO:  在此添加控件通知处理程序代码
+	UpdateData(TRUE);
+	if (m_csFilePath.IsEmpty())
+	{
+		AfxMessageBox(_T("请输入文件路径!"));
+		return;
+	}
+	CString csTemp(m_csSavePath);
+	char chPath[512] = { 0 };
+	string strInputPath;
+	int nPageNum(0), nTime(0);
+	if (m_csFilePath.Find(_T(".pdf")) > 0)
+	{
+		WideCharToMultiByte(CP_ACP, 0, m_csFilePath, m_csFilePath.GetLength(), chPath, 512, NULL, NULL);		strInputPath = chPath;		int nValue = RemoveWaterMark(strInputPath);		if (nValue == 0)		{
+			csTemp.Format(_T("Success!"));
+			AfxMessageBox(csTemp);
+		}
 	}
 }

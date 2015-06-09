@@ -110,7 +110,7 @@ enum KeyWords4
 	_SIZE_,
 };
 
-#define MSAFE_DELETE(ptr) if((ptr)){delete (ptr);(ptr)=NULL;}
+#define MSAFE_DELETE(ptr) if((ptr)){delete[] (ptr);(ptr)=NULL;}
 
 enum CODE
 {

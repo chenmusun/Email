@@ -1,6 +1,7 @@
 #pragma once
 #include "afxbutton.h"
 #include "afxeditbrowsectrl.h"
+#include "afxwin.h"
 
 
 // CDialogPDF ¶Ô»°¿ò
@@ -35,4 +36,7 @@ public:
 	afx_msg void OnBnClickedMfcbuttonPdf2txt();
 	afx_msg void OnBnClickedMfcbuttonOpenfo();
 	afx_msg void OnBnClickedButtonTest();
+	afx_msg void OnBnClickedButtonPer();
+	afx_msg void OnBnClickedButtonWm();
+	CButton m_btnTest;
 };

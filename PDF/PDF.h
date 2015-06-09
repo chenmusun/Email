@@ -11,7 +11,6 @@
 #define PDF_API __declspec(dllimport)
 #pragma	comment(lib,"../output/PDF.lib")
 #endif
-
 #include <string>
 using namespace std;
 // 此类是从 PDF.dll 导出的
@@ -28,6 +27,7 @@ PDF_API int fnPDF(void);
 PDF_API int PDF2TXT(string inputFilePath, string outputFilePath, string& outputname, int& nPageNum, int& time);
 PDF_API BOOL InitializeLibrary();
 PDF_API void FinalizeLibrary();
-PDF_API int RemovePasswd(string inputPDF, string outputPDF);
-PDF_API int RemoveWaterMark(string inputPDF, string outputPDF);
-PDF_API int PDF2TEXT(string inputPDF, string outputText);
+PDF_API int RemovePasswd(string inputPDF);
+PDF_API int RemoveWaterMark(string inputPDF);
+PDF_API int PDF2TEXT(string inputPDF);
+void GetPathInfo(const string&strSrc, string&stroutputPath,int nType=0);//0:PDF2Text;1:去权限;2:去水印

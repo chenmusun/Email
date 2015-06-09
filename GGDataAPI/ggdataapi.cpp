@@ -68,7 +68,7 @@ void GGDataAPI::makeUrlParam()
 	time_t tt;
 	time(&tt);
 	char szTime[16];
-	sprintf_s(szTime,16,"%d",tt);
+	sprintf_s(szTime, 16, "%d", (int)tt);
 	apiParam.append("&time_stamp=").append(szTime);
 
 	map<string,string> mapParam;

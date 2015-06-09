@@ -138,24 +138,60 @@ PDF_API void FinalizeLibrary()
 	FSDK_CloseLog();
 }
 
-PDF_API int RemovePasswd(string inputPDF, string outputPDF)
+PDF_API int RemovePasswd(string inputPDF)
 {
-	return FSADK_PDF_RemovePassword((char*)outputPDF.c_str(), (char*)inputPDF.c_str());
+	string stroutpath;
+	GetPathInfo(inputPDF,stroutpath,1);
+	return FSADK_PDF_RemovePassword((char*)stroutpath.c_str(), (char*)inputPDF.c_str());
 }
 
-PDF_API int RemoveWaterMark(string inputPDF, string outputPDF)
+PDF_API int RemoveWaterMark(string inputPDF)
 {
 	int wClientData = 0;
-
+	string outputPDF;
+	GetPathInfo(inputPDF, outputPDF, 2);
 	FADK_WATERMARK_HANDLER handler;
+
+	wClientData = 3;
+	handler.clientData = (void*)&wClientData;
 	handler.DeletePDFObject = Test_DeletePDFObject;
 	FSADK_PDF_RemoveWatermark(&handler, (char*)outputPDF.c_str(), (char*)inputPDF.c_str());
 	return 0;
 }
 
-PDF_API int PDF2TEXT(string inputPDF, string outputText)
+PDF_API int PDF2TEXT(string inputPDF)
 {
+	string outputText;
+	GetPathInfo(inputPDF, outputText);
 	return FSADK_PDF_ExtractText((char*)outputText.c_str(), (char*)inputPDF.c_str());
+}
+
+void GetPathInfo(const string&strSrc, string&stroutputPath,int nType)
+{
+	char chTemp[512] = { 0 };
+	string strTemp, strinputPath, strFileName;
+	auto pos = strSrc.find_last_of("\\");
+	strTemp = strSrc.substr(0, pos);
+	strinputPath = strTemp;
+	auto pos2 = strSrc.find_last_of(".");
+	strFileName = strSrc.substr(pos + 1, pos2 - pos - 1);
+	switch (nType)
+	{
+	case 0:
+		sprintf_s(chTemp, 512, "%s\\%s.txt", strinputPath.c_str(),strFileName.c_str());
+		stroutputPath = chTemp;
+		break;
+	case 1:
+		sprintf_s(chTemp, 512, "%s\\No_Permission_%s.pdf", strinputPath.c_str(), strFileName.c_str());
+		stroutputPath = chTemp;
+		break;
+	case 2:
+		sprintf_s(chTemp, 512, "%s\\No_Watermark_%s.pdf", strinputPath.c_str(), strFileName.c_str());
+		stroutputPath = chTemp;
+		break;
+	default:
+		break;
+	}
 }
 ////////////////////////////////////////////////////////////////////////////////////
 // 这是已导出类的构造函数。
