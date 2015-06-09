@@ -28,9 +28,9 @@ PDF_API int fnPDF(void);
 PDF_API int PDF2TXT(string inputFilePath, string outputFilePath, string& outputname, int& nPageNum, int& time);
 PDF_API BOOL InitializeLibrary();
 PDF_API void FinalizeLibrary();
-PDF_API int RemovePasswd(string inputPDF);
-PDF_API int RemoveWaterMark(string inputPDF);
-PDF_API int PDF2TEXT(string inputPDF);
+PDF_API int RemovePasswd(const string& inputPDF);
+PDF_API int RemoveWaterMark(const string& inputPDF);
+PDF_API int PDF2TEXT(const string& inputPDF);
 void GetPathInfo(const string&strSrc, string&stroutputPath, int nType = 0);//0:PDF2Text;1:去权限;2:去水印;3:office转换
-PDF_API int OFFICE2PDF(const CString& csinputPath);
+PDF_API int OFFICE2PDF(const string& inputPDF);
 string ConvertPath(const CString& csPath);

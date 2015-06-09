@@ -27,6 +27,7 @@ public:
 	CString m_csGUID;
 	CString m_csSavePath;
 	CMFCButton m_btnGet;
+	vector<CString> m_vecType;
 public:
 	afx_msg void OnBnClickedMfcbuttonGet();
 	void SetMongoDBInfo(const MongoDBInfo& info);

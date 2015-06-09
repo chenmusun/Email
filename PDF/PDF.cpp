@@ -190,14 +190,14 @@ PDF_API void FinalizeLibrary()
 	FSDK_CloseLog();
 }
 
-PDF_API int RemovePasswd(string inputPDF)
+PDF_API int RemovePasswd(const string& inputPDF)
 {
 	string stroutpath;
 	GetPathInfo(inputPDF, stroutpath, 1);
 	return FSADK_PDF_RemovePassword((char*)stroutpath.c_str(), (char*)inputPDF.c_str());
 }
 
-PDF_API int RemoveWaterMark(string inputPDF)
+PDF_API int RemoveWaterMark(const string& inputPDF)
 {
 	int wClientData = 0;
 	string outputPDF;
@@ -211,7 +211,7 @@ PDF_API int RemoveWaterMark(string inputPDF)
 	return 0;
 }
 
-PDF_API int PDF2TEXT(string inputPDF)
+PDF_API int PDF2TEXT(const string& inputPDF)
 {
 	string outputText;
 	GetPathInfo(inputPDF, outputText);
@@ -250,46 +250,12 @@ void GetPathInfo(const string&strSrc, string&stroutputPath, int nType)
 	}
 }
 
-//void OnBnClickedButtonConvert()
-//{
-//	// TODO: Add your control notification handler code here
-//	char chCommend[512] = { 0 }, chPath[MAX_PATH] = { 0 }, chiPath[MAX_PATH] = { 0 }, choPath[MAX_PATH] = { 0 }, chFileName[MAX_PATH] = { 0 };
-//	CString csFileName, csiPath;
-//	HMODULE hModule = LoadLibrary(_T("pdftools.dll"));
-//
-//	if (NULL == hModule) {
-//		int ret = GetLastError();
-//		return;
-//	}
-//
-//	FXT_InitLibrary fxtInitLibrary = (FXT_InitLibrary)GetProcAddress(hModule, "FXT_InitLibrary");
-//	FXT_DestoryLibrary fxtDestoryLibrary = (FXT_DestoryLibrary)GetProcAddress(hModule, "FXT_DestoryLibrary");
-//	FXT_OfficeToPDFRun fxtOfficeToPDFRun = (FXT_OfficeToPDFRun)GetProcAddress(hModule, "FXT_OfficeToPDFRun");
-//	WideCharToMultiByte(CP_ACP, 0, m_csFilePath, m_csFilePath.GetLength(), chPath, MAX_PATH, NULL, NULL);
-//	auto pos = m_csFilePath.ReverseFind(_T('\\'));
-//	csiPath = m_csFilePath.Left(pos);
-//	WideCharToMultiByte(CP_ACP, 0, csiPath, csiPath.GetLength(), chiPath, MAX_PATH, NULL, NULL);
-//	auto pos2 = m_csFilePath.ReverseFind(_T('.'));
-//	csFileName = m_csFilePath.Mid(pos + 1, pos2 - pos - 1);
-//	WideCharToMultiByte(CP_ACP, 0, csFileName, csFileName.GetLength(), chFileName, MAX_PATH, NULL, NULL);
-//	sprintf_s(choPath, MAX_PATH, "%s\\%s.pdf", chiPath, chFileName);
-//	sprintf_s(chCommend, 512, "-i %s -o %s", chPath, choPath);
-//	if (fxtInitLibrary("E:\\Email\\Office×ª»»_demo20150515\\PDFConvert\\pdftools\\ftlkey.txt", 0) == 0) {
-//
-//		int ret = fxtOfficeToPDFRun(chCommend, NULL, NULL);
-//
-//		fxtDestoryLibrary();
-//		if (ret == 0)
-//			OutputDebugStringA("Success!");
-//	}
-//}
-
-PDF_API int OFFICE2PDF(const CString& csinputPath)
+PDF_API int OFFICE2PDF(const string& inputPDF)
 {
 	int ret(-1);
-	string stroutputPath, inputPath(ConvertPath(csinputPath));
+	string stroutputPath;
 	char chCommend[512] = { 0 };
-	GetPathInfo(inputPath, stroutputPath, 3);
+	GetPathInfo(inputPDF, stroutputPath, 3);
 	HMODULE hModule = LoadLibrary(_T("pdftools64.dll"));
 
 	if (NULL == hModule)
@@ -300,7 +266,7 @@ PDF_API int OFFICE2PDF(const CString& csinputPath)
 	FXT_InitLibrary fxtInitLibrary = (FXT_InitLibrary)GetProcAddress(hModule, "FXT_InitLibrary");
 	FXT_DestoryLibrary fxtDestoryLibrary = (FXT_DestoryLibrary)GetProcAddress(hModule, "FXT_DestoryLibrary");
 	FXT_OfficeToPDFRun fxtOfficeToPDFRun = (FXT_OfficeToPDFRun)GetProcAddress(hModule, "FXT_OfficeToPDFRun");
-	sprintf_s(chCommend, 512, "-i %s -o %s", inputPath.c_str(), stroutputPath.c_str());
+	sprintf_s(chCommend, 512, "-i %s -o %s", inputPDF.c_str(), stroutputPath.c_str());
 	if (fxtInitLibrary("ftlkey.txt", 0) == 0) 
 	{
 

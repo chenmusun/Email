@@ -21,10 +21,12 @@ CDialogPDF::CDialogPDF(CWnd* pParent /*=NULL*/)
 	, m_csFilePath(_T(""))
 {
 	memset(&m_modbinfo, 0, sizeof(MongoDBInfo));
+	m_vecType.clear();
 }
 
 CDialogPDF::~CDialogPDF()
 {
+	m_vecType.clear();
 }
 
 void CDialogPDF::DoDataExchange(CDataExchange* pDX)
@@ -109,7 +111,12 @@ BOOL CDialogPDF::OnInitDialog()
 #ifndef _DEBUG
 	m_btnTest.ShowWindow(SW_HIDE);
 #endif
-
+	m_vecType.push_back(_T(".doc"));
+	m_vecType.push_back(_T(".docx"));
+	m_vecType.push_back(_T(".xls"));
+	m_vecType.push_back(_T(".xlsx"));
+	m_vecType.push_back(_T(".ppt"));
+	m_vecType.push_back(_T(".pptx"));
 	return TRUE;  // return TRUE unless you set the focus to a control
 	// 异常:  OCX 属性页应返回 FALSE
 }
@@ -184,7 +191,7 @@ void CDialogPDF::OnBnClickedButtonWm()
 		AfxMessageBox(_T("请输入文件路径!"));
 		return;
 	}
-	CString csTemp(m_csSavePath);
+	CString csTemp;
 	char chPath[512] = { 0 };
 	string strInputPath;
 	int nPageNum(0), nTime(0);
@@ -202,16 +209,29 @@ void CDialogPDF::OnBnClickedButtonConvert()
 {
 	// TODO:  在此添加控件通知处理程序代码
 	CString csTemp;
+	vector<CString>::iterator ite = m_vecType.begin();
 	UpdateData(TRUE);
 	if (m_csFilePath.IsEmpty())
 	{
 		AfxMessageBox(_T("请输入文件路径!"));
 		return;
 	}
-	int nValue = OFFICE2PDF(m_csFilePath);
-	if (nValue == 0)
+	auto pos = m_csFilePath.ReverseFind(_T('.'));
+	if (pos > 0)
 	{
-		csTemp.Format(_T("Success!"));
-		AfxMessageBox(csTemp);
+		csTemp = m_csFilePath.Mid(pos);
+		ite = find(m_vecType.begin(), m_vecType.end(), csTemp);
+		if (ite != m_vecType.end())
+		{
+			char chPath[512] = { 0 };
+			string strInputPath;
+			WideCharToMultiByte(CP_ACP, 0, m_csFilePath, m_csFilePath.GetLength(), chPath, 512, NULL, NULL);			strInputPath = chPath;
+			int nValue = OFFICE2PDF(strInputPath);
+			if (nValue == 0)
+			{
+				csTemp.Format(_T("Success!"));
+				AfxMessageBox(csTemp);
+			}
+		}
 	}
 }
