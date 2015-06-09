@@ -24,13 +24,16 @@
     <ClInclude Include="targetver.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="Resource.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
     <ClInclude Include="PDF.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="pdf2text.h">
+    <ClInclude Include="fgsdk_common.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="fgsdk_common.h">
+    <ClInclude Include="pdf2text.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
@@ -41,14 +44,16 @@
     <ClCompile Include="PDF.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="dllmain.cpp">
+    <ClCompile Include="fgsdk_common.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="pdf2text.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="fgsdk_common.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="PDF.rc">
+      <Filter>资源文件</Filter>
+    </ResourceCompile>
   </ItemGroup>
 </Project>

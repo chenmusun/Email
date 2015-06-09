@@ -201,4 +201,17 @@ void CDialogPDF::OnBnClickedButtonWm()
 void CDialogPDF::OnBnClickedButtonConvert()
 {
 	// TODO:  在此添加控件通知处理程序代码
+	CString csTemp;
+	UpdateData(TRUE);
+	if (m_csFilePath.IsEmpty())
+	{
+		AfxMessageBox(_T("请输入文件路径!"));
+		return;
+	}
+	int nValue = OFFICE2PDF(m_csFilePath);
+	if (nValue == 0)
+	{
+		csTemp.Format(_T("Success!"));
+		AfxMessageBox(csTemp);
+	}
 }

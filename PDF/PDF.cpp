@@ -8,6 +8,11 @@
 #include "fadk/fadk.h"
 #include "fgsdk/fsdk.h"
 
+#ifdef _DEBUG
+#define new DEBUG_NEW
+#endif
+
+
 typedef int(*FXT_InitLibrary) (const char* key, int screenFlag);
 typedef void(*FXT_DestoryLibrary) ();
 
@@ -103,14 +108,55 @@ bool	Test_DeletePDFObject(void* clientData, FADK_PDF_OBJECT_INFO* objectInfo)
 	return false;
 }
 
-// 这是导出变量的一个示例
-PDF_API int nPDF=0;
+// 唯一的应用程序对象
 
-// 这是导出函数的一个示例。
-PDF_API int fnPDF(void)
+CWinApp theApp;
+
+using namespace std;
+
+int _tmain(int argc, TCHAR* argv[], TCHAR* envp[])
 {
-	return 42;
+	int nRetCode = 0;
+
+	HMODULE hModule = ::GetModuleHandle(NULL);
+
+	if (hModule != NULL)
+	{
+		// 初始化 MFC 并在失败时显示错误
+		if (!AfxWinInit(hModule, NULL, ::GetCommandLine(), 0))
+		{
+			// TODO:  更改错误代码以符合您的需要
+			_tprintf(_T("错误:  MFC 初始化失败\n"));
+			nRetCode = 1;
+		}
+		else
+		{
+			// TODO:  在此处为应用程序的行为编写代码。
+		}
+	}
+	else
+	{
+		// TODO:  更改错误代码以符合您的需要
+		_tprintf(_T("错误:  GetModuleHandle 失败\n"));
+		nRetCode = 1;
+	}
+
+	return nRetCode;
 }
+////////////////////////////////////////////////////////////////////////////////////
+// 这是已导出类的构造函数。
+// 有关类定义的信息，请参阅 PDF.h
+CPDF::CPDF()
+{
+	return;
+}
+
+
+CPDF::~CPDF()
+{
+
+}
+
 
 PDF_API int PDF2TXT(string inputFilePath, string outputFilePath, string& outputname, int& nPageNum, int& time)
 {
@@ -147,7 +193,7 @@ PDF_API void FinalizeLibrary()
 PDF_API int RemovePasswd(string inputPDF)
 {
 	string stroutpath;
-	GetPathInfo(inputPDF,stroutpath,1);
+	GetPathInfo(inputPDF, stroutpath, 1);
 	return FSADK_PDF_RemovePassword((char*)stroutpath.c_str(), (char*)inputPDF.c_str());
 }
 
@@ -172,7 +218,7 @@ PDF_API int PDF2TEXT(string inputPDF)
 	return FSADK_PDF_ExtractText((char*)outputText.c_str(), (char*)inputPDF.c_str());
 }
 
-void GetPathInfo(const string&strSrc, string&stroutputPath,int nType)
+void GetPathInfo(const string&strSrc, string&stroutputPath, int nType)
 {
 	char chTemp[512] = { 0 };
 	string strTemp, strinputPath, strFileName;
@@ -184,7 +230,7 @@ void GetPathInfo(const string&strSrc, string&stroutputPath,int nType)
 	switch (nType)
 	{
 	case 0:
-		sprintf_s(chTemp, 512, "%s\\%s.txt", strinputPath.c_str(),strFileName.c_str());
+		sprintf_s(chTemp, 512, "%s\\%s.txt", strinputPath.c_str(), strFileName.c_str());
 		stroutputPath = chTemp;
 		break;
 	case 1:
@@ -195,12 +241,16 @@ void GetPathInfo(const string&strSrc, string&stroutputPath,int nType)
 		sprintf_s(chTemp, 512, "%s\\No_Watermark_%s.pdf", strinputPath.c_str(), strFileName.c_str());
 		stroutputPath = chTemp;
 		break;
+	case 3:
+		sprintf_s(chTemp, 512, "%s\\%s.pdf", strinputPath.c_str(), strFileName.c_str());
+		stroutputPath = chTemp;
+		break;
 	default:
 		break;
 	}
 }
 
-//void CPDFConvertDemoDlg::OnBnClickedButtonConvert()
+//void OnBnClickedButtonConvert()
 //{
 //	// TODO: Add your control notification handler code here
 //	char chCommend[512] = { 0 }, chPath[MAX_PATH] = { 0 }, chiPath[MAX_PATH] = { 0 }, choPath[MAX_PATH] = { 0 }, chFileName[MAX_PATH] = { 0 };
@@ -234,17 +284,48 @@ void GetPathInfo(const string&strSrc, string&stroutputPath,int nType)
 //	}
 //}
 
-
-////////////////////////////////////////////////////////////////////////////////////
-// 这是已导出类的构造函数。
-// 有关类定义的信息，请参阅 PDF.h
-CPDF::CPDF()
+PDF_API int OFFICE2PDF(const CString& csinputPath)
 {
-	return;
+	int ret(-1);
+	string stroutputPath, inputPath(ConvertPath(csinputPath));
+	char chCommend[512] = { 0 };
+	GetPathInfo(inputPath, stroutputPath, 3);
+	HMODULE hModule = LoadLibrary(_T("pdftools64.dll"));
+
+	if (NULL == hModule)
+	{
+		int ret = GetLastError();
+		return -1;
+	}
+	FXT_InitLibrary fxtInitLibrary = (FXT_InitLibrary)GetProcAddress(hModule, "FXT_InitLibrary");
+	FXT_DestoryLibrary fxtDestoryLibrary = (FXT_DestoryLibrary)GetProcAddress(hModule, "FXT_DestoryLibrary");
+	FXT_OfficeToPDFRun fxtOfficeToPDFRun = (FXT_OfficeToPDFRun)GetProcAddress(hModule, "FXT_OfficeToPDFRun");
+	sprintf_s(chCommend, 512, "-i %s -o %s", inputPath.c_str(), stroutputPath.c_str());
+	if (fxtInitLibrary("ftlkey.txt", 0) == 0) 
+	{
+
+		ret = fxtOfficeToPDFRun(chCommend, NULL, NULL);
+
+		fxtDestoryLibrary();
+	}
+	return ret;
 }
 
-
-CPDF::~CPDF()
+string ConvertPath(const CString& csPath)
 {
-
+	string strPath;
+	char*p = NULL;
+	int nLen = ::WideCharToMultiByte(CP_ACP, NULL, csPath, csPath.GetLength(), NULL, 0, NULL, NULL);
+	if (nLen <= 0)
+		return strPath;
+	p = new char[nLen + 1];
+	memset(p, 0, nLen + 1);
+	::WideCharToMultiByte(CP_ACP, NULL, csPath, csPath.GetLength(), p, nLen, NULL, NULL);
+	strPath = p;
+	if (p&& nLen > 0)
+	{
+		delete p;
+		p = NULL;
+	}
+	return strPath;
 }
